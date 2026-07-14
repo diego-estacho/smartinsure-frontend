@@ -25,9 +25,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 IRMAO = ROOT.parent / "smartinsure-backend"
-IGNORAR = (".git", ".claude", "node_modules")
+IGNORAR = (".git", ".claude", "node_modules",
+           # artefato de framework (ADR-004): scratch/kit é invisível ao harness —
+           # nem escaneado como doc, nem versionado (espelha PASTAS_FRAMEWORK).
+           ".specify", "specs", "memory", ".grill", ".superpowers", ".agents")
 MD_FUTUROS = {"db-schema.md", "rastreabilidade-rn.md"}
-PASTAS_FRAMEWORK = {".specify", "specs", "memory", ".gsd", "gsd", ".superpowers"}
+PASTAS_FRAMEWORK = {".specify", "specs", "memory", ".grill", ".superpowers", ".agents"}
 
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)\s#]+)(?:#[^)]*)?\)")
 FENCE_RE = re.compile(r"```.*?```", re.S)
