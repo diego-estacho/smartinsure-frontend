@@ -1,6 +1,6 @@
 # Convenções do frontend (smartinsure-frontend)
 
-**Arquitetura decidida: Nuxt 3** ([ADR-001](adr/001-arquitetura-nuxt.md)). Este é o mapa operacional do front: o que a stack é, onde as coisas ficam e as regras não-negociáveis. O *porquê* de cada decisão vive nos ADRs de UI ([docs/adr/](adr/)) — este doc aponta, não duplica.
+**Arquitetura decidida: Nuxt 4** ([ADR-001](adr/001-arquitetura-nuxt.md)). Este é o mapa operacional do front: o que a stack é, onde as coisas ficam e as regras não-negociáveis. O *porquê* de cada decisão vive nos ADRs de UI ([docs/adr/](adr/)) — este doc aponta, não duplica.
 
 ## Stack
 
@@ -10,7 +10,7 @@ Política de versão: a **última versão estável** de cada dependência-chave,
 - Camada de servidor do Nuxt (**Nitro**) como BFF: o browser nunca fala direto com o backend ([ADR-008](adr/008-bff-nitro-server-routes.md)).
 - Pinia só para estado de UI; dado de servidor por composable ([ADR-002](adr/002-estado-cliente-pinia-ui.md)).
 - Vitest + Playwright ([ADR-005](adr/005-estrategia-de-testes.md)).
-- UI kit e gerador de types ainda em aberto — ver [Propostas](#propostas-a-decidir-no-scaffold).
+- UI kit **Vuetify 3** ([ADR-010](adr/010-ui-kit-vuetify.md)); gerador de types **openapi-typescript** ([ADR-011](adr/011-gerador-de-types-openapi.md)); **pt-BR fixo**, sem i18n ([ADR-012](adr/012-i18n-ptbr-fixo.md)).
 
 ## Estrutura de pastas ([ADR-003](adr/003-estrutura-de-pastas-simples.md))
 
@@ -45,7 +45,7 @@ O log de decisões do front é o próprio diretório [docs/adr/](adr/) — uma d
 
 | ADR | Decisão |
 |---|---|
-| [001](adr/001-arquitetura-nuxt.md) | Frontend em Nuxt 3 |
+| [001](adr/001-arquitetura-nuxt.md) | Frontend em Nuxt 4 |
 | [002](adr/002-estado-cliente-pinia-ui.md) | Estado: Pinia só para UI |
 | [003](adr/003-estrutura-de-pastas-simples.md) | Estrutura de pastas simples |
 | [004](adr/004-consumo-do-contrato-status-por-nome.md) | Consumo do contrato: status por nome estável |
@@ -54,11 +54,6 @@ O log de decisões do front é o próprio diretório [docs/adr/](adr/) — uma d
 | [007](adr/007-estrategia-de-sessao.md) | Estratégia de sessão |
 | [008](adr/008-bff-nitro-server-routes.md) | BFF no servidor Nuxt (Nitro) |
 | [009](adr/009-dev-auth-bypass-testes.md) | Dev-auth (bypass para testes, gated por env) |
-
-## Propostas (a decidir no scaffold)
-
-Não são convenção enquanto abertas; cada uma vira um ADR de UI quando ratificada, no início do scaffold. Propostas do dono do front:
-
-- **UI kit:** Vuetify 3 (tema dirigido pelos design tokens).
-- **Gerador de types:** openapi-typescript (só types + fetch fino).
-- **i18n:** pt-BR fixo (i18n só se o negócio pedir).
+| [010](adr/010-ui-kit-vuetify.md) | UI kit: Vuetify 3 (tema por design tokens) |
+| [011](adr/011-gerador-de-types-openapi.md) | Gerador de types: openapi-typescript |
+| [012](adr/012-i18n-ptbr-fixo.md) | i18n: pt-BR fixo |
