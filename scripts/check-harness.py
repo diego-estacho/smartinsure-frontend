@@ -10,7 +10,8 @@ Checagens:
    quando presente, no repo irmão; ausente o irmão, viram aviso.
 4. AGENTS.md com no máximo 100 linhas (harness fino).
 5. Cada ADR de UI em docs/adr/ tem título '# ADR-NNN' e seção '## Status'.
-6. Nenhuma pasta de framework de desenvolvimento está versionada (ADR-004 do produto).
+6. Exec-plan ativo tem seção 'Evidências'; exec-plan concluído a tem preenchida.
+7. Nenhuma pasta de framework de desenvolvimento está versionada (ADR-004 do produto).
 
 IDs de produto (glossário/RN/OPEN e ADRs do produto) são validados no backend, que
 os define. Aqui só se validam os ADRs de UI locais (docs/adr/).
@@ -106,7 +107,17 @@ for f in adr_files:
     if not re.search(r"^##\s+Status", t, re.M):
         errors.append(f"{f.relative_to(ROOT)}: ADR sem a seção '## Status'")
 
-# 6. pastas de framework de desenvolvimento não podem ser versionadas (ADR-004 do produto)
+# 6. exec-plans (quando existirem): plano ativo tem 'Evidências'; concluído a tem preenchida
+for f in (ROOT / "docs" / "exec-plans" / "active").glob("*.md"):
+    if not re.search(r"^#+\s*Evid[êe]ncias", f.read_text(encoding="utf-8"), re.M):
+        errors.append(f"{f.relative_to(ROOT)}: exec-plan ativo sem seção 'Evidências'")
+for f in (ROOT / "docs" / "exec-plans" / "completed").glob("*.md"):
+    m = re.search(r"^#+\s*Evid[êe]ncias\s*\n(.*)$", f.read_text(encoding="utf-8"), re.S | re.M)
+    corpo = (m.group(1).strip() if m else "")
+    if not corpo or corpo.startswith("("):
+        errors.append(f"{f.relative_to(ROOT)}: exec-plan concluído com seção 'Evidências' vazia")
+
+# 7. pastas de framework de desenvolvimento não podem ser versionadas (ADR-004 do produto)
 try:
     tracked = subprocess.run(["git", "ls-files"], cwd=ROOT,
                              capture_output=True, text=True, check=True).stdout.splitlines()
