@@ -30,8 +30,12 @@ Conflito entre chat, memória e arquivos: **prevalecem os arquivos versionados**
 
 ## Fluxo por tarefa
 
+**Passo 0 — triagem.** A tarefa toca dinheiro, transição de status, permissão, cálculo ou regra de negócio — ou precisa de contrato novo/alterado?
+- **Não → front-only:** fica neste repo; siga direto para a implementação, mantendo o vocabulário do glossário.
+- **Sim → cross-repo:** a RN/contrato entra no **backend primeiro** (refinada com a PO e catalogada antes do código — ADR-003 do produto); só então o front consome. PRs linkados pelo mesmo `AB#NNNNN` (ADR-001 do produto).
+
 1. Ler este arquivo + somente os docs relevantes ao tema; confirmar que nenhuma dependência está aberta em open-decisions.md (camada de produto).
-2. Se a atividade toca comportamento de negócio, o primeiro passo é a RN — refinada com a PO e catalogada no backend antes do código (ferramenta de entrevista livre — ADR-003 do produto). Ajuste sem regra de negócio (layout, cor, texto já no glossário) pula direto para a implementação, mantendo o vocabulário do glossário.
+2. Trabalho de mais de ~1 dia ganha um exec-plan em `docs/exec-plans/` (front-only) — com a seção Evidências preenchida ao concluir.
 3. ADR de UI (em docs/adr/) quando houver decisão difícil de reverter.
 4. Implementar o menor incremento vertical.
 5. Rodar lint, typecheck e testes; E2E da jornada afetada.

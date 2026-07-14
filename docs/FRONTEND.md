@@ -57,4 +57,8 @@ O log de decisões do front é o próprio diretório [docs/adr/](adr/) — uma d
 
 ## Propostas (a decidir no scaffold)
 
-Não são convenção enquanto abertas — vivem em [open-decisions.md do produto](../../smartinsure-backend/docs/product-specs/open-decisions.md) (OPEN-03), a ratificar no início do scaffold; a decisão vira ADR de UI e sai de lá: **UI kit** (Vuetify 3, proposta), **gerador de types** (openapi-typescript, proposta), **i18n** (pt-BR fixo, proposta).
+Não são convenção enquanto abertas; cada uma vira um ADR de UI quando ratificada, no início do scaffold. Propostas do dono do front:
+
+- **UI kit:** Vuetify 3 (tema dirigido pelos design tokens).
+- **Gerador de types:** openapi-typescript (só types + fetch fino).
+- **i18n:** pt-BR fixo (i18n só se o negócio pedir).
