@@ -1,0 +1,18 @@
+# CODEOWNERS — review humano obrigatório por especialidade (QUALITY_SCORE.md do produto).
+# Quem escreve é o dono da feature (fullstack); quem revisa é o especialista.
+# Substitua os handles @org/... pelos reais na criação do repo na organização;
+# enquanto forem placeholders, o roteamento é intenção documentada, não gate ativo.
+
+# Padrão: qualquer arquivo exige ao menos um review.
+*                        @org/smartinsure-devs
+
+# Front e design system → Diego.
+/components/             @org/smartinsure-front
+/styles/                 @org/smartinsure-front
+/docs/FRONTEND.md        @org/smartinsure-front
+/docs/adr/               @org/smartinsure-front
+
+# Harness (mapa, lint, CI) → mantenedor do harness.
+/AGENTS.md               @org/smartinsure-harness
+/scripts/                @org/smartinsure-harness
+/azure-pipelines.yml     @org/smartinsure-harness

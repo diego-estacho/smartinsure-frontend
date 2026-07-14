@@ -1,0 +1,27 @@
+# CI do smartinsure-frontend.
+# Regra inegociável: nenhum step de teste usa continue-on-error / condition que mascare falha.
+
+trigger:
+  branches:
+    include: [main]
+
+pr:
+  branches:
+    include: ['*']
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.12'
+
+  - script: python scripts/check-harness.py
+    displayName: 'Lint do harness (em CI, ponteiros de workspace viram aviso)'
+
+  # Gates ativados no scaffold (exec-plan 0001 do produto, Fase B) — sem continue-on-error, NUNCA:
+  # - install + typecheck + lint
+  # - geração de types a partir do artifact openapi.json do backend + FALHA em drift (ADR-001)
+  # - testes unitários (Vitest) + build
+  # - playwright: E2E das jornadas afetadas (gate de merge); suíte completa no noturno
