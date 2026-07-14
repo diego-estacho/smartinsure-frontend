@@ -1,0 +1,2 @@
+Types GERADOS do contrato OpenAPI (ADR-011) — nunca editar à mão.
+Rode `pnpm types:gen` quando o contrato do backend existir.

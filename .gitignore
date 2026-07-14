@@ -1,10 +1,29 @@
-node_modules/
-.nuxt/
-.output/
-dist/
-coverage/
-playwright-report/
-test-results/
+# Nuxt dev/build outputs
+.output
+.data
+.nuxt
+.nitro
+.cache
+dist
+
+# Node dependencies
+node_modules
+
+# Testes / cobertura
+coverage
+playwright-report
+test-results
+
+# Logs
+logs
+*.log
+
+# Misc
+.DS_Store
+.fleet
+.idea
+
+# Local env files
 .env
 .env.*
 !.env.example
@@ -13,6 +32,9 @@ test-results/
 /.specify/
 /specs/
 /memory/
-/.gsd/
-/gsd/
+/.grill/
 /.superpowers/
+# Artefato de instalação de kit (skills universais) e config de agente por-dev.
+/.agents/
+/skills-lock.json
+/.claude/
