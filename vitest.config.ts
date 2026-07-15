@@ -1,7 +1,17 @@
-import { defineConfig } from 'vitest/config'
+import { fileURLToPath } from 'node:url'
+import { defineVitestConfig } from '@nuxt/test-utils/config'
 
 // Testes unitários/componente (ADR-005). E2E de jornada ficam no Playwright.
-export default defineConfig({
+// Ambiente padrão happy-dom (testes puros); testes de componente optam pelo ambiente
+// `nuxt` por arquivo com `// @vitest-environment nuxt` (auto-imports, alias, Vuetify).
+export default defineVitestConfig({
+  // Alias `~`/`@` → app/ (Nuxt 4) também nos testes puros happy-dom.
+  resolve: {
+    alias: {
+      '~': fileURLToPath(new URL('./app', import.meta.url)),
+      '@': fileURLToPath(new URL('./app', import.meta.url)),
+    },
+  },
   test: {
     environment: 'happy-dom',
     include: ['tests/unit/**/*.spec.ts'],

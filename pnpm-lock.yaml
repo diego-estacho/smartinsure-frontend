@@ -11,6 +11,9 @@ importers:
       '@mdi/js':
         specifier: ^7.4.47
         version: 7.4.47
+      maska:
+        specifier: ^3.2.0
+        version: 3.2.0
       nuxt:
         specifier: ^4.4.8
         version: 4.4.8(@babel/plugin-syntax-jsx@7.29.7(@babel/core@7.29.7))(@babel/plugin-syntax-typescript@7.29.7(@babel/core@7.29.7))(@parcel/watcher@2.5.6)(@types/node@26.1.1)(@vue/compiler-sfc@3.5.39)(cac@6.7.14)(db0@0.3.4)(esbuild@0.28.1)(eslint@10.7.0(jiti@2.7.0))(ioredis@5.11.1)(magicast@0.5.3)(optionator@0.9.4)(pinia@4.0.0(@vue/devtools-api@8.1.5)(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3)))(rollup-plugin-visualizer@7.0.1(rollup@4.62.2))(rollup@4.62.2)(sass@1.101.0)(srvx@0.11.22)(terser@5.49.0)(typescript@5.9.3)(vite@7.3.6(@types/node@26.1.1)(jiti@2.7.0)(sass@1.101.0)(terser@5.49.0)(yaml@2.9.0))(vue-tsc@2.2.12(typescript@5.9.3))(yaml@2.9.0)
@@ -20,6 +23,9 @@ importers:
       vue:
         specifier: ^3.5.39
         version: 3.5.39(typescript@5.9.3)
+      vue-currency-input:
+        specifier: ^3.2.2
+        version: 3.2.2(vue@3.5.39(typescript@5.9.3))
       vue-router:
         specifier: ^5.1.0
         version: 5.1.0(@vue/compiler-sfc@3.5.39)(esbuild@0.28.1)(pinia@4.0.0(@vue/devtools-api@8.1.5)(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3)))(rollup@4.62.2)(vite@7.3.6(@types/node@26.1.1)(jiti@2.7.0)(sass@1.101.0)(terser@5.49.0)(yaml@2.9.0))(vue@3.5.39(typescript@5.9.3))
@@ -3144,6 +3150,9 @@ packages:
     resolution: {integrity: sha512-hXdUTZYIVOt1Ex//jAQi+wTZZpUpwBj/0QsOzqegb3rGMMeJiSEu5xLHnYfBrRV4RH2+OCSOO95Is/7x1WJ4bw==}
     engines: {node: '>=10'}
 
+  maska@3.2.0:
+    resolution: {integrity: sha512-zSmSgs5/q9vMSmrdZT3rKOv9uLznNWR/niuuAdBZDTvB3SMKOX9vhMtDijFyExz+B4UClu2rvksylUh/ea1bLA==}
+
   mdn-data@2.0.28:
     resolution: {integrity: sha512-aylIc7Z9y4yzHYAJNuESG3hfhC+0Ibp/MAMiaOZgNv4pmEdFyfZhhhny4MNiAfWdBQ1RQ2mfDWmM1x8SvGyp8g==}
 
@@ -4456,6 +4465,11 @@ packages:
 
   vue-component-type-helpers@3.3.7:
     resolution: {integrity: sha512-Skkhw9agYSgsWqv7bxSOGJZa9SaiJbZVGdXuFWnrzKaQYHnw9qbjD630rw6RyMqDbp54nfLCLw5SZA55if7JLg==}
+
+  vue-currency-input@3.2.2:
+    resolution: {integrity: sha512-+F6y+cQVJ1zlXfMKVnwf+e8/G8nef6iZOiXLkZbeIq7WiqlNhakAQpadIaIvApL/ZVTMWE0w/If02xYzJ28+5g==}
+    peerDependencies:
+      vue: ^2.7 || ^3.0.0
 
   vue-devtools-stub@0.1.0:
     resolution: {integrity: sha512-RutnB7X8c5hjq39NceArgXg28WZtZpGc3+J16ljMiYnFhKvd8hITxSWQSQ5bvldxMDU6gG5mkxl1MTQLXckVSQ==}
@@ -7821,6 +7835,8 @@ snapshots:
     dependencies:
       semver: 7.8.5
 
+  maska@3.2.0: {}
+
   mdn-data@2.0.28: {}
 
   mdn-data@2.27.1: {}
@@ -9352,6 +9368,10 @@ snapshots:
       ufo: 1.6.4
 
   vue-component-type-helpers@3.3.7: {}
+
+  vue-currency-input@3.2.2(vue@3.5.39(typescript@5.9.3)):
+    dependencies:
+      vue: 3.5.39(typescript@5.9.3)
 
   vue-devtools-stub@0.1.0: {}
 

@@ -1,37 +1,91 @@
 /*
- * Design tokens não-cromáticos — CSS custom properties (ADR-006).
+ * Design tokens não-cromáticos — CSS custom properties (ADR-006 + ADR-013 §5).
  * Consumir sempre por var(--si-...); nunca hardcodar valor visual em componente.
- * As cores vivem em tokens.ts (alimentam o tema Vuetify). Estes são o tema-base neutro.
+ * As cores vivem em tokens.ts (alimentam o tema Vuetify). Valores destilados da
+ * identidade real do SmartInsure (marca fiel, estrutura racionalizada).
+ * Nomes em inglês (código utilitário, AGENTS.md).
  */
 :root {
   /* Espaçamento (escala 4pt) */
+  --si-space-0: 0;
   --si-space-1: 4px;
   --si-space-2: 8px;
   --si-space-3: 12px;
   --si-space-4: 16px;
+  --si-space-5: 20px;
   --si-space-6: 24px;
   --si-space-8: 32px;
+  --si-space-10: 40px;
+  --si-space-12: 48px;
+  --si-space-16: 64px;
+  --si-space-20: 80px;
+  --si-space-24: 96px;
 
-  /* Raio */
-  --si-radius-sm: 4px;
-  --si-radius-md: 8px;
-  --si-radius-lg: 16px;
+  /* Raio (regra de marca: nunca 0 — feel insurtech, não bancário legado) */
+  --si-radius-xs: 4px;
+  --si-radius-sm: 6px;
+  --si-radius-md: 10px;
+  --si-radius-lg: 14px;
+  --si-radius-xl: 20px;
+  --si-radius-2xl: 28px;
   --si-radius-pill: 999px;
 
-  /* Tipografia */
-  --si-font-familia: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --si-font-tamanho-base: 16px;
-  --si-font-peso-regular: 400;
-  --si-font-peso-medio: 500;
-  --si-font-peso-forte: 700;
-  --si-line-height-base: 1.5;
+  /* Tipografia — Plus Jakarta Sans (carregada via <link> no nuxt.config.ts) */
+  --si-font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --si-font-mono: ui-monospace, 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
 
-  /* Elevação */
-  --si-elevation-1: 0 1px 2px rgba(16, 24, 40, 0.06);
-  --si-elevation-2: 0 2px 8px rgba(16, 24, 40, 0.1);
+  --si-font-weight-regular: 400;
+  --si-font-weight-medium: 500;
+  --si-font-weight-semibold: 600;
+  --si-font-weight-bold: 700;
 
-  /* Movimento */
-  --si-motion-rapido: 120ms;
-  --si-motion-base: 200ms;
-  --si-motion-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  /* Escala tipográfica: tamanho / line-height / letter-spacing */
+  --si-fs-display: 56px;
+  --si-lh-display: 1.05;
+  --si-ls-display: -0.02em;
+  --si-fs-h1: 40px;
+  --si-lh-h1: 1.15;
+  --si-ls-h1: -0.015em;
+  --si-fs-h2: 30px;
+  --si-lh-h2: 1.2;
+  --si-ls-h2: -0.01em;
+  --si-fs-h3: 22px;
+  --si-lh-h3: 1.3;
+  --si-ls-h3: -0.005em;
+  --si-fs-h4: 18px;
+  --si-lh-h4: 1.35;
+  --si-ls-h4: 0;
+  --si-fs-body: 16px;
+  --si-lh-body: 1.55;
+  --si-ls-body: 0;
+  --si-fs-small: 14px;
+  --si-lh-small: 1.5;
+  --si-ls-small: 0;
+  --si-fs-caption: 12px;
+  --si-lh-caption: 1.4;
+  --si-ls-caption: 0.01em;
+  --si-fs-eyebrow: 12px;
+  --si-lh-eyebrow: 1.2;
+  --si-ls-eyebrow: 0.12em;
+
+  /* Elevação (sombras neutras, sem cast azul; glow verde só no CTA primário) */
+  --si-shadow-1: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 1px rgba(15, 23, 42, 0.04);
+  --si-shadow-2: 0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --si-shadow-3: 0 12px 28px rgba(15, 23, 42, 0.1), 0 2px 4px rgba(15, 23, 42, 0.04);
+  --si-shadow-glow: 0 8px 24px rgba(34, 197, 94, 0.28);
+
+  /* Movimento (fade + translate-up; sem bounce/overshoot) */
+  --si-dur-fast: 120ms;
+  --si-dur-base: 200ms;
+  --si-dur-slow: 320ms;
+  --si-ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --si-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Aplica a família e o corpo-base ao app (Vuetify define font-family em .v-application). */
+body,
+.v-application {
+  font-family: var(--si-font-family);
+  font-size: var(--si-fs-body);
+  line-height: var(--si-lh-body);
 }
