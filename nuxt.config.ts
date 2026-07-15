@@ -1,4 +1,4 @@
-import { temaClaro } from './app/assets/styles/tokens/tokens'
+import { lightTheme } from './app/assets/styles/tokens/tokens'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -6,6 +6,39 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
 
   modules: ['@pinia/nuxt', 'vuetify-nuxt-module', '@nuxt/eslint'],
+
+  // Kit `Si` (ADR-013): componentes de ui/ sem prefixo de pasta — SiButton.vue → <SiButton>.
+  components: [
+    { path: '~/components/ui', pathPrefix: false },
+    '~/components',
+  ],
+
+  // Vitrine do DS (ADR-013 §7): rotas /dev/* existem só em desenvolvimento — removidas
+  // do build de produção.
+  hooks: {
+    'pages:extend'(pages) {
+      if (process.env.NODE_ENV === 'production') {
+        for (let i = pages.length - 1; i >= 0; i--) {
+          const p = pages[i]
+          if (p && (p.path === '/dev' || p.path.startsWith('/dev/'))) pages.splice(i, 1)
+        }
+      }
+    },
+  },
+
+  // Fonte da marca — Plus Jakarta Sans via <link> (evita @import bloqueante no SCSS).
+  app: {
+    head: {
+      link: [
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+        {
+          rel: 'stylesheet',
+          href: 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap',
+        },
+      ],
+    },
+  },
 
   // Design tokens não-cromáticos (ADR-006). As cores vão pelo tema Vuetify abaixo.
   css: ['~/assets/styles/tokens/base.css'],
@@ -26,9 +59,13 @@ export default defineNuxtConfig({
     vuetifyOptions: {
       theme: {
         defaultTheme: 'light',
-        themes: { light: temaClaro },
+        themes: { light: lightTheme },
       },
       icons: { defaultSet: 'mdi-svg' },
+      // VDateInput ainda é labs (ADR-013 §6, form native-first) + composable de data com
+      // o adaptador padrão do Vuetify (sem dependência externa).
+      labComponents: ['VDateInput'],
+      date: {},
     },
   },
 })
