@@ -2,8 +2,10 @@
 
 > Trabalho front-only (+1 dia). Camada de UI, sem código de domínio (OPEN-01 aberta).
 > Branch: `feat/design-system-kit-ui` (sem AB# — atividade interna de fundação).
+> Entregue no PR #4 (mergeado). Ajustes de review incluídos: PascalCase no template,
+> validação real de CPF/CNPJ e data padronizada pt-BR.
 
-Status: em andamento
+Status: concluído
 Contexto obrigatório (ler antes de executar): `AGENTS.md`, `docs/FRONTEND.md`, os ADRs em `docs/adr/` (em especial **013**, e 003/006/010/012), o grill em `.grill/design-system-kit-ui.md`, e a camada de produto em `../smartinsure-backend/docs/`.
 
 ## Objetivo
@@ -64,7 +66,7 @@ Runtime (dev server :3000, console limpo):
 - `GET /dev/ui` → 200; `SiButton` renderiza `v-btn` com defaults curados (`bg-primary`, `rounded-md`, tamanhos, `bg-error`, `text-primary`, `v-btn--loading/--disabled`).
 - Screenshots full-page da vitrine capturados (todos os componentes on-brand: verde de marca, cores semânticas corretas, fonte aplicada, SiDataTable com paginação, overlays, progresso).
 
-Pendências (fora do concluído): testes de comportamento por wrapper (gate de 80%); migração da landing; `SiAppBar`/`SiNavigationDrawer` construídos mas ainda sem demo de shell na vitrine (precisam de contexto de layout).
+Concluído depois: testes de comportamento por wrapper, migração da landing e demo de shell (`SiAppBar`/`SiNavigationDrawer` montados em layout no smoke). Fica registrado para depois: ligar o gate de 80% quando entrar código de domínio.
 
 **Onda 2 (família de form) — concluída; testes pendentes.**
 
