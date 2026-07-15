@@ -30,7 +30,7 @@ const maskOptions = computed(() => ({
 </script>
 
 <template>
-  <v-text-field
+  <VTextField
     v-model="model"
     v-maska="maskOptions"
     v-bind="$attrs"
@@ -42,5 +42,5 @@ const maskOptions = computed(() => ({
     <template v-for="(_, name) in $slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps ?? {}" />
     </template>
-  </v-text-field>
+  </VTextField>
 </template>

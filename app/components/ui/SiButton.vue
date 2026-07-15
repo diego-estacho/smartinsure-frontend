@@ -22,7 +22,7 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <v-btn
+  <VBtn
     v-bind="$attrs"
     :variant="variant"
     :color="color"
@@ -35,5 +35,5 @@ withDefaults(defineProps<{
     <slot name="prepend" />
     <slot />
     <slot name="append" />
-  </v-btn>
+  </VBtn>
 </template>

@@ -19,7 +19,7 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <v-card
+  <VCard
     v-bind="$attrs"
     :variant="variant"
     :elevation="elevation"
@@ -29,5 +29,5 @@ withDefaults(defineProps<{
     <template v-for="(_, name) in $slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps ?? {}" />
     </template>
-  </v-card>
+  </VCard>
 </template>

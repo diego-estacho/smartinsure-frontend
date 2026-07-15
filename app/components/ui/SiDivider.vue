@@ -6,7 +6,7 @@ defineOptions({ inheritAttrs: false })
 </script>
 
 <template>
-  <v-divider v-bind="$attrs">
+  <VDivider v-bind="$attrs">
     <slot />
-  </v-divider>
+  </VDivider>
 </template>

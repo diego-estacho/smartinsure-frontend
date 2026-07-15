@@ -9,9 +9,9 @@ const model = defineModel<boolean>()
 </script>
 
 <template>
-  <v-menu v-bind="$attrs" v-model="model">
+  <VMenu v-bind="$attrs" v-model="model">
     <template v-for="(_, name) in $slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps ?? {}" />
     </template>
-  </v-menu>
+  </VMenu>
 </template>

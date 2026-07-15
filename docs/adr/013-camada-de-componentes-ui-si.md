@@ -10,7 +10,7 @@ Com Vuetify 3 como kit (ADR-010) e o tema dirigido por design tokens (ADR-006), 
 
 1. **Filosofia de wrapper — curado + passthrough.** Cada `ui/` fixa os *defaults* de design (cor, variante, tamanho, estado) como API própria e curada; repassa o resto via `v-bind="$attrs"` + slots livres para o componente Vuetify. Contrato estável no que é política de design e blinda troca de lib; liberdade no detalhe.
 
-2. **Nomenclatura — prefixo `Si` (PascalCase).** `SiButton`, `SiTextField`, `SiDataTable`, `SiDialog`. Não `SI` (ambiguidade de fronteira no PascalCase do ESLint). Utilitário → inglês (o domínio, esse sim em pt-BR do glossário — não se aplica a `ui/`).
+2. **Nomenclatura — prefixo `Si` (PascalCase).** `SiButton`, `SiTextField`, `SiDataTable`, `SiDialog`. Não `SI` (ambiguidade de fronteira no PascalCase do ESLint). Utilitário → inglês (o domínio, esse sim em pt-BR do glossário — não se aplica a `ui/`). **Todo componente no template usa PascalCase, inclusive os do Vuetify** (`VAlert`, não `v-alert`) — imposto pelo lint (`vue/component-name-in-template-casing` com `registeredComponentsOnly: false`). Diretivas (`v-model`, `v-if`, `v-bind`) seguem em kebab, como manda o Vue.
 
 3. **Whitelabel = só cor de marca.** A corretora troca apenas `primary`/`secondary` + logo (futuro: via `themeConfig` no backend, reaplicado no tema em runtime). As cores **semânticas** (`success`/`warning`/`error`/`info`) são lei da plataforma e não são whitelabel. Agora constrói-se só a **costura** (cor sempre por token do tema, nunca hex); o mecanismo de troca em runtime fica para quando existir a tela de config.
 

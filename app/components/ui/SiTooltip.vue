@@ -13,9 +13,9 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <v-tooltip v-bind="$attrs" :location="location">
+  <VTooltip v-bind="$attrs" :location="location">
     <template v-for="(_, name) in $slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps ?? {}" />
     </template>
-  </v-tooltip>
+  </VTooltip>
 </template>

@@ -52,8 +52,8 @@ const items = [
 </script>
 
 <template>
-  <v-main class="bg-background">
-    <v-container class="py-8">
+  <VMain class="bg-background">
+    <VContainer class="py-8">
       <div class="mb-8">
         <p class="text-caption text-medium-emphasis" style="letter-spacing: var(--si-ls-eyebrow)">DESIGN SYSTEM</p>
         <h1 class="text-h4 font-weight-bold">Vitrine de componentes <code>Si</code></h1>
@@ -62,8 +62,8 @@ const items = [
 
       <!-- Ações -->
       <SiCard class="mb-6">
-        <v-card-title>Ações — SiButton</v-card-title>
-        <v-card-text class="d-flex flex-wrap align-center" style="gap: var(--si-space-3)">
+        <VCardTitle>Ações — SiButton</VCardTitle>
+        <VCardText class="d-flex flex-wrap align-center" style="gap: var(--si-space-3)">
           <SiButton>Primário</SiButton>
           <SiButton variant="tonal">Tonal</SiButton>
           <SiButton variant="outlined">Outlined</SiButton>
@@ -74,13 +74,13 @@ const items = [
           <SiButton :disabled="true">Desabilitado</SiButton>
           <SiButton size="small">Pequeno</SiButton>
           <SiButton size="large">Grande</SiButton>
-        </v-card-text>
+        </VCardText>
       </SiCard>
 
       <!-- Ícone, Chip, Badge, Avatar -->
       <SiCard class="mb-6">
-        <v-card-title>SiIcon · SiChip · SiBadge · SiAvatar</v-card-title>
-        <v-card-text class="d-flex flex-wrap align-center" style="gap: var(--si-space-4)">
+        <VCardTitle>SiIcon · SiChip · SiBadge · SiAvatar</VCardTitle>
+        <VCardText class="d-flex flex-wrap align-center" style="gap: var(--si-space-4)">
           <SiIcon :icon="mdiShieldCheckOutline" color="primary" size="large" />
           <SiIcon :icon="mdiMenu" />
           <SiChip>Padrão</SiChip>
@@ -92,67 +92,67 @@ const items = [
           </SiBadge>
           <SiAvatar color="primary"><SiIcon :icon="mdiAccount" /></SiAvatar>
           <SiAvatar color="secondary" size="small">DE</SiAvatar>
-        </v-card-text>
+        </VCardText>
       </SiCard>
 
       <!-- Campos -->
       <SiCard class="mb-6">
-        <v-card-title>Campos (secos)</v-card-title>
-        <v-card-text>
-          <v-row>
-            <v-col cols="12" md="6">
+        <VCardTitle>Campos (secos)</VCardTitle>
+        <VCardText>
+          <VRow>
+            <VCol cols="12" md="6">
               <SiTextField v-model="texto" label="Nome" placeholder="Digite…" clearable />
-            </v-col>
-            <v-col cols="12" md="6">
+            </VCol>
+            <VCol cols="12" md="6">
               <SiSelect v-model="selecionado" :items="opcoes" label="Tipo" clearable />
-            </v-col>
-            <v-col cols="12">
+            </VCol>
+            <VCol cols="12">
               <SiTextarea v-model="area" label="Observações" auto-grow />
-            </v-col>
-            <v-col cols="12" md="4">
+            </VCol>
+            <VCol cols="12" md="4">
               <SiCheckbox v-model="marcado" label="Aceito os termos" />
-            </v-col>
-            <v-col cols="12" md="4">
+            </VCol>
+            <VCol cols="12" md="4">
               <SiSwitch v-model="ligado" label="Notificações" />
-            </v-col>
-            <v-col cols="12" md="4">
+            </VCol>
+            <VCol cols="12" md="4">
               <SiRadioGroup v-model="opcao" label="Plano" inline>
                 <SiRadio label="A" value="a" />
                 <SiRadio label="B" value="b" />
               </SiRadioGroup>
-            </v-col>
-          </v-row>
+            </VCol>
+          </VRow>
           <p class="text-caption text-medium-emphasis mt-2">
             Modelos: {{ { texto, selecionado, marcado, ligado, opcao } }}
           </p>
-        </v-card-text>
+        </VCardText>
       </SiCard>
 
       <!-- Formulário (Onda 2) — família de form composta -->
       <SiCard class="mb-6">
-        <v-card-title>Formulário — família de form (Onda 2)</v-card-title>
-        <v-card-text>
+        <VCardTitle>Formulário — família de form (Onda 2)</VCardTitle>
+        <VCardText>
           <SiForm ref="formRef" v-model="formValido">
-            <v-row>
-              <v-col cols="12" md="6">
+            <VRow>
+              <VCol cols="12" md="6">
                 <SiTextField v-model="fEmail" label="E-mail" :rules="[required(), email()]" />
-              </v-col>
-              <v-col cols="12" md="6">
+              </VCol>
+              <VCol cols="12" md="6">
                 <SiDocField v-model="fDoc" label="CPF/CNPJ" :rules="[required(), cpfCnpjFormat()]" />
-              </v-col>
-              <v-col cols="12" md="6">
+              </VCol>
+              <VCol cols="12" md="6">
                 <SiCurrencyField v-model="fValor" label="Prêmio (BRL)" :rules="[required('Informe o valor')]" />
-              </v-col>
-              <v-col cols="12" md="6">
+              </VCol>
+              <VCol cols="12" md="6">
                 <SiDateField v-model="fData" label="Vigência" :rules="[required('Informe a data')]" />
-              </v-col>
-            </v-row>
+              </VCol>
+            </VRow>
             <div class="d-flex align-center mt-2" style="gap: var(--si-space-3)">
               <SiButton @click="enviarForm">Validar e enviar</SiButton>
               <span class="text-caption text-medium-emphasis">Válido: {{ formValido }} · Enviado: {{ enviado }}</span>
             </div>
           </SiForm>
-        </v-card-text>
+        </VCardText>
       </SiCard>
 
       <!-- Abas + Expansão -->
@@ -161,7 +161,7 @@ const items = [
           <SiTab value="cotacoes" text="Cotações" />
           <SiTab value="propostas" text="Propostas" />
         </SiTabs>
-        <v-card-text>
+        <VCardText>
           <SiExpansionPanels v-model="painel">
             <SiExpansionPanel title="Detalhes da oferta">
               <template #text>Conteúdo do painel — aba ativa: {{ aba }}.</template>
@@ -170,29 +170,29 @@ const items = [
               <template #text>Prazos e coberturas.</template>
             </SiExpansionPanel>
           </SiExpansionPanels>
-        </v-card-text>
+        </VCardText>
       </SiCard>
 
       <!-- Tabela -->
       <SiCard class="mb-6">
-        <v-card-title>SiDataTable</v-card-title>
+        <VCardTitle>SiDataTable</VCardTitle>
         <SiDataTable :headers="headers" :items="items" />
       </SiCard>
 
       <!-- Overlays -->
       <SiCard class="mb-6">
-        <v-card-title>Overlays — SiDialog · SiMenu · SiTooltip</v-card-title>
-        <v-card-text class="d-flex flex-wrap align-center" style="gap: var(--si-space-3)">
+        <VCardTitle>Overlays — SiDialog · SiMenu · SiTooltip</VCardTitle>
+        <VCardText class="d-flex flex-wrap align-center" style="gap: var(--si-space-3)">
           <SiButton @click="dialogo = true">Abrir diálogo</SiButton>
           <SiDialog v-model="dialogo">
             <SiCard>
-              <v-card-title>Confirmar</v-card-title>
-              <v-card-text>Deseja aceitar esta cotação?</v-card-text>
-              <v-card-actions>
-                <v-spacer />
+              <VCardTitle>Confirmar</VCardTitle>
+              <VCardText>Deseja aceitar esta cotação?</VCardText>
+              <VCardActions>
+                <VSpacer />
                 <SiButton variant="text" @click="dialogo = false">Cancelar</SiButton>
                 <SiButton @click="dialogo = false">Confirmar</SiButton>
-              </v-card-actions>
+              </VCardActions>
             </SiCard>
           </SiDialog>
 
@@ -214,13 +214,13 @@ const items = [
               <SiButton variant="tonal" v-bind="props">Passe o mouse</SiButton>
             </template>
           </SiTooltip>
-        </v-card-text>
+        </VCardText>
       </SiCard>
 
       <!-- Progresso + Divider -->
       <SiCard class="mb-6">
-        <v-card-title>Progresso &amp; Divider</v-card-title>
-        <v-card-text>
+        <VCardTitle>Progresso &amp; Divider</VCardTitle>
+        <VCardText>
           <div class="d-flex align-center mb-4" style="gap: var(--si-space-4)">
             <SiProgressCircular indeterminate />
             <SiProgressCircular :model-value="progresso" :size="48">{{ progresso }}</SiProgressCircular>
@@ -228,19 +228,19 @@ const items = [
           <SiDivider class="my-4" />
           <SiProgressLinear :model-value="progresso" class="mb-2" />
           <SiProgressLinear indeterminate color="secondary" />
-        </v-card-text>
+        </VCardText>
       </SiCard>
 
       <!-- Feedback -->
       <SiCard class="mb-6">
-        <v-card-title>SiAlert</v-card-title>
-        <v-card-text class="d-flex flex-column" style="gap: var(--si-space-3)">
+        <VCardTitle>SiAlert</VCardTitle>
+        <VCardText class="d-flex flex-column" style="gap: var(--si-space-3)">
           <SiAlert type="success" text="Cotação recebida com sucesso." />
           <SiAlert type="info" text="Aguardando retorno da seguradora." />
           <SiAlert type="warning" text="Vigência próxima do vencimento." />
           <SiAlert type="error" text="Falha ao processar a proposta." />
-        </v-card-text>
+        </VCardText>
       </SiCard>
-    </v-container>
-  </v-main>
+    </VContainer>
+  </VMain>
 </template>

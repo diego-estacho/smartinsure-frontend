@@ -19,9 +19,9 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <v-app-bar v-bind="$attrs" :color="color" :flat="flat" :elevation="elevation" :height="height">
+  <VAppBar v-bind="$attrs" :color="color" :flat="flat" :elevation="elevation" :height="height">
     <template v-for="(_, name) in $slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps ?? {}" />
     </template>
-  </v-app-bar>
+  </VAppBar>
 </template>

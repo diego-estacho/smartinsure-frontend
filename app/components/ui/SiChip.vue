@@ -17,9 +17,9 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <v-chip v-bind="$attrs" :variant="variant" :color="color" :size="size" :label="label">
+  <VChip v-bind="$attrs" :variant="variant" :color="color" :size="size" :label="label">
     <slot name="prepend" />
     <slot />
     <slot name="append" />
-  </v-chip>
+  </VChip>
 </template>

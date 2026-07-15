@@ -22,7 +22,7 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <v-date-input
+  <VDateInput
     v-model="model"
     v-bind="$attrs"
     :variant="variant"
@@ -33,5 +33,5 @@ withDefaults(defineProps<{
     <template v-for="(_, name) in $slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps ?? {}" />
     </template>
-  </v-date-input>
+  </VDateInput>
 </template>

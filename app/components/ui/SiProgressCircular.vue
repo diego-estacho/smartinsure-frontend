@@ -14,7 +14,7 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <v-progress-circular v-bind="$attrs" :color="color" :indeterminate="indeterminate">
+  <VProgressCircular v-bind="$attrs" :color="color" :indeterminate="indeterminate">
     <slot />
-  </v-progress-circular>
+  </VProgressCircular>
 </template>

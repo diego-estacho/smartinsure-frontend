@@ -16,7 +16,7 @@ defineExpose({
 </script>
 
 <template>
-  <v-form ref="formRef" v-bind="$attrs" v-model="model">
+  <VForm ref="formRef" v-bind="$attrs" v-model="model">
     <slot />
-  </v-form>
+  </VForm>
 </template>

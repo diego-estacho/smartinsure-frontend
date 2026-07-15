@@ -21,7 +21,7 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <v-text-field
+  <VTextField
     v-bind="$attrs"
     v-model="model"
     :variant="variant"
@@ -32,5 +32,5 @@ withDefaults(defineProps<{
     <template v-for="(_, name) in $slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps ?? {}" />
     </template>
-  </v-text-field>
+  </VTextField>
 </template>

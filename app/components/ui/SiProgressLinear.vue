@@ -16,7 +16,7 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <v-progress-linear v-bind="$attrs" :color="color" :indeterminate="indeterminate" :rounded="rounded">
+  <VProgressLinear v-bind="$attrs" :color="color" :indeterminate="indeterminate" :rounded="rounded">
     <slot />
-  </v-progress-linear>
+  </VProgressLinear>
 </template>

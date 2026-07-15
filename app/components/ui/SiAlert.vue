@@ -18,7 +18,7 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <v-alert
+  <VAlert
     v-bind="$attrs"
     :type="type"
     :variant="variant"
@@ -28,5 +28,5 @@ withDefaults(defineProps<{
     <template v-for="(_, name) in $slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps ?? {}" />
     </template>
-  </v-alert>
+  </VAlert>
 </template>

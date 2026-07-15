@@ -47,7 +47,7 @@ watch(numberValue, (v) => {
 </script>
 
 <template>
-  <v-text-field
+  <VTextField
     :ref="bindCurrencyInput"
     v-bind="$attrs"
     :variant="variant"
@@ -58,5 +58,5 @@ watch(numberValue, (v) => {
     <template v-for="(_, name) in $slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps ?? {}" />
     </template>
-  </v-text-field>
+  </VTextField>
 </template>

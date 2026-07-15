@@ -8,10 +8,10 @@ useHead({ title: 'SmartInsure' })
 </script>
 
 <template>
-  <v-main>
-    <v-container class="py-16">
-      <v-row justify="center">
-        <v-col cols="12" md="8" lg="6">
+  <VMain>
+    <VContainer class="py-16">
+      <VRow justify="center">
+        <VCol cols="12" md="8" lg="6">
           <SiCard :elevation="2" class="pa-6">
             <div class="d-flex align-center mb-4" style="gap: var(--si-space-3)">
               <SiIcon :icon="mdiShieldCheckOutline" size="32" color="primary" />
@@ -23,8 +23,8 @@ useHead({ title: 'SmartInsure' })
             </p>
             <SiChip color="success" size="small">ambiente pronto</SiChip>
           </SiCard>
-        </v-col>
-      </v-row>
-    </v-container>
-  </v-main>
+        </VCol>
+      </VRow>
+    </VContainer>
+  </VMain>
 </template>

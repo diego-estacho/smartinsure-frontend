@@ -16,9 +16,9 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <v-list v-bind="$attrs" v-model:selected="model" :density="density" :nav="nav">
+  <VList v-bind="$attrs" v-model:selected="model" :density="density" :nav="nav">
     <template v-for="(_, name) in $slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps ?? {}" />
     </template>
-  </v-list>
+  </VList>
 </template>

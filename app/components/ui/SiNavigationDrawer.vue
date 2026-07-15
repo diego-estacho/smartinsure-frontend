@@ -17,9 +17,9 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <v-navigation-drawer v-bind="$attrs" v-model="model" :color="color" :width="width">
+  <VNavigationDrawer v-bind="$attrs" v-model="model" :color="color" :width="width">
     <template v-for="(_, name) in $slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps ?? {}" />
     </template>
-  </v-navigation-drawer>
+  </VNavigationDrawer>
 </template>

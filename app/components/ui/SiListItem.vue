@@ -15,9 +15,9 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <v-list-item v-bind="$attrs" :color="color" :rounded="rounded">
+  <VListItem v-bind="$attrs" :color="color" :rounded="rounded">
     <template v-for="(_, name) in $slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps ?? {}" />
     </template>
-  </v-list-item>
+  </VListItem>
 </template>

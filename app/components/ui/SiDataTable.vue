@@ -15,9 +15,9 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <v-data-table v-bind="$attrs" :density="density" :hover="hover">
+  <VDataTable v-bind="$attrs" :density="density" :hover="hover">
     <template v-for="(_, name) in $slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps ?? {}" />
     </template>
-  </v-data-table>
+  </VDataTable>
 </template>

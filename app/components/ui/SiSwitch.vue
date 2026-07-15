@@ -17,9 +17,9 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <v-switch v-bind="$attrs" v-model="model" :color="color" :density="density" :inset="inset">
+  <VSwitch v-bind="$attrs" v-model="model" :color="color" :density="density" :inset="inset">
     <template v-for="(_, name) in $slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps ?? {}" />
     </template>
-  </v-switch>
+  </VSwitch>
 </template>

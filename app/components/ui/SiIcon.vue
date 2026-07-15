@@ -16,5 +16,5 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <v-icon v-bind="$attrs" :icon="icon" :color="color" :size="size" />
+  <VIcon v-bind="$attrs" :icon="icon" :color="color" :size="size" />
 </template>

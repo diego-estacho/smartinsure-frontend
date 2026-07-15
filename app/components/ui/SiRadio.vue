@@ -13,9 +13,9 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <v-radio v-bind="$attrs" :color="color">
+  <VRadio v-bind="$attrs" :color="color">
     <template v-for="(_, name) in $slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps ?? {}" />
     </template>
-  </v-radio>
+  </VRadio>
 </template>
