@@ -17,7 +17,7 @@ Conflito entre chat, memória e arquivos: **prevalecem os arquivos versionados**
 
 ## Regras de trabalho
 
-- Vocabulário: somente termos do glossário na UI, nas rotas e nos nomes de componente/tipo de domínio.
+- Vocabulário: somente termos pt-BR do glossário na UI e nas rotas de página; nomes de componente/tipo/composable usam o nome técnico em inglês mapeado no glossário (ADR-058 do produto).
 - Types da API: SEMPRE gerados do contrato OpenAPI do backend — proibido escrever ou editar type de API à mão (o CI falha em drift).
 - Status: renderizado pelo **nome estável** vindo do contrato; label/cor num único mapa por domínio. Nunca por posição ordinal.
 - Nenhuma regra de negócio no cliente: dinheiro, transição de status e permissão são decididos no servidor; o front valida forma, não decisão.

@@ -39,6 +39,9 @@
   --si-font-weight-semibold: 600;
   --si-font-weight-bold: 700;
 
+  /* Layout */
+  --si-container-narrow: 40rem;
+
   /* Escala tipográfica: tamanho / line-height / letter-spacing */
   --si-fs-display: 56px;
   --si-lh-display: 1.05;

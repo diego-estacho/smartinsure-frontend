@@ -17,9 +17,9 @@ Política de versão: a **última versão estável** de cada dependência-chave,
 ```
 pages/            # rotas — nomes do glossário (/ofertas, /apolices)
 components/
-  ofertas/        # componentes do domínio (OfertaWizard.vue, CotacaoCard.vue)
+  ofertas/        # componentes do domínio (OfferWizard.vue, QuoteCard.vue)
   ui/             # básicos sem domínio (botão, modal, tabela)
-composables/      # useOfertas(), useCotacoes() — acesso a dados por domínio
+composables/      # useOffers(), useQuotes() — acesso a dados por domínio
 stores/           # Pinia: estado de UI apenas
 types/gen/        # types GERADOS do contrato OpenAPI — nunca editar à mão
 styles/tokens/    # design tokens: cores, tipografia, espaçamento, raio, elevação, movimento
@@ -29,7 +29,7 @@ Um domínio novo = o mesmo desenho.
 
 ## Regras não-negociáveis
 
-- **Vocabulário:** só termos do glossário na UI, nas rotas e nos nomes de componente/tipo de domínio (`OfertaWizard`, nunca `QuoteWizard`).
+- **Vocabulário (ADR-058 do produto):** UI e rotas de página só com termos pt-BR do glossário (`/ofertas`, label "Oferta"); nomes de componente/tipo/composable usam o nome técnico em inglês mapeado 1:1 no glossário (`OfferWizard`, `useUsers`) — tradução ad hoc é proibida.
 - **Nenhuma regra de negócio no cliente:** cálculo, transição de status, permissão e validação de dinheiro decididos no servidor (SECURITY do produto); o front valida forma (obrigatório, formato, máscara), nunca decisão.
 - **Nenhum valor visual hardcoded:** só design tokens ([ADR-006](adr/006-design-tokens-whitelabel.md)).
 - **Contrato:** types de API sempre gerados do contrato, nunca à mão (ADR-001 do produto); status por nome estável, acesso a dados só por composable ([ADR-004](adr/004-consumo-do-contrato-status-por-nome.md)).
