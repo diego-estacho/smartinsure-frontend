@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { mdiAccountPlusOutline } from '~/lib/icons'
+import { required, email as emailRule } from '~/lib/rules'
 import { userStatusLabels } from '~/lib/status/users'
 
 // RN-001: o front valida forma (obrigatório, formato); unicidade, identidade e
@@ -11,10 +12,6 @@ const email = ref('')
 const enviando = ref(false)
 const erro = ref<string | null>(null)
 const sucesso = ref<string | null>(null)
-
-const obrigatorio = (valor: string) => !!valor.trim() || 'Campo obrigatório.'
-const emailValido = (valor: string) =>
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor) || 'E-mail inválido.'
 
 async function enviar() {
   erro.value = null
@@ -38,50 +35,49 @@ async function enviar() {
 </script>
 
 <template>
-  <v-container class="container-narrow">
+  <VContainer class="container-narrow">
     <h1 class="text-h5 mb-4">
       Novo usuário
     </h1>
 
-    <v-form @submit.prevent="enviar">
-      <v-text-field
+    <SiForm @submit.prevent="enviar">
+      <SiTextField
         v-model="nome"
         label="Nome"
-        :rules="[obrigatorio]"
+        :rules="[required()]"
         autofocus
       />
 
-      <v-text-field
+      <SiTextField
         v-model="email"
         label="E-mail"
         type="email"
-        :rules="[obrigatorio, emailValido]"
+        :rules="[required(), emailRule()]"
       />
 
-      <v-alert
+      <SiAlert
         v-if="erro"
         type="error"
         class="mb-4"
         :text="erro"
       />
 
-      <v-alert
+      <SiAlert
         v-if="sucesso"
         type="success"
         class="mb-4"
         :text="sucesso"
       />
 
-      <v-btn
+      <SiButton
         type="submit"
-        color="primary"
         :loading="enviando"
         :prepend-icon="mdiAccountPlusOutline"
       >
         Criar usuário
-      </v-btn>
-    </v-form>
-  </v-container>
+      </SiButton>
+    </SiForm>
+  </VContainer>
 </template>
 
 <style scoped>
