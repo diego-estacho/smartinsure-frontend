@@ -1,15 +1,10 @@
 <script setup lang="ts">
 import { mdiAccountPlusOutline } from '~/lib/icons'
+import { userStatusLabels } from '~/lib/status/users'
 
 // RN-001: o front valida forma (obrigatório, formato); unicidade, identidade e
 // situação são decisão do servidor (SECURITY do produto).
 const { createUser } = useUsers()
-
-// Status por nome estável do contrato → label pt-BR (ADR-004): mapa único do domínio.
-const statusLabels: Record<string, string> = {
-  Pending: 'Pendente',
-  Active: 'Ativo',
-}
 
 const nome = ref('')
 const email = ref('')
@@ -28,7 +23,7 @@ async function enviar() {
 
   try {
     const usuario = await createUser({ name: nome.value, email: email.value })
-    const situacao = statusLabels[usuario.status ?? ''] ?? usuario.status
+    const situacao = userStatusLabels[usuario.status ?? ''] ?? usuario.status
     sucesso.value = `Usuário ${usuario.name} criado. Situação: ${situacao}.`
     nome.value = ''
     email.value = ''
@@ -43,7 +38,7 @@ async function enviar() {
 </script>
 
 <template>
-  <v-container max-width="640">
+  <v-container class="container-narrow">
     <h1 class="text-h5 mb-4">
       Novo usuário
     </h1>
@@ -88,3 +83,9 @@ async function enviar() {
     </v-form>
   </v-container>
 </template>
+
+<style scoped>
+.container-narrow {
+  max-width: var(--si-container-narrow);
+}
+</style>
