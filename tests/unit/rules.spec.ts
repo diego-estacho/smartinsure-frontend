@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { required, email, minLength, maxLength, cpfCnpjFormat } from '../../app/lib/rules'
+import { required, email, minLength, maxLength, cpfCnpjFormat, cpf, cnpj, cpfCnpj } from '../../app/lib/rules'
 
 // ADR-013 §6 — regras de validação (mensagens em pt-BR). true = válido; string = erro.
 describe('regras de validação (ADR-013 §6)', () => {
@@ -24,11 +24,21 @@ describe('regras de validação (ADR-013 §6)', () => {
     expect(maxLength(2)('ab')).toBe(true)
   })
 
-  it('cpfCnpjFormat: aceita CPF (11) e CNPJ alfanumérico (14); conta alfanuméricos, não só dígitos', () => {
-    expect(cpfCnpjFormat()('123.456.789-09')).toBe(true) // CPF
-    expect(cpfCnpjFormat()('12.ABC.345/01DE-35')).toBe(true) // CNPJ alfanumérico 2026
-    expect(cpfCnpjFormat()('11.222.333/0001-81')).toBe(true) // CNPJ numérico
+  it('cpfCnpjFormat: valida só o formato (comprimento 11/14)', () => {
+    expect(cpfCnpjFormat()('123.456.789-09')).toBe(true)
+    expect(cpfCnpjFormat()('12.ABC.345/01DE-35')).toBe(true)
     expect(cpfCnpjFormat()('123')).toBe('Documento inválido')
-    expect(cpfCnpjFormat()('')).toBe(true) // vazio fica com o required
+    expect(cpfCnpjFormat()('')).toBe(true)
+  })
+
+  it('cpf/cnpj/cpfCnpj: validam dígito verificador (rejeitam 000... e DV errado)', () => {
+    expect(cpf()('111.444.777-35')).toBe(true)
+    expect(cpf()('000.000.000-00')).toBe('CPF inválido')
+    expect(cnpj()('11.222.333/0001-81')).toBe(true)
+    expect(cnpj()('12.ABC.345/01DE-35')).toBe(true) // alfanumérico 2026
+    expect(cnpj()('11.222.333/0001-80')).toBe('CNPJ inválido')
+    expect(cpfCnpj()('111.444.777-35')).toBe(true)
+    expect(cpfCnpj()('000.000.000-00')).toBe('CPF/CNPJ inválido')
+    expect(cpfCnpj()('')).toBe(true) // vazio fica com o required
   })
 })

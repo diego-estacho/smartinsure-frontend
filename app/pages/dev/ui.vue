@@ -5,7 +5,7 @@
  * de documentação/onboarding. Componente novo entra aqui.
  */
 import { mdiShieldCheckOutline, mdiMenu, mdiDotsVertical, mdiAccount } from '~/lib/icons'
-import { required, email, cpfCnpjFormat } from '~/lib/rules'
+import { required, email, cpfCnpj } from '~/lib/rules'
 
 useHead({ title: 'SmartInsure · Vitrine UI' })
 
@@ -29,7 +29,7 @@ const formValido = ref<boolean | null>(null)
 const fEmail = ref('')
 const fDoc = ref('')
 const fValor = ref<number | null>(null)
-const fData = ref<Date | null>(null)
+const fData = ref<string | null>(null)
 const enviado = ref('')
 
 async function enviarForm() {
@@ -138,13 +138,14 @@ const items = [
                 <SiTextField v-model="fEmail" label="E-mail" :rules="[required(), email()]" />
               </VCol>
               <VCol cols="12" md="6">
-                <SiDocField v-model="fDoc" label="CPF/CNPJ" :rules="[required(), cpfCnpjFormat()]" />
+                <SiDocField v-model="fDoc" label="CPF/CNPJ" :rules="[required(), cpfCnpj()]" />
               </VCol>
               <VCol cols="12" md="6">
                 <SiCurrencyField v-model="fValor" label="Prêmio (BRL)" :rules="[required('Informe o valor')]" />
               </VCol>
               <VCol cols="12" md="6">
                 <SiDateField v-model="fData" label="Vigência" :rules="[required('Informe a data')]" />
+                <p class="text-caption text-medium-emphasis mt-n2">valor (backend): {{ fData ?? '—' }}</p>
               </VCol>
             </VRow>
             <div class="d-flex align-center mt-2" style="gap: var(--si-space-3)">

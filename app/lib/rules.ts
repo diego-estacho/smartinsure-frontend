@@ -3,6 +3,8 @@
  * Cada regra é `(v) => true | string`; a string é a mensagem de erro em pt-BR (UI).
  * Funções em inglês (utilitário); mensagens em pt-BR.
  */
+import { isValidCpf, isValidCnpj, isValidCpfCnpj } from '~/lib/documents'
+
 export type Rule = (value: unknown) => true | string
 
 const isEmpty = (v: unknown): boolean =>
@@ -21,9 +23,9 @@ export const maxLength = (max: number, message?: string): Rule =>
   v => (isEmpty(v) || String(v).length <= max ? true : message ?? `Máximo de ${max} caracteres`)
 
 /**
- * Comprimento do documento: 11 = CPF, 14 = CNPJ. Checagem de formato, não de dígito
- * verificador. Remove só a pontuação da máscara (`. - /`) e conta os alfanuméricos —
- * o CNPJ passou a ser alfanumérico em 2026, então NÃO dá pra filtrar por `\d`.
+ * Comprimento do documento: 11 = CPF, 14 = CNPJ. Checagem de FORMATO apenas (não valida
+ * dígito verificador). Prefira `cpf`/`cnpj`/`cpfCnpj` para rejeitar documentos inválidos
+ * como `000.000.000-00`.
  */
 export const cpfCnpjFormat = (message = 'Documento inválido'): Rule =>
   (v) => {
@@ -31,3 +33,15 @@ export const cpfCnpjFormat = (message = 'Documento inválido'): Rule =>
     const clean = String(v).replace(/[.\-/\s]/g, '')
     return clean.length === 11 || clean.length === 14 ? true : message
   }
+
+/** CPF válido por dígito verificador (rejeita 000.000.000-00 etc.). */
+export const cpf = (message = 'CPF inválido'): Rule =>
+  v => (isEmpty(v) || isValidCpf(String(v)) ? true : message)
+
+/** CNPJ válido por dígito verificador — suporta alfanumérico (2026). */
+export const cnpj = (message = 'CNPJ inválido'): Rule =>
+  v => (isEmpty(v) || isValidCnpj(String(v)) ? true : message)
+
+/** CPF ou CNPJ válido por dígito verificador (dispara pelo comprimento). */
+export const cpfCnpj = (message = 'CPF/CNPJ inválido'): Rule =>
+  v => (isEmpty(v) || isValidCpfCnpj(String(v)) ? true : message)

@@ -1,3 +1,4 @@
+import { pt } from 'vuetify/locale'
 import { lightTheme } from './app/assets/styles/tokens/tokens'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
@@ -62,10 +63,13 @@ export default defineNuxtConfig({
         themes: { light: lightTheme },
       },
       icons: { defaultSet: 'mdi-svg' },
+      // UI em pt-BR (ADR-012) com as mensagens nativas do Vuetify. O locale também rege
+      // o parse de data digitada no VDateInput.
+      locale: { locale: 'pt', fallback: 'en', messages: { pt } },
       // VDateInput ainda é labs (ADR-013 §6, form native-first) + composable de data com
-      // o adaptador padrão do Vuetify (sem dependência externa).
+      // o adaptador padrão do Vuetify; locale pt-BR = dd/MM/yyyy.
       labComponents: ['VDateInput'],
-      date: {},
+      date: { locale: { pt: 'pt-BR' } },
     },
   },
 })
