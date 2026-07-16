@@ -59,6 +59,11 @@ export const baseColors = {
   'on-error': '#FFFFFF',
   'error-darken-1': '#DC2626',
 
+  // Superfície ESCURA de marca (carvão/charcoal) — fundo do menu lateral e afins. Parte da
+  // identidade SmartInsure (design system: --si-carvao). Whitelabel pode trocar o valor.
+  charcoal: '#0F172A',
+  'on-charcoal': '#FFFFFF',
+
   'on-background': '#0F172A', // carvão
   'on-surface': '#0F172A', // carvão
 } as const
