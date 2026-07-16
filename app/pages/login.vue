@@ -12,31 +12,31 @@ interface ProblemDetails {
 
 const form = ref<{ validate: () => Promise<{ valid: boolean }> } | null>(null)
 const email = ref('')
-const senha = ref('')
-const senhaVisivel = ref(false)
-const enviando = ref(false)
-const erro = ref<string | null>(null)
+const password = ref('')
+const passwordVisible = ref(false)
+const submitting = ref(false)
+const error = ref<string | null>(null)
 
-async function entrar() {
-  erro.value = null
+async function submit() {
+  error.value = null
 
   const validation = await form.value?.validate()
   if (!validation?.valid) {
     return
   }
 
-  enviando.value = true
+  submitting.value = true
 
   try {
-    await login({ email: email.value, password: senha.value })
+    await login({ email: email.value, password: password.value })
     await navigateTo('/')
   }
-  catch (error) {
-    const problem = (error as { data?: { data?: ProblemDetails } }).data?.data
-    erro.value = problem?.detail ?? 'Não foi possível entrar. Tente novamente.'
+  catch (err) {
+    const problem = (err as { data?: { data?: ProblemDetails } }).data?.data
+    error.value = problem?.detail ?? 'Não foi possível entrar. Tente novamente.'
   }
   finally {
-    enviando.value = false
+    submitting.value = false
   }
 }
 </script>
@@ -64,7 +64,7 @@ async function entrar() {
 
       <SiForm
         ref="form"
-        @submit.prevent="entrar"
+        @submit.prevent="submit"
       >
         <SiTextField
           v-model="email"
@@ -75,25 +75,25 @@ async function entrar() {
         />
 
         <SiTextField
-          v-model="senha"
+          v-model="password"
           label="Senha"
-          :type="senhaVisivel ? 'text' : 'password'"
+          :type="passwordVisible ? 'text' : 'password'"
           :rules="[required()]"
-          :append-inner-icon="senhaVisivel ? mdiEyeOffOutline : mdiEyeOutline"
-          @click:append-inner="senhaVisivel = !senhaVisivel"
+          :append-inner-icon="passwordVisible ? mdiEyeOffOutline : mdiEyeOutline"
+          @click:append-inner="passwordVisible = !passwordVisible"
         />
 
         <SiAlert
-          v-if="erro"
+          v-if="error"
           type="error"
           class="mb-4"
-          :text="erro"
+          :text="error"
         />
 
         <SiButton
           type="submit"
           block
-          :loading="enviando"
+          :loading="submitting"
           :prepend-icon="mdiLoginVariant"
         >
           Entrar
