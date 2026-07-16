@@ -17,7 +17,7 @@ Conflito entre chat, memória e arquivos: **prevalecem os arquivos versionados**
 
 ## Regras de trabalho
 
-- Vocabulário: somente termos pt-BR do glossário na UI e nas rotas de página; nomes de componente/tipo/composable usam o nome técnico em inglês mapeado no glossário (ADR-058 do produto).
+- Idioma: **identificador de código é sempre inglês** — variável, função, método, arquivo, componente, tipo, composable, classe CSS (`submitting`/`signIn`/`drawerOpen`, nunca `enviando`/`entrar`/`drawerAberto`). Só **rota de página** e **texto de UI** ficam em pt-BR. Termo de domínio no código usa o nome técnico inglês mapeado 1:1 no glossário (ADR-058 do produto); não-domínio usa inglês idiomático. O `check-harness.py` cobra.
 - Types da API: SEMPRE gerados do contrato OpenAPI do backend — proibido escrever ou editar type de API à mão (o CI falha em drift).
 - Status: renderizado pelo **nome estável** vindo do contrato; label/cor num único mapa por domínio. Nunca por posição ordinal.
 - Nenhuma regra de negócio no cliente: dinheiro, transição de status e permissão são decididos no servidor; o front valida forma, não decisão.
@@ -31,12 +31,19 @@ Conflito entre chat, memória e arquivos: **prevalecem os arquivos versionados**
 
 ## Fluxo por tarefa
 
+> **Gate de entrada (bloqueante — ADR-003, ADR-016, ADR-002).** Nenhuma alteração de código,
+> config ou doc começa antes de: (a) ler este arquivo inteiro; (b) fazer a triagem abaixo (define
+> se é só-front, só-back ou cross-repo); (c) criar a(s) **worktree(s)** da tarefa e trabalhar nelas
+> — nunca na checkout principal (ADR-002); (d) decidir e **registrar** se a tarefa leva exec-plan.
+> Vale para qualquer IA ou dev — o `check-harness.py` cobra a decisão de exec-plan; o `doctor.py`
+> avisa se você não está numa worktree.
+
 **Passo 0 — triagem.** A tarefa toca dinheiro, transição de status, permissão, cálculo ou regra de negócio — ou precisa de contrato novo/alterado?
 - **Não → front-only:** fica neste repo; siga direto para a implementação, mantendo o vocabulário do glossário.
 - **Sim → cross-repo:** a RN/contrato entra no **backend primeiro** (refinada com a PO e catalogada antes do código — ADR-003 do produto); só então o front consome. PRs linkados pelo mesmo `AB#NNNNN` (ADR-001 do produto).
 
 1. Ler este arquivo + somente os docs relevantes ao tema; confirmar que nenhuma dependência está aberta em open-decisions.md (camada de produto).
-2. Trabalho de mais de ~1 dia ganha um exec-plan em `docs/exec-plans/` (front-only) — com a seção Evidências preenchida ao concluir.
+2. **Decisão de exec-plan (obrigatória; o plano, não).** Trabalho não-trivial (≈+1 dia ou decisão a documentar) ganha exec-plan em `docs/exec-plans/active/` ANTES de implementar (Evidências preenchida ao concluir). Trivial (ex.: trocar cor de botão) dispensa — mas a dispensa é **declarada** no commit: `Exec-plan: dispensado — <motivo>`. Registrar a decisão nunca é opcional (ADR-016).
 3. ADR de UI (em docs/adr/) quando houver decisão difícil de reverter.
 4. Implementar o menor incremento vertical.
 5. Rodar lint, typecheck e testes; E2E da jornada afetada.
@@ -44,7 +51,7 @@ Conflito entre chat, memória e arquivos: **prevalecem os arquivos versionados**
 
 ## Convenções
 
-- Branch `ab-NNNNN-slug-curto` (sem `#`); `AB#NNNNN` no commit/PR; worktrees nativas em `C:\wt\` (ADR-002 do produto).
+- Toda tarefa nasce numa worktree do(s) repo(s) da triagem (cross-repo = worktrees irmãs sob a mesma pasta da atividade); branch `ab-NNNNN-slug-curto` (sem `#`), `AB#NNNNN` no commit/PR; worktrees nativas em `C:\wt\<id>\<repo>` (raiz curta: MAX_PATH, ADR-002 do produto). **Provisório até o AB#:** o `<slug>` da tarefa faz o papel de `ab-NNNNN` (branch e pasta-pai das irmãs). Após o merge, `python scripts/worktree-gc.py` remove a worktree.
 - Workspace lado a lado: `smartinsure-backend` e `smartinsure-frontend` na mesma pasta — `../smartinsure-backend/docs/` precisa resolver (o lint valida).
 - Mudança cross-repo: backend primeiro (contrato publicado), front consome — PRs linkados pelo mesmo `AB#NNNNN` (ADR-001 do produto).
 - Ferramenta de IA e framework de desenvolvimento são livres: o harness valida o resultado, não a ferramenta (ADR-003 do produto). `CLAUDE.md` e equivalentes são apenas ponteiros para este arquivo.
@@ -57,4 +64,5 @@ Preenchidos quando o scaffold do app existir — até lá, não assumir scripts 
 ```
 python scripts/doctor.py          # valida o ambiente e o layout de workspace
 python scripts/check-harness.py   # lint do próprio harness
+python scripts/worktree-gc.py     # remove worktrees de branches já mergeadas (ADR-002)
 ```
