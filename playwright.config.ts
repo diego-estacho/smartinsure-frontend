@@ -12,5 +12,7 @@ export default defineConfig({
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    // Dev-auth (ADR-009): sessão sintética só no E2E — nunca em produção.
+    env: { NUXT_DEV_AUTH_ENABLED: 'true' },
   },
 })

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { useUsers } from '../../app/composables/useUsers'
 
 const fetchMock = vi.fn()
-vi.stubGlobal('$fetch', fetchMock)
+const api = fetchMock as unknown as typeof $fetch
 
 describe('RN-001 criação de Usuário — composable useUsers', () => {
   it('envia a criação via BFF, nunca direto ao backend', async () => {
@@ -13,7 +13,7 @@ describe('RN-001 criação de Usuário — composable useUsers', () => {
       status: 'Pending',
     })
 
-    const { createUser } = useUsers()
+    const { createUser } = useUsers(api)
     const user = await createUser({ name: 'Maria Silva', email: 'maria@corretora.com.br' })
 
     expect(fetchMock).toHaveBeenCalledWith('/api/users', {
@@ -26,7 +26,7 @@ describe('RN-001 criação de Usuário — composable useUsers', () => {
   it('propaga o erro do servidor sem decidir regra no cliente', async () => {
     fetchMock.mockRejectedValueOnce(new Error('409'))
 
-    const { createUser } = useUsers()
+    const { createUser } = useUsers(api)
 
     await expect(
       createUser({ name: 'Maria Silva', email: 'maria@corretora.com.br' }),
