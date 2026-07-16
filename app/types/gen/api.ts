@@ -4,6 +4,45 @@
  */
 
 export interface paths {
+    "/api/v1/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AuthenticateUserRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AuthenticateUserResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users": {
         parameters: {
             query?: never;
@@ -86,6 +125,15 @@ export interface components {
             /** Format: uuid */
             id: string;
             status: string;
+        };
+        AuthenticateUserRequest: {
+            email: string;
+            password: string;
+        };
+        AuthenticateUserResponse: {
+            accessToken: string;
+            /** Format: date-time */
+            expiresAtUtc: string;
         };
         CreateUserRequest: {
             name: string;
