@@ -9,48 +9,48 @@ import { required, email, cpfCnpj } from '~/lib/rules'
 
 useHead({ title: 'SmartInsure · Vitrine UI' })
 
-const texto = ref('')
-const area = ref('')
-const selecionado = ref<string | null>(null)
-const marcado = ref(true)
-const ligado = ref(true)
-const opcao = ref('a')
-const aba = ref('cotacoes')
-const painel = ref<number>()
-const dialogo = ref(false)
+const text = ref('')
+const notes = ref('')
+const selected = ref<string | null>(null)
+const checked = ref(true)
+const switchOn = ref(true)
+const radioOption = ref('a')
+const tab = ref('cotacoes')
+const panel = ref<number>()
+const dialog = ref(false)
 const menu = ref(false)
-const progresso = ref(65)
+const progress = ref(65)
 
-const tabelaPagina = ref(1)
-const tabelaPorPagina = ref(10)
+const tablePage = ref(1)
+const tablePerPage = ref(10)
 
-const opcoes = ['Cliente', 'Corretora', 'Seguradora']
+const options = ['Cliente', 'Corretora', 'Seguradora']
 
 // Formulário (onda 2) — composição dos campos Si + validação nativa.
 const formRef = ref()
-const formValido = ref<boolean | null>(null)
+const formValid = ref<boolean | null>(null)
 const fEmail = ref('')
 const fDoc = ref('')
-const fValor = ref<number | null>(null)
-const fData = ref<string | null>(null)
-const enviado = ref('')
+const fAmount = ref<number | null>(null)
+const fDate = ref<string | null>(null)
+const submitted = ref('')
 
-async function enviarForm() {
+async function submitForm() {
   const { valid } = await formRef.value.validate()
-  enviado.value = valid
-    ? JSON.stringify({ fEmail: fEmail.value, fDoc: fDoc.value, fValor: fValor.value, fData: fData.value })
+  submitted.value = valid
+    ? JSON.stringify({ fEmail: fEmail.value, fDoc: fDoc.value, fAmount: fAmount.value, fDate: fDate.value })
     : 'inválido — corrija os campos'
 }
 
 const headers = [
-  { title: 'Corretora', key: 'nome' },
-  { title: 'Prêmio', key: 'premio' },
+  { title: 'Corretora', key: 'name' },
+  { title: 'Prêmio', key: 'premium' },
   { title: 'Status', key: 'status' },
 ]
 const items = [
-  { nome: 'Alfa Seguros', premio: 'R$ 1.240,00', status: 'Cotada' },
-  { nome: 'Beta Corretora', premio: 'R$ 980,50', status: 'Proposta' },
-  { nome: 'Gama Hub', premio: 'R$ 2.115,90', status: 'Emitida' },
+  { name: 'Alfa Seguros', premium: 'R$ 1.240,00', status: 'Cotada' },
+  { name: 'Beta Corretora', premium: 'R$ 980,50', status: 'Proposta' },
+  { name: 'Gama Hub', premium: 'R$ 2.115,90', status: 'Emitida' },
 ]
 </script>
 
@@ -104,29 +104,29 @@ const items = [
         <VCardText>
           <VRow>
             <VCol cols="12" md="6">
-              <SiTextField v-model="texto" label="Nome" placeholder="Digite…" clearable />
+              <SiTextField v-model="text" label="Nome" placeholder="Digite…" clearable />
             </VCol>
             <VCol cols="12" md="6">
-              <SiSelect v-model="selecionado" :items="opcoes" label="Tipo" clearable />
+              <SiSelect v-model="selected" :items="options" label="Tipo" clearable />
             </VCol>
             <VCol cols="12">
-              <SiTextarea v-model="area" label="Observações" auto-grow />
+              <SiTextarea v-model="notes" label="Observações" auto-grow />
             </VCol>
             <VCol cols="12" md="4">
-              <SiCheckbox v-model="marcado" label="Aceito os termos" />
+              <SiCheckbox v-model="checked" label="Aceito os termos" />
             </VCol>
             <VCol cols="12" md="4">
-              <SiSwitch v-model="ligado" label="Notificações" />
+              <SiSwitch v-model="switchOn" label="Notificações" />
             </VCol>
             <VCol cols="12" md="4">
-              <SiRadioGroup v-model="opcao" label="Plano" inline>
+              <SiRadioGroup v-model="radioOption" label="Plano" inline>
                 <SiRadio label="A" value="a" />
                 <SiRadio label="B" value="b" />
               </SiRadioGroup>
             </VCol>
           </VRow>
           <p class="text-caption text-medium-emphasis mt-2">
-            Modelos: {{ { texto, selecionado, marcado, ligado, opcao } }}
+            Modelos: {{ { text, selected, checked, switchOn, radioOption } }}
           </p>
         </VCardText>
       </SiCard>
@@ -135,7 +135,7 @@ const items = [
       <SiCard class="mb-6">
         <VCardTitle>Formulário — família de form (Onda 2)</VCardTitle>
         <VCardText>
-          <SiForm ref="formRef" v-model="formValido">
+          <SiForm ref="formRef" v-model="formValid">
             <VRow>
               <VCol cols="12" md="6">
                 <SiTextField v-model="fEmail" label="E-mail" :rules="[required(), email()]" />
@@ -144,16 +144,16 @@ const items = [
                 <SiDocField v-model="fDoc" label="CPF/CNPJ" :rules="[required(), cpfCnpj()]" />
               </VCol>
               <VCol cols="12" md="6">
-                <SiCurrencyField v-model="fValor" label="Prêmio (BRL)" :rules="[required('Informe o valor')]" />
+                <SiCurrencyField v-model="fAmount" label="Prêmio (BRL)" :rules="[required('Informe o valor')]" />
               </VCol>
               <VCol cols="12" md="6">
-                <SiDateField v-model="fData" label="Vigência" :rules="[required('Informe a data')]" />
-                <p class="text-caption text-medium-emphasis mt-n2">valor (backend): {{ fData ?? '—' }}</p>
+                <SiDateField v-model="fDate" label="Vigência" :rules="[required('Informe a data')]" />
+                <p class="text-caption text-medium-emphasis mt-n2">valor (backend): {{ fDate ?? '—' }}</p>
               </VCol>
             </VRow>
             <div class="d-flex align-center mt-2" style="gap: var(--si-space-3)">
-              <SiButton @click="enviarForm">Validar e enviar</SiButton>
-              <span class="text-caption text-medium-emphasis">Válido: {{ formValido }} · Enviado: {{ enviado }}</span>
+              <SiButton @click="submitForm">Validar e enviar</SiButton>
+              <span class="text-caption text-medium-emphasis">Válido: {{ formValid }} · Enviado: {{ submitted }}</span>
             </div>
           </SiForm>
         </VCardText>
@@ -161,14 +161,14 @@ const items = [
 
       <!-- Abas + Expansão -->
       <SiCard class="mb-6">
-        <SiTabs v-model="aba">
+        <SiTabs v-model="tab">
           <SiTab value="cotacoes" text="Cotações" />
           <SiTab value="propostas" text="Propostas" />
         </SiTabs>
         <VCardText>
-          <SiExpansionPanels v-model="painel">
+          <SiExpansionPanels v-model="panel">
             <SiExpansionPanel title="Detalhes da oferta">
-              <template #text>Conteúdo do painel — aba ativa: {{ aba }}.</template>
+              <template #text>Conteúdo do painel — aba ativa: {{ tab }}.</template>
             </SiExpansionPanel>
             <SiExpansionPanel title="Condições">
               <template #text>Prazos e coberturas.</template>
@@ -182,8 +182,8 @@ const items = [
         <VCardTitle>SiDataTable</VCardTitle>
         <SiDataTable :headers="headers" :items="items" hide-default-footer />
         <SiPagination
-          v-model:page="tabelaPagina"
-          v-model:items-per-page="tabelaPorPagina"
+          v-model:page="tablePage"
+          v-model:items-per-page="tablePerPage"
           :total="2313"
         />
       </SiCard>
@@ -192,15 +192,15 @@ const items = [
       <SiCard class="mb-6">
         <VCardTitle>Overlays — SiDialog · SiMenu · SiTooltip</VCardTitle>
         <VCardText class="d-flex flex-wrap align-center" style="gap: var(--si-space-3)">
-          <SiButton @click="dialogo = true">Abrir diálogo</SiButton>
-          <SiDialog v-model="dialogo">
+          <SiButton @click="dialog = true">Abrir diálogo</SiButton>
+          <SiDialog v-model="dialog">
             <SiCard>
               <VCardTitle>Confirmar</VCardTitle>
               <VCardText>Deseja aceitar esta cotação?</VCardText>
               <VCardActions>
                 <VSpacer />
-                <SiButton variant="text" @click="dialogo = false">Cancelar</SiButton>
-                <SiButton @click="dialogo = false">Confirmar</SiButton>
+                <SiButton variant="text" @click="dialog = false">Cancelar</SiButton>
+                <SiButton @click="dialog = false">Confirmar</SiButton>
               </VCardActions>
             </SiCard>
           </SiDialog>
@@ -232,10 +232,10 @@ const items = [
         <VCardText>
           <div class="d-flex align-center mb-4" style="gap: var(--si-space-4)">
             <SiProgressCircular indeterminate />
-            <SiProgressCircular :model-value="progresso" :size="48">{{ progresso }}</SiProgressCircular>
+            <SiProgressCircular :model-value="progress" :size="48">{{ progress }}</SiProgressCircular>
           </div>
           <SiDivider class="my-4" />
-          <SiProgressLinear :model-value="progresso" class="mb-2" />
+          <SiProgressLinear :model-value="progress" class="mb-2" />
           <SiProgressLinear indeterminate color="secondary" />
         </VCardText>
       </SiCard>

@@ -29,7 +29,7 @@ Um domínio novo = o mesmo desenho.
 
 ## Regras não-negociáveis
 
-- **Vocabulário (ADR-058 do produto):** UI e rotas de página só com termos pt-BR do glossário (`/ofertas`, label "Oferta"); nomes de componente/tipo/composable usam o nome técnico em inglês mapeado 1:1 no glossário (`OfferWizard`, `useUsers`) — tradução ad hoc é proibida.
+- **Idioma — código em inglês, UI/rota em pt-BR (ADR-058 do produto):** todo identificador de código é inglês — variável, função, método, arquivo, componente, tipo, composable, classe CSS (`submitting`/`signIn`/`drawerOpen`, nunca `enviando`/`entrar`/`drawerAberto`). Só **rota de página** (`/usuarios/novo`, `/cotacoes/lista`) e **texto de UI** (label "Oferta") ficam em pt-BR. Termo de domínio no código usa o técnico inglês mapeado 1:1 no glossário (`OfferWizard`, `useUsers`); tradução ad hoc é proibida. O `check-harness.py` cobra os identificadores declarados.
 - **Nenhuma regra de negócio no cliente:** cálculo, transição de status, permissão e validação de dinheiro decididos no servidor (SECURITY do produto); o front valida forma (obrigatório, formato, máscara), nunca decisão.
 - **Nenhum valor visual hardcoded:** só design tokens ([ADR-006](adr/006-design-tokens-whitelabel.md)).
 - **Contrato:** types de API sempre gerados do contrato, nunca à mão (ADR-001 do produto); status por nome estável, acesso a dados só por composable ([ADR-004](adr/004-consumo-do-contrato-status-por-nome.md)).

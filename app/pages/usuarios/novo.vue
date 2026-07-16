@@ -7,29 +7,29 @@ import { userStatusLabels } from '~/lib/status/users'
 // situação são decisão do servidor (SECURITY do produto).
 const { createUser } = useUsers()
 
-const nome = ref('')
+const name = ref('')
 const email = ref('')
-const enviando = ref(false)
-const erro = ref<string | null>(null)
-const sucesso = ref<string | null>(null)
+const submitting = ref(false)
+const error = ref<string | null>(null)
+const success = ref<string | null>(null)
 
-async function enviar() {
-  erro.value = null
-  sucesso.value = null
-  enviando.value = true
+async function submit() {
+  error.value = null
+  success.value = null
+  submitting.value = true
 
   try {
-    const usuario = await createUser({ name: nome.value, email: email.value })
-    const situacao = userStatusLabels[usuario.status ?? ''] ?? usuario.status
-    sucesso.value = `Usuário ${usuario.name} criado. Situação: ${situacao}.`
-    nome.value = ''
+    const user = await createUser({ name: name.value, email: email.value })
+    const statusLabel = userStatusLabels[user.status ?? ''] ?? user.status
+    success.value = `Usuário ${user.name} criado. Situação: ${statusLabel}.`
+    name.value = ''
     email.value = ''
   }
   catch {
-    erro.value = 'Não foi possível criar o usuário. Verifique os dados e tente novamente.'
+    error.value = 'Não foi possível criar o usuário. Verifique os dados e tente novamente.'
   }
   finally {
-    enviando.value = false
+    submitting.value = false
   }
 }
 </script>
@@ -40,9 +40,9 @@ async function enviar() {
       Novo usuário
     </h1>
 
-    <SiForm @submit.prevent="enviar">
+    <SiForm @submit.prevent="submit">
       <SiTextField
-        v-model="nome"
+        v-model="name"
         label="Nome"
         :rules="[required()]"
         autofocus
@@ -56,22 +56,22 @@ async function enviar() {
       />
 
       <SiAlert
-        v-if="erro"
+        v-if="error"
         type="error"
         class="mb-4"
-        :text="erro"
+        :text="error"
       />
 
       <SiAlert
-        v-if="sucesso"
+        v-if="success"
         type="success"
         class="mb-4"
-        :text="sucesso"
+        :text="success"
       />
 
       <SiButton
         type="submit"
-        :loading="enviando"
+        :loading="submitting"
         :prepend-icon="mdiAccountPlusOutline"
       >
         Criar usuário

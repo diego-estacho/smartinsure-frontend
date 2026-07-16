@@ -12,6 +12,9 @@ Checagens:
 5. Cada ADR de UI em docs/adr/ tem título '# ADR-NNN' e seção '## Status'.
 6. Exec-plan ativo tem seção 'Evidências'; exec-plan concluído a tem preenchida.
 7. Nenhuma pasta de framework de desenvolvimento está versionada (ADR-004 do produto).
+8. CSS global de componente escopado sob `.si-*` (ADR-015).
+9. Código de produto (app/ ou server/) alterado tem exec-plan ativo OU dispensa em commit (ADR-016).
+10. Identificador de código é inglês; só rota/UI em pt-BR (ADR-058; rede conservadora).
 
 IDs de produto (glossário/RN/OPEN e ADRs do produto) são validados no backend, que
 os define. Aqui só se validam os ADRs de UI locais (docs/adr/).
@@ -153,6 +156,72 @@ if styles_dir.exists():
                 if sel and ".si-" not in sel:
                     errors.append(f"{f.relative_to(ROOT)}: seletor CSS fora do namespace "
                                   f"`.si-*` (ADR-015) -> {sel}")
+
+# 9. Gate de exec-plan (ADR-016): código de produto (app/ ou server/) alterado exige uma
+#    decisão de triagem registrada — OU um exec-plan ativo, OU uma dispensa declarada em
+#    commit (trailer 'Exec-plan:'). Não força documentação para o trivial; força a DECISÃO
+#    a existir e ficar auditável. Agnóstico de ferramenta (ADR-003). Base indeterminada
+#    (sem git / sem branch principal) vira aviso — não trava dev local nem CI de repo só.
+PRODUTO_DIRS = ("app/", "server/")
+EXEC_TRAILER_RE = re.compile(r"^Exec-plan:\s*\S", re.M | re.I)
+try:
+    base = None
+    for ref in ("origin/main", "origin/master", "main", "master"):
+        r = subprocess.run(["git", "merge-base", "HEAD", ref], cwd=ROOT,
+                           capture_output=True, text=True)
+        if r.returncode == 0 and r.stdout.strip():
+            base = r.stdout.strip()
+            break
+    if base is None:
+        warnings.append("gate de exec-plan (ADR-016) não verificado — branch base indeterminada")
+    else:
+        changed = subprocess.run(["git", "diff", "--name-only", base, "HEAD"], cwd=ROOT,
+                                 capture_output=True, text=True, check=True).stdout.splitlines()
+        if any(c.startswith(PRODUTO_DIRS) for c in changed):
+            plano_ativo = any((ROOT / "docs" / "exec-plans" / "active").glob("*.md"))
+            msgs = subprocess.run(["git", "log", "--format=%B", f"{base}..HEAD"], cwd=ROOT,
+                                 capture_output=True, text=True, check=True).stdout
+            if not plano_ativo and not EXEC_TRAILER_RE.search(msgs):
+                errors.append("código de produto (app//server/) alterado sem exec-plan ativo "
+                              "nem declaração 'Exec-plan:' em commit — abra o plano em "
+                              "docs/exec-plans/active/ ou dispense com motivo no commit "
+                              "('Exec-plan: dispensado — <motivo>'). Ver AGENTS.md Passo 0 / ADR-016.")
+except (OSError, subprocess.CalledProcessError):
+    warnings.append("git indisponível — gate de exec-plan (ADR-016) pulado")
+
+# 10. Idioma do código (ADR-058 do produto / AGENTS §Idioma): identificador de código é
+#     inglês; só rota de página e texto de UI ficam em pt-BR. Rede conservadora — checa os
+#     nomes DECLARADOS (const/let/var/function) no <script> de .vue e em .ts contra uma lista
+#     de palavras pt-BR inequívocas, quebrando o identificador em segmentos camelCase. Não
+#     parseia idioma (não é exaustiva); complementa o review. Termo de domínio no código deve
+#     usar o técnico inglês do glossário — por isso cotacao/apolice/oferta também entram aqui.
+PT_WORDS = {
+    "senha", "senhas", "visivel", "invisivel", "enviar", "enviando", "enviado", "entrar",
+    "sair", "erro", "erros", "sucesso", "falha", "aberto", "aberta", "fechado", "fechada",
+    "carregando", "salvar", "salvando", "salvo", "excluir", "buscar", "busca", "lista",
+    "listar", "novo", "nova", "editar", "criar", "criando", "nome", "nomes", "usuario",
+    "usuarios", "senha", "cotacao", "cotacoes", "apolice", "apolices", "oferta", "ofertas",
+    "proposta", "propostas", "tomador", "corretora", "seguradora", "situacao", "vigencia",
+}
+DECL_RE = re.compile(r"\b(?:const|let|var|function)\s+([A-Za-z_$][\w$]*)")
+SCRIPT_RE = re.compile(r"<script\b[^>]*>(.*?)</script>", re.S | re.I)
+CAMEL_RE = re.compile(r"[A-Z]?[a-z]+|[A-Z]+(?![a-z])")
+for raiz in (ROOT / "app", ROOT / "server"):
+    if not raiz.exists():
+        continue
+    for f in sorted(list(raiz.rglob("*.vue")) + list(raiz.rglob("*.ts"))):
+        if "gen" in f.parts:
+            continue
+        conteudo = f.read_text(encoding="utf-8")
+        if f.suffix == ".vue":
+            conteudo = " ".join(SCRIPT_RE.findall(conteudo))
+        for ident in DECL_RE.findall(conteudo):
+            segs = {s.lower() for s in CAMEL_RE.findall(ident)}
+            achados = segs & PT_WORDS
+            if achados:
+                errors.append(f"{f.relative_to(ROOT)}: identificador de código em pt-BR -> "
+                              f"'{ident}' (código é inglês; só rota/UI em pt-BR — ADR-058, "
+                              f"AGENTS §Idioma). Termo(s): {', '.join(sorted(achados))}")
 
 for w in warnings:
     print(f"aviso: {w}")
