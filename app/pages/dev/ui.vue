@@ -21,6 +21,9 @@ const dialogo = ref(false)
 const menu = ref(false)
 const progresso = ref(65)
 
+const tabelaPagina = ref(1)
+const tabelaPorPagina = ref(10)
+
 const opcoes = ['Cliente', 'Corretora', 'Seguradora']
 
 // Formulário (onda 2) — composição dos campos Si + validação nativa.
@@ -177,7 +180,12 @@ const items = [
       <!-- Tabela -->
       <SiCard class="mb-6">
         <VCardTitle>SiDataTable</VCardTitle>
-        <SiDataTable :headers="headers" :items="items" />
+        <SiDataTable :headers="headers" :items="items" hide-default-footer />
+        <SiPagination
+          v-model:page="tabelaPagina"
+          v-model:items-per-page="tabelaPorPagina"
+          :total="2313"
+        />
       </SiCard>
 
       <!-- Overlays -->

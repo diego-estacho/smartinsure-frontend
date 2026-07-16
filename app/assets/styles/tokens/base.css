@@ -42,6 +42,13 @@
   /* Layout */
   --si-container-narrow: 40rem;
 
+  /* Neutros NÃO-whitelabel (escala neutra do DS). Diferente das cores de marca
+   * (tokens.ts → tema): estes são constantes de UI que a corretora NÃO troca —
+   * cinza de texto utilitário e hairline. Ficam aqui por serem invariantes de marca. */
+  --si-cinza: #64748b;        /* texto secundário / header de tabela */
+  --si-cinza-claro: #e2e8f0;  /* hairline, divisórias, bordas de card */
+  --si-cinza-suave: #f1f5f9;  /* faixa de fundo do header de tabela / zebra */
+
   /* Escala tipográfica: tamanho / line-height / letter-spacing */
   --si-fs-display: 56px;
   --si-lh-display: 1.05;

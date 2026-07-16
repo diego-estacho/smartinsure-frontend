@@ -132,6 +132,28 @@ try:
 except (OSError, subprocess.CalledProcessError):
     warnings.append("git indisponível — checagem de pasta de framework (ADR-004) pulada")
 
+# 8. CSS global de componente é escopado sob `.si-*` (ADR-015 — namespacing p/
+#    microfrontend). Toda folha autoral em app/assets/styles (exceto tokens/, que
+#    define :root/base) só pode ter seletores que contenham uma classe `.si-*`;
+#    classes do Vuetify (`.v-*`) entram só como co-classe/descendente, nunca sozinhas.
+CSS_COMMENT_RE = re.compile(r"/\*.*?\*/", re.S)
+CSS_SELECTOR_RE = re.compile(r"([^{}]+)\{")
+styles_dir = ROOT / "app" / "assets" / "styles"
+if styles_dir.exists():
+    for f in sorted(styles_dir.rglob("*.css")):
+        if "tokens" in f.relative_to(styles_dir).parts:
+            continue
+        conteudo = CSS_COMMENT_RE.sub(" ", f.read_text(encoding="utf-8"))
+        for prelude in CSS_SELECTOR_RE.findall(conteudo):
+            prelude = prelude.strip()
+            if not prelude or prelude.startswith("@"):
+                continue
+            for sel in prelude.split(","):
+                sel = sel.strip()
+                if sel and ".si-" not in sel:
+                    errors.append(f"{f.relative_to(ROOT)}: seletor CSS fora do namespace "
+                                  f"`.si-*` (ADR-015) -> {sel}")
+
 for w in warnings:
     print(f"aviso: {w}")
 if errors:

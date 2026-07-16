@@ -23,6 +23,7 @@ withDefaults(defineProps<{
 
 <template>
   <VBtn
+    class="si-button"
     v-bind="$attrs"
     :variant="variant"
     :color="color"

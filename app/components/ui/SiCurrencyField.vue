@@ -49,6 +49,7 @@ watch(numberValue, (v) => {
 <template>
   <VTextField
     :ref="bindCurrencyInput"
+    class="si-field"
     v-bind="$attrs"
     :variant="variant"
     :density="density"

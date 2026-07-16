@@ -33,6 +33,7 @@ const maskOptions = computed(() => ({
   <VTextField
     v-model="model"
     v-maska="maskOptions"
+    class="si-field"
     v-bind="$attrs"
     :variant="variant"
     :density="density"

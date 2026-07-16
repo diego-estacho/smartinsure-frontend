@@ -8,6 +8,7 @@ import SiButton from '~/components/ui/SiButton.vue'
 import SiTextField from '~/components/ui/SiTextField.vue'
 import SiCurrencyField from '~/components/ui/SiCurrencyField.vue'
 import SiForm from '~/components/ui/SiForm.vue'
+import SiPagination from '~/components/ui/SiPagination.vue'
 
 describe('SiButton — curado + passthrough (ADR-013)', () => {
   it('aplica defaults do DS: primary, rounded-md, variante flat', async () => {
@@ -60,5 +61,34 @@ describe('SiForm — validação nativa', () => {
     const exposed = (w.vm.$ as unknown as { exposed: { validate: () => Promise<{ valid: boolean }> } }).exposed
     const result = await exposed.validate()
     expect(result.valid).toBe(false)
+  })
+})
+
+describe('SiPagination — navegação (ref InsurePoint)', () => {
+  it('resumo "Mostrando N de total" usa o último item da página', async () => {
+    const w = await mountSuspended(SiPagination, { props: { page: 1, itemsPerPage: 10, total: 2313 } })
+    expect(w.text()).toContain('Mostrando 10 de 2313 resultados')
+  })
+
+  it('janela com reticências para muitas páginas: 1 … atual±1 … total', async () => {
+    const w = await mountSuspended(SiPagination, { props: { page: 1, itemsPerPage: 10, total: 2313 } })
+    const labels = w.findAll('.si-pagination__page').map(b => b.text())
+    expect(labels[0]).toBe('1')
+    expect(labels.at(-1)).toBe('232') // ceil(2313/10)
+    expect(w.findAll('.si-pagination__ellipsis').length).toBeGreaterThan(0)
+  })
+
+  it('clicar num número emite update:page', async () => {
+    const w = await mountSuspended(SiPagination, { props: { page: 1, itemsPerPage: 10, total: 2313 } })
+    const ultima = w.findAll('.si-pagination__page').at(-1)!
+    await ultima.trigger('click')
+    expect(w.emitted('update:page')?.at(-1)).toEqual([232])
+  })
+
+  it('marca a página ativa', async () => {
+    const w = await mountSuspended(SiPagination, { props: { page: 2, itemsPerPage: 10, total: 2313 } })
+    const ativa = w.find('.si-pagination__page--active')
+    expect(ativa.exists()).toBe(true)
+    expect(ativa.text()).toBe('2')
   })
 })
