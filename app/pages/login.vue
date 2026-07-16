@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiLoginVariant, mdiEyeOutline, mdiEyeOffOutline } from '~/lib/icons'
+import { mdiLoginVariant, mdiEyeOutline, mdiEyeOffOutline, mdiShieldCheckOutline } from '~/lib/icons'
 import { required, email as emailRule } from '~/lib/rules'
 
 // RN-005: o front valida forma; credenciais, situação do Usuário e validade da
@@ -42,52 +42,86 @@ async function entrar() {
 </script>
 
 <template>
-  <VContainer class="container-narrow">
-    <h1 class="text-h5 mb-4">
-      Entrar
-    </h1>
-
-    <SiForm
-      ref="form"
-      @submit.prevent="entrar"
+  <div class="login-screen">
+    <SiCard
+      class="login-card"
+      :elevation="2"
+      rounded="xl"
     >
-      <SiTextField
-        v-model="email"
-        label="E-mail"
-        type="email"
-        :rules="[required(), emailRule()]"
-        autofocus
-      />
+      <div class="login-brand">
+        <SiIcon
+          :icon="mdiShieldCheckOutline"
+          color="primary"
+          size="40"
+        />
+        <h1 class="text-h5 mt-2">
+          SmartInsure
+        </h1>
+        <p class="text-body-2 text-medium-emphasis">
+          Entre com seu e-mail e senha
+        </p>
+      </div>
 
-      <SiTextField
-        v-model="senha"
-        label="Senha"
-        :type="senhaVisivel ? 'text' : 'password'"
-        :rules="[required()]"
-        :append-inner-icon="senhaVisivel ? mdiEyeOffOutline : mdiEyeOutline"
-        @click:append-inner="senhaVisivel = !senhaVisivel"
-      />
-
-      <SiAlert
-        v-if="erro"
-        type="error"
-        class="mb-4"
-        :text="erro"
-      />
-
-      <SiButton
-        type="submit"
-        :loading="enviando"
-        :prepend-icon="mdiLoginVariant"
+      <SiForm
+        ref="form"
+        @submit.prevent="entrar"
       >
-        Entrar
-      </SiButton>
-    </SiForm>
-  </VContainer>
+        <SiTextField
+          v-model="email"
+          label="E-mail"
+          type="email"
+          :rules="[required(), emailRule()]"
+          autofocus
+        />
+
+        <SiTextField
+          v-model="senha"
+          label="Senha"
+          :type="senhaVisivel ? 'text' : 'password'"
+          :rules="[required()]"
+          :append-inner-icon="senhaVisivel ? mdiEyeOffOutline : mdiEyeOutline"
+          @click:append-inner="senhaVisivel = !senhaVisivel"
+        />
+
+        <SiAlert
+          v-if="erro"
+          type="error"
+          class="mb-4"
+          :text="erro"
+        />
+
+        <SiButton
+          type="submit"
+          block
+          :loading="enviando"
+          :prepend-icon="mdiLoginVariant"
+        >
+          Entrar
+        </SiButton>
+      </SiForm>
+    </SiCard>
+  </div>
 </template>
 
 <style scoped>
-.container-narrow {
-  max-width: var(--si-container-narrow);
+.login-screen {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--si-space-4);
+}
+
+.login-card {
+  width: min(100%, calc(var(--si-container-narrow) / 1.6));
+  padding: var(--si-space-8);
+}
+
+.login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: var(--si-space-6);
 }
 </style>

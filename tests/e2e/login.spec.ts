@@ -5,7 +5,7 @@ test.describe('RN-005 autenticação', () => {
   test('sem sessão, a landing redireciona para a tela de login', async ({ page }) => {
     await page.goto('/')
     await expect(page).toHaveURL(/\/login$/)
-    await expect(page.getByRole('heading', { name: 'Entrar' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Entrar' })).toBeVisible()
   })
 
   test('a tela de login valida forma antes de enviar', async ({ page }) => {
