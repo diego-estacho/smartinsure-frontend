@@ -37,13 +37,18 @@ export default defineEventHandler(async (event): Promise<{ expiresAtUtc: string 
     })
   }
 
-  const expiresAtUtc = response.expiresAtUtc ?? ''
-  const maxAge = Math.max(
-    0,
-    Math.floor((new Date(expiresAtUtc).getTime() - Date.now()) / 1000),
-  )
+  const expiresAt = new Date(response.expiresAtUtc ?? '').getTime()
 
-  setCookie(event, 'sessao', response.accessToken ?? '', {
+  if (!response.accessToken || Number.isNaN(expiresAt)) {
+    throw createError({
+      statusCode: 502,
+      statusMessage: 'Resposta inválida do serviço de autenticação.',
+    })
+  }
+
+  const maxAge = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000))
+
+  setCookie(event, 'sessao', response.accessToken, {
     httpOnly: true,
     secure: !import.meta.dev,
     sameSite: 'lax',
@@ -51,5 +56,5 @@ export default defineEventHandler(async (event): Promise<{ expiresAtUtc: string 
     maxAge,
   })
 
-  return { expiresAtUtc }
+  return { expiresAtUtc: response.expiresAtUtc as string }
 })
