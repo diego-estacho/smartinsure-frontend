@@ -23,6 +23,7 @@ withDefaults(defineProps<{
   <VSelect
     v-bind="$attrs"
     v-model="model"
+    class="si-field"
     :variant="variant"
     :density="density"
     :color="color"

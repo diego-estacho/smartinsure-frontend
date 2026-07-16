@@ -41,8 +41,9 @@ export default defineNuxtConfig({
     },
   },
 
-  // Design tokens não-cromáticos (ADR-006). As cores vão pelo tema Vuetify abaixo.
-  css: ['~/assets/styles/tokens/base.css'],
+  // Design tokens não-cromáticos (ADR-006) + skin de componentes (ADR-014, carregado
+  // depois para vencer o CSS do Vuetify no cascade). As cores vão pelo tema abaixo.
+  css: ['~/assets/styles/tokens/base.css', '~/assets/styles/skin.css'],
 
   typescript: { strict: true },
 
@@ -61,6 +62,28 @@ export default defineNuxtConfig({
       theme: {
         defaultTheme: 'light',
         themes: { light: lightTheme },
+      },
+      // Defaults de componente validados no InsurePoint (ADR-014). Só o *comportamento*
+      // de default (variante/densidade/cor por token); o acabamento fino vive em skin.css.
+      // Não entram: `label` no chip (DS manda pill) nem ícones do template antigo.
+      defaults: {
+        VBtn: { color: 'primary' },
+        VBadge: { color: 'primary' },
+        VChip: { color: 'primary' },
+        VList: { color: 'primary', density: 'compact' },
+        VTabs: { color: 'primary', density: 'comfortable' },
+        VTooltip: { location: 'top' },
+        VMenu: { offset: '2px' },
+        VCheckbox: { color: 'primary', density: 'comfortable', hideDetails: 'auto' },
+        VCheckboxBtn: { color: 'primary' },
+        VRadioGroup: { color: 'primary', density: 'comfortable', hideDetails: 'auto' },
+        VRadio: { density: 'comfortable', hideDetails: 'auto' },
+        VSwitch: { inset: true, color: 'primary', ripple: false, hideDetails: 'auto' },
+        VSelect: { variant: 'outlined', color: 'primary', density: 'comfortable', hideDetails: 'auto' },
+        VTextField: { variant: 'outlined', color: 'primary', density: 'comfortable', hideDetails: 'auto' },
+        VTextarea: { variant: 'outlined', color: 'primary', density: 'comfortable', hideDetails: 'auto' },
+        VProgressLinear: { height: 6, rounded: true, roundedBar: true },
+        VNavigationDrawer: { touchless: true },
       },
       icons: { defaultSet: 'mdi-svg' },
       // UI em pt-BR (ADR-012) com as mensagens nativas do Vuetify. O locale também rege

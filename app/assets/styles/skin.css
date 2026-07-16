@@ -1,0 +1,124 @@
+/*
+ * Skin de componentes (ADR-014). Recupera o acabamento visual validado do
+ * InsurePoint, re-expresso nos design tokens do SmartInsure (base.css + tema
+ * Vuetify). Regras:
+ *  - nenhum valor de marca hardcoded — cor por var do tema/neutros, medida por var(--si-…);
+ *  - o motor do template antigo (@core/mixins) NÃO é importado — aqui vive só o *efeito*;
+ *  - TODO seletor é escopado sob uma classe `.si-*` (ADR-015): namespacing de
+ *    microfrontend. As classes `.si-*` vêm da raiz de cada wrapper `Si`; o `.v-*`
+ *    do Vuetify só aparece como co-classe/descendente, nunca sozinho no escopo global.
+ * Ver `docs/adr/014-*` e `docs/adr/015-*`.
+ */
+
+/* ─── Botão (.si-button na raiz do VBtn) ─────────────────────────────────────
+ * DS (components-buttons): peso 600, SEM caixa-alta (Vuetify uppercaseia), radius md.
+ * `.si-button.v-btn` vence o `text-transform` do Vuetify por especificidade. */
+.si-button.v-btn {
+  font-family: var(--si-font-family);
+  font-weight: var(--si-font-weight-semibold);
+  letter-spacing: normal;
+  text-transform: none;
+  transition:
+    transform var(--si-dur-fast) var(--si-ease-out),
+    box-shadow var(--si-dur-base) var(--si-ease-out),
+    background-color var(--si-dur-base) var(--si-ease-out);
+}
+
+.si-button.v-btn:not(.v-btn--disabled):active {
+  transform: scale(0.98);
+}
+
+/* Glow verde no hover do CTA primário (DS: primary-hover). */
+.si-button.bg-primary:not(.v-btn--disabled):hover {
+  box-shadow: var(--si-shadow-glow);
+}
+
+/* ─── Tab (.si-tab na raiz do VTab) ──────────────────────────────────────────
+ * Navegação não é rótulo utilitário — fora a caixa-alta do Vuetify (DS voice). */
+.si-tab.v-tab {
+  font-weight: var(--si-font-weight-semibold);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+/* ─── Tabela (.si-table na raiz do VDataTable) ───────────────────────────────
+ * O DS não define tabela; referência é o InsurePoint, tokenizado. DS README:
+ * headers ALL-CAPS de utilidade, cinza, com letter-spacing; densidade; tabular. */
+.si-table th {
+  font-size: var(--si-fs-caption);
+  font-weight: var(--si-font-weight-semibold);
+  letter-spacing: var(--si-ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--si-cinza);
+}
+
+/* Faixa cinza atrás do header (validado no InsurePoint — header com fundo cinza). */
+.si-table thead th {
+  background: var(--si-cinza-suave);
+}
+
+/* Linhas com mais respiro (densidade validada). */
+.si-table tbody td {
+  padding-block: var(--si-space-3);
+}
+
+.si-table .v-data-table-header__content {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--si-space-2);
+}
+
+.si-table td {
+  font-size: var(--si-fs-small);
+}
+
+/* Padding de borda validado (24px = space-6). */
+.si-table table > thead > tr > :first-child,
+.si-table table > tbody > tr > :first-child {
+  padding-inline-start: var(--si-space-6);
+}
+
+.si-table table > thead > tr > :last-child,
+.si-table table > tbody > tr > :last-child {
+  padding-inline-end: var(--si-space-6);
+}
+
+/* Numéricos à direita com fonte tabular (DS README). */
+.si-table td.text-end,
+.si-table th.text-end {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Card (.si-card na raiz do VCard) ───────────────────────────────────────
+ * DS (components-cards): radius lg; variante seca com hairline; elevado com shadow-2. */
+.si-card.v-card {
+  border-radius: var(--si-radius-lg);
+}
+
+.si-card.v-card--variant-flat,
+.si-card.v-card--variant-outlined {
+  border: thin solid var(--si-cinza-claro);
+}
+
+.si-card.v-card--variant-elevated {
+  box-shadow: var(--si-shadow-2);
+}
+
+/* ─── Campos (.si-field na raiz de cada wrapper de campo) ─────────────────────
+ * DS (components-fields): foco = borda de marca + ring 3px; erro = danger + ring. */
+.si-field .v-field--focused {
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary), 0.2);
+}
+
+.si-field .v-field--error {
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-error), 0.18);
+}
+
+/* ─── Chip / status pill (.si-chip na raiz do VChip) ─────────────────────────
+ * DS (components-pills): pill 999px, 12px peso 600. DS vence o chip quadrado do
+ * InsurePoint (ADR-014 §3). */
+.si-chip.v-chip {
+  font-weight: var(--si-font-weight-semibold);
+  font-size: var(--si-fs-caption);
+  border-radius: var(--si-radius-pill);
+}

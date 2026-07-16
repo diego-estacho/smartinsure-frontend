@@ -55,6 +55,7 @@ function displayBr(value: unknown): string {
 <template>
   <VDateInput
     v-model="inner"
+    class="si-field"
     v-bind="$attrs"
     :variant="variant"
     :density="density"

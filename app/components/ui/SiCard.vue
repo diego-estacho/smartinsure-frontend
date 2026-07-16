@@ -20,6 +20,7 @@ withDefaults(defineProps<{
 
 <template>
   <VCard
+    class="si-card"
     v-bind="$attrs"
     :variant="variant"
     :elevation="elevation"

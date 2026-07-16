@@ -22,6 +22,7 @@ Conflito entre chat, memória e arquivos: **prevalecem os arquivos versionados**
 - Status: renderizado pelo **nome estável** vindo do contrato; label/cor num único mapa por domínio. Nunca por posição ordinal.
 - Nenhuma regra de negócio no cliente: dinheiro, transição de status e permissão são decididos no servidor; o front valida forma, não decisão.
 - Nenhuma cor/fonte/espaçamento hardcoded em componente — só design tokens (whitelabel por corretora desde o dia 1).
+- Toda classe CSS autoral leva prefixo `si-`; CSS de componente é escopado sob `.si-*` (isolamento de microfrontend, ADR-015). O harness cobra.
 - Segredo nunca em arquivo versionado; token nunca em localStorage (SECURITY do produto).
 - Pasta de trabalho de framework não é versionada (ADR-004 do produto); o resultado é aterrissado nos docs.
 - Cobertura mínima de 80% é gate de CI; teste sem asserção de comportamento não conta (QUALITY_SCORE do produto).
