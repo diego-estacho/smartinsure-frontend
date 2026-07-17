@@ -76,6 +76,349 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/brokerages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                    status?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PagedResponseOfBrokerageListItemResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateBrokerageRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CreateBrokerageResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/brokerages/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GetBrokerageResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/brokerages/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ChangeBrokerageStatusBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChangeBrokerageStatusResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/insurers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                    includeInactive?: boolean;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PagedResponseOfInsurerListItemResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateInsurerRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CreateInsurerResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/insurers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GetInsurerResponse"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateInsurerBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UpdateInsurerResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/insurers/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ChangeInsurerStatusBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChangeInsurerStatusResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/persons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    term?: string;
+                    role?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SearchPersonsResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users": {
         parameters: {
             query?: never;
@@ -150,6 +493,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/{id}/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SetUserProfileBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SetUserProfileResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -168,6 +552,71 @@ export interface components {
             /** Format: date-time */
             expiresAtUtc: string;
         };
+        BrokerageAddressResponse: {
+            zipCode: null | string;
+            street: null | string;
+            number: null | string;
+            complement: null | string;
+            neighborhood: null | string;
+            city: null | string;
+            state: null | string;
+        };
+        BrokerageListItemResponse: {
+            /** Format: uuid */
+            id: string;
+            documentNumber: string;
+            name: string;
+            socialName: null | string;
+            isPrivateSector: null | boolean;
+            status: string;
+        };
+        ChangeBrokerageStatusBody: {
+            status: string;
+        };
+        ChangeBrokerageStatusResponse: {
+            /** Format: uuid */
+            id: string;
+            status: string;
+        };
+        ChangeInsurerStatusBody: {
+            status: string;
+        };
+        ChangeInsurerStatusResponse: {
+            /** Format: uuid */
+            id: string;
+            status: string;
+        };
+        CreateBrokerageRequest: {
+            cnpj: string;
+        };
+        CreateBrokerageResponse: {
+            /** Format: uuid */
+            id: string;
+            documentNumber: string;
+            name: string;
+            socialName: null | string;
+            legalNatureCode: null | string;
+            legalNatureName: null | string;
+            isPrivateSector: null | boolean;
+            status: string;
+            mainAddress: null | components["schemas"]["ImportedBrokerageAddressResponse"];
+        };
+        CreateInsurerRequest: {
+            cnpj: string;
+            corporateName: string;
+            tradeName: null | string;
+            logoUrl: null | string;
+            initialStatus: string;
+        };
+        CreateInsurerResponse: {
+            /** Format: uuid */
+            id: string;
+            cnpj: string;
+            corporateName: string;
+            tradeName: null | string;
+            logoUrl: null | string;
+            status: string;
+        };
         CreateUserRequest: {
             name: string;
             email: string;
@@ -177,6 +626,115 @@ export interface components {
             id: string;
             name: string;
             email: string;
+            status: string;
+        };
+        GetBrokerageResponse: {
+            /** Format: uuid */
+            id: string;
+            documentNumber: string;
+            name: string;
+            socialName: null | string;
+            legalNatureCode: null | string;
+            legalNatureName: null | string;
+            isPrivateSector: null | boolean;
+            status: string;
+            mainAddress: null | components["schemas"]["BrokerageAddressResponse"];
+        };
+        GetInsurerResponse: {
+            /** Format: uuid */
+            id: string;
+            cnpj: string;
+            corporateName: string;
+            tradeName: null | string;
+            logoUrl: null | string;
+            status: string;
+        };
+        ImportedBrokerageAddressResponse: {
+            zipCode: null | string;
+            street: null | string;
+            number: null | string;
+            complement: null | string;
+            neighborhood: null | string;
+            city: null | string;
+            state: null | string;
+        };
+        InsurerListItemResponse: {
+            /** Format: uuid */
+            id: string;
+            cnpj: string;
+            corporateName: string;
+            tradeName: null | string;
+            logoUrl: null | string;
+            status: string;
+        };
+        PagedResponseOfBrokerageListItemResponse: {
+            items: components["schemas"]["BrokerageListItemResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int64 */
+            totalCount: number | string;
+            /** Format: int64 */
+            totalPages?: number | string;
+        };
+        PagedResponseOfInsurerListItemResponse: {
+            items: components["schemas"]["InsurerListItemResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int64 */
+            totalCount: number | string;
+            /** Format: int64 */
+            totalPages?: number | string;
+        };
+        PersonAddressResponse: {
+            zipCode: null | string;
+            street: null | string;
+            number: null | string;
+            complement: null | string;
+            neighborhood: null | string;
+            city: null | string;
+            state: null | string;
+        };
+        PersonSearchItemResponse: {
+            /** Format: uuid */
+            id: string;
+            documentNumber: string;
+            name: string;
+            socialName: null | string;
+            type: string;
+            isPrivateSector: null | boolean;
+            roles: string[];
+            mainAddress: null | components["schemas"]["PersonAddressResponse"];
+            preSelectedBranchDocumentNumber?: null | string;
+        };
+        SearchPersonsResponse: {
+            items: components["schemas"]["PersonSearchItemResponse"][];
+            notice?: null | string;
+        };
+        SetUserProfileBody: {
+            profile: null | string;
+        };
+        SetUserProfileResponse: {
+            /** Format: uuid */
+            id: string;
+            profile: null | string;
+        };
+        UpdateInsurerBody: {
+            cnpj: string;
+            corporateName: string;
+            tradeName: null | string;
+            logoUrl: null | string;
+        };
+        UpdateInsurerResponse: {
+            /** Format: uuid */
+            id: string;
+            cnpj: string;
+            corporateName: string;
+            tradeName: null | string;
+            logoUrl: null | string;
             status: string;
         };
     };

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isValidCpf, isValidCnpj, isValidCpfCnpj } from '../../app/lib/documents'
+import { formatCnpj, isValidCpf, isValidCnpj, isValidCpfCnpj } from '../../app/lib/documents'
 
 // ADR-013 §6 — validação por dígito verificador (não só formato).
 describe('validação de documentos', () => {
@@ -30,5 +30,11 @@ describe('validação de documentos', () => {
     expect(isValidCpfCnpj('11.222.333/0001-81')).toBe(true)
     expect(isValidCpfCnpj('000.000.000-00')).toBe(false)
     expect(isValidCpfCnpj('123')).toBe(false)
+  })
+
+  it('formatCnpj aplica máscara numérica e alfanumérica', () => {
+    expect(formatCnpj('11222333000181')).toBe('11.222.333/0001-81')
+    expect(formatCnpj('12abc34501de35')).toBe('12.ABC.345/01DE-35')
+    expect(formatCnpj('123')).toBe('123')
   })
 })

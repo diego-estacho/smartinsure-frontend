@@ -19,19 +19,33 @@
  * offset do VMain), não valores visuais tokenizáveis (ADR-006 rege cor/fonte/espaço/raio/sombra).
  */
 import {
-  mdiViewDashboardOutline, mdiFileDocumentOutline, mdiAccount, mdiLogout,
-  mdiChevronDoubleLeft, mdiChevronDoubleRight,
+  mdiFileDocumentOutline, mdiAccount, mdiLogout,
+  mdiChevronDoubleLeft, mdiChevronDoubleRight, mdiOfficeBuildingOutline, mdiMenu,
 } from '~/lib/icons'
 
 const { logout } = useAuth()
+const { mobile } = useDisplay()
 
 const drawerOpen = ref(true)
 const rail = ref(false)
 
 const nav = [
-  { title: 'Página A', to: '/demo/a', icon: mdiViewDashboardOutline },
+  { title: 'Corretoras', to: '/corretoras', icon: mdiOfficeBuildingOutline },
   { title: 'Página B', to: '/demo/b', icon: mdiFileDocumentOutline },
 ]
+
+watch(mobile, (isMobile) => {
+  drawerOpen.value = !isMobile
+  if (isMobile) rail.value = false
+}, { immediate: true })
+
+function toggleDrawer() {
+  drawerOpen.value = !drawerOpen.value
+}
+
+function closeDrawerOnMobile() {
+  if (mobile.value) drawerOpen.value = false
+}
 
 async function onLogout() {
   await logout()
@@ -41,15 +55,46 @@ async function onLogout() {
 
 <template>
   <VApp>
+    <SiAppBar
+      v-if="mobile"
+      color="charcoal"
+      height="64"
+      class="si-shell-topbar"
+    >
+      <button
+        type="button"
+        class="si-shell-topbar-button"
+        :aria-label="drawerOpen ? 'Fechar menu' : 'Abrir menu'"
+        @click="toggleDrawer"
+      >
+        <SiIcon :icon="mdiMenu" />
+      </button>
+
+      <div class="si-shell-topbar-brand">
+        <img
+          src="/brand/symbol.png"
+          alt="SmartInsure"
+          class="si-shell-symbol"
+          width="32"
+          height="32"
+        >
+        <span class="si-shell-wordmark">
+          <span class="si-shell-wordmark-smart">Smart</span><span class="si-shell-wordmark-insure">insure</span>
+        </span>
+      </div>
+    </SiAppBar>
+
     <SiNavigationDrawer
       v-model="drawerOpen"
-      permanent
+      :permanent="!mobile"
+      :temporary="mobile"
       color="charcoal"
       :width="280"
-      :rail="rail"
+      :rail="!mobile && rail"
       :rail-width="76"
     >
       <div
+        v-if="!mobile"
         class="si-shell-brand"
         :class="{ 'si-shell-brand--rail': rail }"
       >
@@ -80,12 +125,14 @@ async function onLogout() {
           color="on-charcoal"
           :prepend-icon="item.icon"
           :title="item.title"
+          @click="closeDrawerOnMobile"
         />
       </SiList>
 
       <template #append>
         <div class="si-shell-footer">
           <button
+            v-if="!mobile"
             type="button"
             class="si-shell-action"
             :class="{ 'si-shell-action--rail': rail }"
@@ -140,6 +187,36 @@ async function onLogout() {
 </template>
 
 <style scoped>
+.si-shell-topbar :deep(.v-toolbar__content) {
+  display: flex;
+  align-items: center;
+  gap: var(--si-space-3);
+  padding-inline: var(--si-space-3);
+}
+
+.si-shell-topbar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--si-space-10);
+  height: var(--si-space-10);
+  border: 0;
+  border-radius: var(--si-radius-md);
+  background: transparent;
+  color: rgb(var(--v-theme-on-charcoal));
+  cursor: pointer;
+}
+
+.si-shell-topbar-button:hover {
+  background: rgba(var(--v-theme-on-charcoal), 0.08);
+}
+
+.si-shell-topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--si-space-2);
+}
+
 .si-shell-brand {
   display: flex;
   align-items: center;

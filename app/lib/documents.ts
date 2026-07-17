@@ -49,3 +49,10 @@ export function isValidCpfCnpj(input: string): boolean {
   if (clean.length === 14) return isValidCnpj(clean)
   return false
 }
+
+/** Formata CNPJ numérico ou alfanumérico para exibição. */
+export function formatCnpj(input: string): string {
+  const clean = String(input).replace(/[^0-9A-Za-z]/g, '').toUpperCase()
+  if (clean.length !== 14) return input
+  return `${clean.slice(0, 2)}.${clean.slice(2, 5)}.${clean.slice(5, 8)}/${clean.slice(8, 12)}-${clean.slice(12)}`
+}
