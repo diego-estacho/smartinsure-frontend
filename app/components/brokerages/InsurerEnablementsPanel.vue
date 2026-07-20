@@ -187,6 +187,11 @@ async function submitForm() {
   }
 }
 
+function insurerInitials(name: string): string {
+  const words = name.trim().split(/\s+/)
+  return ((words[0]?.[0] ?? '') + (words[1]?.[0] ?? '')).toUpperCase()
+}
+
 function openStatusDialog(item: EnablementListItemResponse) {
   selectedEnablement.value = item
   success.value = null
@@ -266,6 +271,28 @@ async function confirmStatusChange() {
         :items="enablements"
         :loading="loading"
       >
+      <template #[`item.insurerCorporateName`]="{ item }">
+        <div class="si-enablements__insurer">
+          <VAvatar
+            size="32"
+            color="surface"
+            class="si-enablements__insurer-logo"
+          >
+            <VImg
+              v-if="item.insurerLogoUrl"
+              :src="item.insurerLogoUrl"
+              :alt="`Logo ${item.insurerCorporateName}`"
+              contain
+            />
+            <span
+              v-else
+              class="si-enablements__insurer-initials"
+            >{{ insurerInitials(item.insurerCorporateName) }}</span>
+          </VAvatar>
+          <span>{{ item.insurerCorporateName }}</span>
+        </div>
+      </template>
+
       <template #[`item.status`]="{ item }">
         <SiChip
           :color="getEnablementStatusView(item.status).color"
@@ -409,6 +436,28 @@ async function confirmStatusChange() {
   display: flex;
   justify-content: flex-end;
   margin-bottom: var(--si-space-3);
+}
+
+.si-enablements__insurer {
+  display: flex;
+  align-items: center;
+  gap: var(--si-space-3);
+}
+
+.si-enablements__insurer-logo {
+  border: 1px solid var(--si-cinza-claro);
+  background: rgb(var(--v-theme-surface));
+}
+
+.si-enablements__insurer-logo :deep(.v-img__img) {
+  object-fit: contain;
+  padding: 2px;
+}
+
+.si-enablements__insurer-initials {
+  font-size: var(--si-fs-caption);
+  font-weight: var(--si-font-weight-semibold);
+  color: var(--si-cinza);
 }
 
 .si-enablements__summary {

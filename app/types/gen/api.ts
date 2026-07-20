@@ -770,6 +770,7 @@ export interface components {
             /** Format: uuid */
             insurerId: string;
             insurerCorporateName: string;
+            insurerLogoUrl: null | string;
             calculationEngine: string;
             status: string;
         };
