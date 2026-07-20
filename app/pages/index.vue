@@ -1,30 +1,130 @@
 <script setup lang="ts">
-import { mdiShieldCheckOutline } from '~/lib/icons'
+import { mdiArrowRight, mdiOfficeBuildingOutline, mdiShieldCheckOutline } from '~/lib/icons'
 
-// Landing neutra — sem termo de domínio nem status (OPEN-01 aberta: glossário e
-// máquina de estados ainda não ratificados). As jornadas entram quando fechar.
-// Usa os wrappers Si (ADR-013); o grid do Vuetify é estrutural (isento).
+// Home dentro do shell (sidebar). Atalhos apenas pra jornadas que existem —
+// jornada nova entra aqui quando a rota dela nascer (OPEN-01: sem termo de
+// domínio não ratificado, sem promessa de tela futura).
+definePageMeta({ layout: 'shell' })
 useHead({ title: 'SmartInsure' })
+
+const shortcuts = [
+  {
+    title: 'Corretoras',
+    description: 'Cadastro, situação e habilitações de seguradora das corretoras.',
+    to: '/corretoras',
+    icon: mdiOfficeBuildingOutline,
+  },
+]
 </script>
 
 <template>
-  <VMain>
-    <VContainer class="py-16">
-      <VRow justify="center">
-        <VCol cols="12" md="8" lg="6">
-          <SiCard :elevation="2" class="pa-6">
-            <div class="d-flex align-center mb-4" style="gap: var(--si-space-3)">
-              <SiIcon :icon="mdiShieldCheckOutline" size="32" color="primary" />
-              <h1 class="text-h5">SmartInsure</h1>
-            </div>
-            <p class="text-body-1 mb-4">
-              Scaffold do frontend. A estrutura está pronta; as telas entram quando o
-              domínio for ratificado.
-            </p>
-            <SiChip color="success" size="small">ambiente pronto</SiChip>
-          </SiCard>
-        </VCol>
-      </VRow>
-    </VContainer>
-  </VMain>
+  <VContainer class="si-home">
+    <div class="si-home__hero">
+      <SiIcon
+        :icon="mdiShieldCheckOutline"
+        size="40"
+        color="primary"
+      />
+      <div>
+        <h1 class="text-h5">
+          Bem-vindo ao SmartInsure
+        </h1>
+        <p class="text-body-2 si-home__subtitle">
+          Selecione uma área no menu ao lado ou use os atalhos abaixo.
+        </p>
+      </div>
+    </div>
+
+    <div class="si-home__grid">
+      <SiCard
+        v-for="shortcut in shortcuts"
+        :key="shortcut.to"
+        class="si-home__card pa-5"
+        :elevation="1"
+        hover
+        :to="shortcut.to"
+      >
+        <div class="si-home__card-header">
+          <SiIcon
+            :icon="shortcut.icon"
+            size="28"
+            color="primary"
+          />
+          <h2 class="text-subtitle-1">
+            {{ shortcut.title }}
+          </h2>
+        </div>
+
+        <p class="text-body-2 si-home__card-description">
+          {{ shortcut.description }}
+        </p>
+
+        <div class="si-home__card-action">
+          <SiButton
+            variant="text"
+            color="primary"
+            :append-icon="mdiArrowRight"
+            :to="shortcut.to"
+          >
+            Acessar
+          </SiButton>
+        </div>
+      </SiCard>
+    </div>
+  </VContainer>
 </template>
+
+<style scoped>
+.si-home {
+  max-width: var(--si-container-wide);
+}
+
+.si-home__hero {
+  display: flex;
+  align-items: center;
+  gap: var(--si-space-4);
+  margin-block: var(--si-space-8) var(--si-space-6);
+}
+
+.si-home__hero h1 {
+  margin: 0;
+}
+
+.si-home__subtitle {
+  margin: 0;
+  color: rgba(var(--v-theme-on-surface), 0.64);
+}
+
+.si-home__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--si-space-4);
+}
+
+.si-home__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--si-space-3);
+}
+
+.si-home__card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--si-space-3);
+}
+
+.si-home__card-header h2 {
+  margin: 0;
+}
+
+.si-home__card-description {
+  margin: 0;
+  color: rgba(var(--v-theme-on-surface), 0.72);
+  flex: 1;
+}
+
+.si-home__card-action {
+  display: flex;
+  justify-content: flex-end;
+}
+</style>

@@ -22,6 +22,19 @@ export const minLength = (min: number, message?: string): Rule =>
 export const maxLength = (max: number, message?: string): Rule =>
   v => (isEmpty(v) || String(v).length <= max ? true : message ?? `Máximo de ${max} caracteres`)
 
+/** URL absoluta http/https (validação de forma; quem decide se o endereço serve é o backend). */
+export const url = (message = 'Endereço inválido'): Rule =>
+  (v) => {
+    if (isEmpty(v)) return true
+    try {
+      const parsed = new URL(String(v))
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? true : message
+    }
+    catch {
+      return message
+    }
+  }
+
 /**
  * Comprimento do documento: 11 = CPF, 14 = CNPJ. Checagem de FORMATO apenas (não valida
  * dígito verificador). Prefira `cpf`/`cnpj`/`cpfCnpj` para rejeitar documentos inválidos
