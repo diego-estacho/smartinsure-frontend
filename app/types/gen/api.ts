@@ -76,6 +76,171 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/brokerage-insurer-enablements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    brokerageId?: string;
+                    page?: number | string;
+                    pageSize?: number | string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PagedResponseOfBrokerageInsurerEnablementListItemResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateBrokerageInsurerEnablementRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CreateBrokerageInsurerEnablementResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/brokerage-insurer-enablements/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GetBrokerageInsurerEnablementResponse"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateBrokerageInsurerEnablementBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UpdateBrokerageInsurerEnablementResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/brokerage-insurer-enablements/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ChangeBrokerageInsurerEnablementStatusBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChangeBrokerageInsurerEnablementStatusResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/api/v1/brokerages": {
         parameters: {
             query?: never;
@@ -214,6 +379,41 @@ export interface paths {
                 };
             };
         };
+        trace?: never;
+    };
+    "/api/v1/calculation-engines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CalculationEngineListItemResponse"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/insurers": {
@@ -561,6 +761,18 @@ export interface components {
             city: null | string;
             state: null | string;
         };
+        BrokerageInsurerEnablementListItemResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            brokerageId: string;
+            brokerageName: string;
+            /** Format: uuid */
+            insurerId: string;
+            insurerCorporateName: string;
+            calculationEngine: string;
+            status: string;
+        };
         BrokerageListItemResponse: {
             /** Format: uuid */
             id: string;
@@ -568,6 +780,17 @@ export interface components {
             name: string;
             socialName: null | string;
             isPrivateSector: null | boolean;
+            status: string;
+        };
+        CalculationEngineListItemResponse: {
+            name: string;
+        };
+        ChangeBrokerageInsurerEnablementStatusBody: {
+            status: string;
+        };
+        ChangeBrokerageInsurerEnablementStatusResponse: {
+            /** Format: uuid */
+            id: string;
             status: string;
         };
         ChangeBrokerageStatusBody: {
@@ -584,6 +807,25 @@ export interface components {
         ChangeInsurerStatusResponse: {
             /** Format: uuid */
             id: string;
+            status: string;
+        };
+        CreateBrokerageInsurerEnablementRequest: {
+            /** Format: uuid */
+            brokerageId: string;
+            /** Format: uuid */
+            insurerId: string;
+            calculationEngine: string;
+            connectionParameters: null | string;
+        };
+        CreateBrokerageInsurerEnablementResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            brokerageId: string;
+            /** Format: uuid */
+            insurerId: string;
+            calculationEngine: string;
+            connectionParameters: null | string;
             status: string;
         };
         CreateBrokerageRequest: {
@@ -607,6 +849,7 @@ export interface components {
             tradeName: null | string;
             logoUrl: null | string;
             initialStatus: string;
+            referenceExternalId?: null | string;
         };
         CreateInsurerResponse: {
             /** Format: uuid */
@@ -615,6 +858,7 @@ export interface components {
             corporateName: string;
             tradeName: null | string;
             logoUrl: null | string;
+            referenceExternalId: null | string;
             status: string;
         };
         CreateUserRequest: {
@@ -626,6 +870,19 @@ export interface components {
             id: string;
             name: string;
             email: string;
+            status: string;
+        };
+        GetBrokerageInsurerEnablementResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            brokerageId: string;
+            brokerageName: string;
+            /** Format: uuid */
+            insurerId: string;
+            insurerCorporateName: string;
+            calculationEngine: string;
+            connectionParameters: null | string;
             status: string;
         };
         GetBrokerageResponse: {
@@ -647,6 +904,7 @@ export interface components {
             corporateName: string;
             tradeName: null | string;
             logoUrl: null | string;
+            referenceExternalId: null | string;
             status: string;
         };
         ImportedBrokerageAddressResponse: {
@@ -666,6 +924,17 @@ export interface components {
             tradeName: null | string;
             logoUrl: null | string;
             status: string;
+        };
+        PagedResponseOfBrokerageInsurerEnablementListItemResponse: {
+            items: components["schemas"]["BrokerageInsurerEnablementListItemResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int64 */
+            totalCount: number | string;
+            /** Format: int64 */
+            totalPages?: number | string;
         };
         PagedResponseOfBrokerageListItemResponse: {
             items: components["schemas"]["BrokerageListItemResponse"][];
@@ -722,11 +991,27 @@ export interface components {
             id: string;
             profile: null | string;
         };
+        UpdateBrokerageInsurerEnablementBody: {
+            calculationEngine: string;
+            connectionParameters: null | string;
+        };
+        UpdateBrokerageInsurerEnablementResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            brokerageId: string;
+            /** Format: uuid */
+            insurerId: string;
+            calculationEngine: string;
+            connectionParameters: null | string;
+            status: string;
+        };
         UpdateInsurerBody: {
             cnpj: string;
             corporateName: string;
             tradeName: null | string;
             logoUrl: null | string;
+            referenceExternalId?: null | string;
         };
         UpdateInsurerResponse: {
             /** Format: uuid */
@@ -735,6 +1020,7 @@ export interface components {
             corporateName: string;
             tradeName: null | string;
             logoUrl: null | string;
+            referenceExternalId: null | string;
             status: string;
         };
     };

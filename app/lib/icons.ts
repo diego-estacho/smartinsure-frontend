@@ -20,6 +20,7 @@ export {
   mdiChevronDoubleRight,
   mdiOfficeBuildingOutline,
   mdiMagnify,
+  mdiPencilOutline,
   mdiPlus,
   mdiPower,
   mdiPowerOff,

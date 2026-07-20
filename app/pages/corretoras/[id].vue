@@ -14,6 +14,7 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const success = ref<string | null>(null)
 const confirmOpen = ref(false)
+const tab = ref('habilitacoes')
 const statusAction = computed(() =>
   brokerage.value ? getBrokerageStatusAction(brokerage.value.status) : null,
 )
@@ -178,6 +179,24 @@ function formatAddress(address: GetBrokerageResponse['mainAddress']) {
       </dl>
     </SiCard>
 
+    <template v-if="brokerage">
+      <SiTabs
+        v-model="tab"
+        class="si-brokerage-detail__tabs"
+      >
+        <SiTab
+          value="habilitacoes"
+          text="Habilitações de Seguradora"
+        />
+      </SiTabs>
+
+      <VTabsWindow v-model="tab">
+        <VTabsWindowItem value="habilitacoes">
+          <BrokeragesInsurerEnablementsPanel :brokerage-id="brokerage.id" />
+        </VTabsWindowItem>
+      </VTabsWindow>
+    </template>
+
     <SiDialog v-model="confirmOpen">
       <SiCard class="pa-5">
         <h2 class="text-h6 mb-3">
@@ -265,6 +284,10 @@ function formatAddress(address: GetBrokerageResponse['mainAddress']) {
 
 .si-brokerage-detail__address {
   grid-column: 1 / -1;
+}
+
+.si-brokerage-detail__tabs {
+  margin-block: var(--si-space-6) var(--si-space-3);
 }
 
 @media (max-width: 700px) {
