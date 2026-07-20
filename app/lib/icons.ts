@@ -10,6 +10,7 @@ export {
   mdiAccount,
   mdiAccountPlusOutline,
   mdiArrowLeft,
+  mdiArrowRight,
   mdiLoginVariant,
   mdiEyeOutline,
   mdiEyeOffOutline,
