@@ -5,7 +5,9 @@ import { mdiPencilOutline, mdiPlus } from '~/lib/icons'
 import { maxLength, required, url } from '~/lib/rules'
 import { getEnablementStatusAction, getEnablementStatusView } from '~/lib/status/insurer-enablements'
 
-const props = defineProps<{ brokerageId: string }>()
+const props = withDefaults(defineProps<{ brokerageId: string, hideToolbar?: boolean }>(), {
+  hideToolbar: false,
+})
 
 const {
   listEnablements,
@@ -44,6 +46,18 @@ const form = reactive({
 })
 
 const isEditing = computed(() => editingId.value !== null)
+
+/** Resumo com dados reais da listagem (direção C aprovada). */
+const summary = computed(() => {
+  const active = enablements.value.filter(item => item.status === 'Active').length
+  const distinctEngines = [...new Set(enablements.value.map(item => item.calculationEngine))]
+
+  return {
+    total: enablements.value.length,
+    active,
+    engines: distinctEngines.length ? distinctEngines.join(', ') : '—',
+  }
+})
 const isPlugV2 = computed(() => form.calculationEngine === 'PlugV2')
 const formTitle = computed(() => (isEditing.value ? 'Editar habilitação' : 'Habilitar seguradora'))
 
@@ -53,6 +67,8 @@ const selectedEnablement = ref<EnablementListItemResponse | null>(null)
 const statusAction = computed(() =>
   selectedEnablement.value ? getEnablementStatusAction(selectedEnablement.value.status) : null,
 )
+
+defineExpose({ openCreateDialog })
 
 await refresh()
 
@@ -201,13 +217,33 @@ async function confirmStatusChange() {
 
 <template>
   <section class="si-enablements">
-    <div class="si-enablements__toolbar">
+    <div
+      v-if="!props.hideToolbar"
+      class="si-enablements__toolbar"
+    >
       <SiButton
         :prepend-icon="mdiPlus"
         @click="openCreateDialog"
       >
         Habilitar seguradora
       </SiButton>
+    </div>
+
+    <div class="si-enablements__summary">
+      <SiCard class="si-enablements__summary-card pa-4">
+        <span class="si-enablements__summary-label">Seguradoras habilitadas</span>
+        <strong class="si-enablements__summary-value">{{ summary.total }}</strong>
+      </SiCard>
+
+      <SiCard class="si-enablements__summary-card pa-4">
+        <span class="si-enablements__summary-label">Habilitações ativas</span>
+        <strong class="si-enablements__summary-value">{{ summary.active }}</strong>
+      </SiCard>
+
+      <SiCard class="si-enablements__summary-card pa-4">
+        <span class="si-enablements__summary-label">Motor de cálculo</span>
+        <strong class="si-enablements__summary-value">{{ summary.engines }}</strong>
+      </SiCard>
     </div>
 
     <SiAlert
@@ -224,11 +260,12 @@ async function confirmStatusChange() {
       :text="success"
     />
 
-    <SiDataTable
-      :headers="headers"
-      :items="enablements"
-      :loading="loading"
-    >
+    <div class="si-enablements__table">
+      <SiDataTable
+        :headers="headers"
+        :items="enablements"
+        :loading="loading"
+      >
       <template #[`item.status`]="{ item }">
         <SiChip
           :color="getEnablementStatusView(item.status).color"
@@ -265,7 +302,8 @@ async function confirmStatusChange() {
       <template #no-data>
         Nenhuma seguradora habilitada para esta corretora.
       </template>
-    </SiDataTable>
+      </SiDataTable>
+    </div>
 
     <SiDialog v-model="formOpen">
       <SiCard class="pa-5">
@@ -371,6 +409,34 @@ async function confirmStatusChange() {
   display: flex;
   justify-content: flex-end;
   margin-bottom: var(--si-space-3);
+}
+
+.si-enablements__summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--si-space-3);
+  margin-bottom: var(--si-space-4);
+}
+
+.si-enablements__summary-card {
+  display: grid;
+  gap: var(--si-space-1);
+}
+
+.si-enablements__summary-label {
+  color: var(--si-cinza);
+  font-size: var(--si-fs-caption);
+}
+
+.si-enablements__summary-value {
+  font-size: var(--si-fs-h3);
+  font-weight: var(--si-font-weight-bold);
+  line-height: 1.2;
+}
+
+/* Mobile: tabela rola horizontal dentro do próprio painel. */
+.si-enablements__table {
+  overflow-x: auto;
 }
 
 .si-enablements__row-actions,
