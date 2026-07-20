@@ -6,6 +6,7 @@
 export {
   mdiShieldCheckOutline,
   mdiMenu,
+  mdiDomain,
   mdiDotsVertical,
   mdiAccount,
   mdiAccountPlusOutline,
@@ -26,4 +27,5 @@ export {
   mdiPower,
   mdiPowerOff,
   mdiRefresh,
+  mdiTrashCanOutline,
 } from '@mdi/js'
