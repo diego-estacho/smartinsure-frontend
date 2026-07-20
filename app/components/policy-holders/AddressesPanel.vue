@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import type { PolicyHolderAddress, AddPolicyHolderAddressBody, UpdatePolicyHolderAddressBody } from '~/composables/usePolicyHolders'
 import { MASK_CEP } from '~/lib/masks'
-import { mdiPencilOutline, mdiTrashCanOutline } from '~/lib/icons'
+import { mdiPencilOutline, mdiTrashCanOutline, mdiPlus } from '~/lib/icons'
 import { required } from '~/lib/rules'
 
-const props = withDefaults(defineProps<{ policyHolderId: string, hideToolbar?: boolean }>(), {
+const props = withDefaults(defineProps<{ policyHolderId: string, addresses: PolicyHolderAddress[], hideToolbar?: boolean }>(), {
   hideToolbar: false,
 })
 
+const emit = defineEmits<{ changed: [] }>()
+
 const { addAddress, updateAddress, deleteAddress } = usePolicyHolders()
 
-const addresses = ref<PolicyHolderAddress[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 const success = ref<string | null>(null)
@@ -18,6 +19,7 @@ const success = ref<string | null>(null)
 const headers = [
   { title: 'CEP', key: 'zipCode' },
   { title: 'Endereço', key: 'street' },
+  { title: 'Tipo', key: 'type', sortable: false, align: 'center' as const },
   { title: 'Ações', key: 'actions', sortable: false, align: 'end' as const },
 ]
 
@@ -45,11 +47,6 @@ const brazilianStates = [
 ]
 
 defineExpose({ openCreateDialog })
-
-async function refresh() {
-  // Addresses list will be refreshed from parent context
-  // This is called after operations complete
-}
 
 function openCreateDialog() {
   editingId.value = null
@@ -114,7 +111,7 @@ async function submitForm() {
     }
 
     formOpen.value = false
-    await refresh()
+    emit('changed')
   }
   catch {
     error.value = isEditing.value
@@ -134,7 +131,7 @@ async function removeAddress(address: PolicyHolderAddress) {
   try {
     await deleteAddress(props.policyHolderId, address.id)
     success.value = 'Endereço removido.'
-    await refresh()
+    emit('changed')
   }
   catch {
     error.value = 'Não foi possível remover o endereço.'
@@ -155,19 +152,42 @@ function formatAddressLine(address: PolicyHolderAddress): string {
 
 <template>
   <section class="si-policy-holder-addresses-panel">
+    <div
+      v-if="!props.hideToolbar"
+      class="si-policy-holder-addresses-panel__toolbar"
+    >
+      <SiButton
+        :prepend-icon="mdiPlus"
+        @click="openCreateDialog"
+      >
+        Novo endereço
+      </SiButton>
+    </div>
+
     <div class="si-policy-holder-addresses-panel__table">
       <SiDataTable
         :headers="headers"
-        :items="addresses"
+        :items="props.addresses"
         :loading="loading"
       >
         <template #[`item.street`]="{ item }">
           {{ formatAddressLine(item) }}
         </template>
 
+        <template #[`item.type`]="{ item }">
+          <SiChip
+            v-if="item.isMain"
+            variant="outlined"
+            size="small"
+          >
+            Principal
+          </SiChip>
+        </template>
+
         <template #[`item.actions`]="{ item }">
           <div class="si-policy-holder-addresses-panel__row-actions">
             <SiButton
+              v-if="!item.isMain"
               variant="text"
               size="small"
               :prepend-icon="mdiPencilOutline"
@@ -177,6 +197,7 @@ function formatAddressLine(address: PolicyHolderAddress): string {
             </SiButton>
 
             <SiButton
+              v-if="!item.isMain"
               variant="text"
               size="small"
               color="error"
@@ -279,6 +300,12 @@ function formatAddressLine(address: PolicyHolderAddress): string {
 </template>
 
 <style scoped>
+.si-policy-holder-addresses-panel__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--si-space-3);
+}
+
 .si-policy-holder-addresses-panel__table {
   overflow-x: auto;
 }

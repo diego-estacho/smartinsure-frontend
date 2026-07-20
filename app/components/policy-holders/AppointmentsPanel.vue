@@ -6,9 +6,11 @@ import { mdiPlus } from '~/lib/icons'
 import { required } from '~/lib/rules'
 import { getPolicyHolderAppointmentStatusView, canEndPolicyHolderAppointment } from '~/lib/status/policyHolderAppointments'
 
-const props = withDefaults(defineProps<{ policyHolderId: string, hideToolbar?: boolean }>(), {
+const props = withDefaults(defineProps<{ policyHolderId: string, appointments: PolicyHolderAppointment[], hideToolbar?: boolean }>(), {
   hideToolbar: false,
 })
+
+const emit = defineEmits<{ changed: [] }>()
 
 const {
   createAppointment,
@@ -17,10 +19,8 @@ const {
 const { listBrokerages } = useBrokerages()
 const { listInsurers } = useInsurers()
 
-const appointments = ref<PolicyHolderAppointment[]>([])
 const brokerages = ref<BrokerageListItem[]>([])
 const insurers = ref<InsurerListItemResponse[]>([])
-const loading = ref(false)
 const saving = ref(false)
 const error = ref<string | null>(null)
 const success = ref<string | null>(null)
@@ -46,12 +46,11 @@ const confirmOpen = ref(false)
 const existingAppointment = ref<PolicyHolderAppointment | null>(null)
 const confirmSubmitting = ref(false)
 
-defineExpose({ openCreateDialog })
+/** Confirmação de encerrar nomeação. */
+const endConfirmOpen = ref(false)
+const appointmentToEnd = ref<PolicyHolderAppointment | null>(null)
 
-async function refresh() {
-  // This will be called from parent when data refreshes
-  // The appointments will be passed via parent context or re-fetched
-}
+defineExpose({ openCreateDialog })
 
 function openCreateDialog() {
   form.brokerageId = null
@@ -67,7 +66,7 @@ async function loadFormData() {
   try {
     const [brokeragesPage, insurersPage] = await Promise.all([
       listBrokerages({ status: 'Active', pageSize: 100 }),
-      listInsurers({ pageSize: 100 }),
+      listInsurers({ status: 'Active', pageSize: 100 }),
     ])
     brokerages.value = brokeragesPage.items
     insurers.value = insurersPage.items
@@ -83,19 +82,19 @@ async function submitForm() {
 
   if (!form.brokerageId || !form.insurerId) return
 
-  // Check if there's already an active appointment for this insurer
-  const existing = appointments.value.find(
-    a => a.insurerId === form.insurerId && a.status === 'Active',
+  // Check if there's already an active appointment for this insurer WITH A DIFFERENT BROKERAGE (RN-028)
+  const existing = props.appointments.find(
+    a => a.insurerId === form.insurerId && a.status === 'Active' && a.brokerageId !== form.brokerageId,
   )
 
   if (existing) {
-    // Show confirmation dialog
+    // Show confirmation dialog for replacement
     existingAppointment.value = existing
     confirmOpen.value = true
     return
   }
 
-  // No existing appointment, create directly
+  // No existing appointment with different brokerage, create directly
   await createNewAppointment()
 }
 
@@ -113,13 +112,14 @@ async function createNewAppointment() {
     })
     success.value = 'Nomeação criada.'
     formOpen.value = false
-    await refresh()
+    emit('changed')
   }
   catch (err) {
     // Check if it's a 409 conflict (same broker already appointed)
-    const errorObj = err as { status?: number }
+    const errorObj = err as { status?: number, data?: { detail?: string } }
     if (typeof err === 'object' && err !== null && 'status' in err && errorObj.status === 409) {
-      error.value = 'Esta corretora já possui uma nomeação vigente para esta seguradora.'
+      // Show message from ProblemDetails
+      error.value = errorObj.data?.detail || 'Esta corretora já possui uma nomeação vigente para esta seguradora.'
     }
     else {
       error.value = 'Não foi possível criar a nomeação.'
@@ -131,20 +131,14 @@ async function createNewAppointment() {
 }
 
 async function confirmReplaceAppointment() {
-  // End the existing appointment
-  if (!existingAppointment.value) return
-
+  // Just create the new appointment - backend handles replacement atomically (RN-028)
   confirmSubmitting.value = true
   error.value = null
   success.value = null
 
   try {
-    await endAppointment(props.policyHolderId, existingAppointment.value.id)
-    success.value = 'Nomeação anterior encerrada.'
     confirmOpen.value = false
     existingAppointment.value = null
-    await refresh()
-    // Then create the new appointment
     await createNewAppointment()
   }
   catch {
@@ -155,8 +149,16 @@ async function confirmReplaceAppointment() {
   }
 }
 
-async function endAppointmentAction(appointment: PolicyHolderAppointment) {
+function endAppointmentAction(appointment: PolicyHolderAppointment) {
   if (!canEndPolicyHolderAppointment(appointment.status)) return
+
+  appointmentToEnd.value = appointment
+  endConfirmOpen.value = true
+}
+
+async function confirmEndAppointment() {
+  const appointment = appointmentToEnd.value
+  if (!appointment) return
 
   saving.value = true
   error.value = null
@@ -165,7 +167,9 @@ async function endAppointmentAction(appointment: PolicyHolderAppointment) {
   try {
     await endAppointment(props.policyHolderId, appointment.id)
     success.value = 'Nomeação encerrada.'
-    await refresh()
+    endConfirmOpen.value = false
+    appointmentToEnd.value = null
+    emit('changed')
   }
   catch {
     error.value = 'Não foi possível encerrar a nomeação.'
@@ -213,8 +217,7 @@ function formatDateRange(appointment: PolicyHolderAppointment): string {
     <div class="si-policy-holder-appointments-panel__table">
       <SiDataTable
         :headers="headers"
-        :items="appointments"
-        :loading="loading"
+        :items="props.appointments"
       >
         <template #[`item.status`]="{ item }">
           <SiChip
@@ -323,6 +326,35 @@ function formatDateRange(appointment: PolicyHolderAppointment): string {
             color="error"
             :loading="confirmSubmitting"
             @click="confirmReplaceAppointment"
+          >
+            Confirmar
+          </SiButton>
+        </div>
+      </SiCard>
+    </SiDialog>
+
+    <SiDialog v-model="endConfirmOpen">
+      <SiCard class="pa-5">
+        <h2 class="text-h6 mb-3">
+          Encerrar nomeação?
+        </h2>
+
+        <p class="mb-5">
+          Encerrará a nomeação vigente da corretora {{ appointmentToEnd?.brokerageName }} para a seguradora {{ appointmentToEnd?.insurerName }}. O tomador ficará sem corretora nomeada para essa seguradora.
+        </p>
+
+        <div class="si-policy-holder-appointments-panel__dialog-actions">
+          <SiButton
+            variant="text"
+            @click="endConfirmOpen = false"
+          >
+            Cancelar
+          </SiButton>
+
+          <SiButton
+            color="error"
+            :loading="saving"
+            @click="confirmEndAppointment"
           >
             Confirmar
           </SiButton>

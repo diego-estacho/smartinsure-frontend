@@ -174,11 +174,21 @@ function openAppointmentDialog() {
 
         <!-- Endereços tab -->
         <VTabsWindowItem value="enderecos">
+          <div class="si-policy-holder-detail__tab-actions">
+            <SiButton
+              :prepend-icon="mdiPlus"
+              @click="addressesPanelRef?.openCreateDialog()"
+            >
+              Novo endereço
+            </SiButton>
+          </div>
           <PolicyHoldersAddressesPanel
             v-if="policyHolder"
             ref="addressesPanelRef"
             :policy-holder-id="policyHolder.id"
+            :addresses="policyHolder.addresses"
             hide-toolbar
+            @changed="refresh"
           />
         </VTabsWindowItem>
 
@@ -188,7 +198,9 @@ function openAppointmentDialog() {
             v-if="policyHolder"
             ref="appointmentsPanelRef"
             :policy-holder-id="policyHolder.id"
+            :appointments="policyHolder.appointments"
             hide-toolbar
+            @changed="refresh"
           />
         </VTabsWindowItem>
       </VTabsWindow>
@@ -270,6 +282,12 @@ function openAppointmentDialog() {
 
 .si-policy-holder-detail__tabs {
   margin-top: var(--si-space-4);
+}
+
+.si-policy-holder-detail__tab-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--si-space-3);
 }
 
 .si-policy-holder-detail__content {
