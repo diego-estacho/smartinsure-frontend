@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiArrowRight, mdiOfficeBuildingOutline, mdiShieldCheckOutline } from '~/lib/icons'
+import { mdiArrowRight, mdiDomain, mdiOfficeBuildingOutline, mdiShieldCheckOutline } from '~/lib/icons'
 
 // Home dentro do shell (sidebar). Atalhos apenas pra jornadas que existem —
 // jornada nova entra aqui quando a rota dela nascer (OPEN-01: sem termo de
@@ -13,6 +13,12 @@ const shortcuts = [
     description: 'Cadastro, situação e habilitações de seguradora das corretoras.',
     to: '/corretoras',
     icon: mdiOfficeBuildingOutline,
+  },
+  {
+    title: 'Tomadores',
+    description: 'Cadastro, endereços e nomeações dos tomadores.',
+    to: '/tomadores',
+    icon: mdiDomain,
   },
 ]
 </script>
