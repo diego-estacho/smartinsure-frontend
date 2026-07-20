@@ -451,7 +451,7 @@ async function confirmStatusChange() {
 
 .si-enablements__insurer-logo :deep(.v-img__img) {
   object-fit: contain;
-  padding: 2px;
+  padding: var(--si-space-1);
 }
 
 .si-enablements__insurer-initials {
