@@ -31,7 +31,7 @@ const drawerOpen = ref(true)
 const rail = ref(false)
 
 const nav = [
-  { title: 'Painel', to: '/painel', icon: mdiViewDashboardOutline },
+  { title: 'Painel', to: '/', icon: mdiViewDashboardOutline },
   { title: 'Corretoras', to: '/corretoras', icon: mdiOfficeBuildingOutline },
   { title: 'Tomadores', to: '/tomadores', icon: mdiDomain },
   { title: 'Página B', to: '/demo/b', icon: mdiFileDocumentOutline },
