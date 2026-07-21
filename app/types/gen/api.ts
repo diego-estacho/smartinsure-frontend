@@ -1256,7 +1256,6 @@ export interface components {
             insurerName: string;
             status: string;
             failureReason: null | string;
-            policyHolderName: null | string;
             limits: components["schemas"]["CreditInquiryLimitGroupResponse"][];
         };
         CreditInquirySummary: {

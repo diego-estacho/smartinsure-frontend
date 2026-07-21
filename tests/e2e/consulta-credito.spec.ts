@@ -84,7 +84,6 @@ test.describe('Consulta de Crédito - RN-029 Execução da Consulta', () => {
               insurerName: 'Seguradora A',
               status: 'Available',
               failureReason: null,
-              policyHolderName: null,
               limits: [
                 { groupName: 'Tradicional', groupType: 'credit', availableLimit: 50000, usedLimit: 0, rate: 2.5 },
                 { groupName: 'Judicial', groupType: 'credit', availableLimit: 30000, usedLimit: 0, rate: 3.0 },
@@ -96,7 +95,6 @@ test.describe('Consulta de Crédito - RN-029 Execução da Consulta', () => {
               insurerName: 'Seguradora B',
               status: 'Available',
               failureReason: null,
-              policyHolderName: null,
               limits: [
                 { groupName: 'Tradicional', groupType: 'credit', availableLimit: 100000, usedLimit: 0, rate: 2.2 },
               ],
@@ -106,7 +104,6 @@ test.describe('Consulta de Crédito - RN-029 Execução da Consulta', () => {
               insurerName: 'Seguradora C',
               status: 'Unavailable',
               failureReason: 'Indisponível no momento',
-              policyHolderName: null,
               limits: [],
             },
           ],
@@ -183,7 +180,7 @@ test.describe('Consulta de Crédito - RN-029 Execução da Consulta', () => {
     expect(creditInquiriesCalled).toBe(false)
   })
 
-  test('tabela com colunas dinâmicas por grupos de modalidade', async ({ page }) => {
+  test('tabela com colunas dinâmicas por grupos de modalidade — com assertivas reforçadas', async ({ page }) => {
     const brokerageId = '01980000-0000-7000-8000-000000000001'
 
     await page.route('**/api/brokerages*', route =>
@@ -213,7 +210,7 @@ test.describe('Consulta de Crédito - RN-029 Execução da Consulta', () => {
           summary: {
             insurersQueried: 2,
             insurersAvailable: 2,
-            consolidatedLimit: 150000,
+            consolidatedLimit: 4800000,
           },
           results: [
             {
@@ -221,9 +218,8 @@ test.describe('Consulta de Crédito - RN-029 Execução da Consulta', () => {
               insurerName: 'Seguradora A',
               status: 'Available',
               failureReason: null,
-              policyHolderName: null,
               limits: [
-                { groupName: 'Tradicional', groupType: 'credit', availableLimit: 50000, usedLimit: 0, rate: 2.5 },
+                { groupName: 'Tradicional', groupType: 'credit', availableLimit: 4380000, usedLimit: 420000, rate: 2.5 },
                 { groupName: 'Judicial', groupType: 'credit', availableLimit: 30000, usedLimit: 0, rate: 3.0 },
                 { groupName: 'Financeiro', groupType: 'credit', availableLimit: 20000, usedLimit: 0, rate: 4.0 },
               ],
@@ -233,7 +229,6 @@ test.describe('Consulta de Crédito - RN-029 Execução da Consulta', () => {
               insurerName: 'Seguradora B',
               status: 'Available',
               failureReason: null,
-              policyHolderName: null,
               limits: [
                 { groupName: 'Tradicional', groupType: 'credit', availableLimit: 100000, usedLimit: 0, rate: 2.2 },
               ],
@@ -254,18 +249,43 @@ test.describe('Consulta de Crédito - RN-029 Execução da Consulta', () => {
     // Aguarda aparecimento da tabela
     await expect(page.getByText('Quadro consolidado de limites')).toBeVisible()
 
-    // Verifica cabeçalhos da tabela (agora com grupos dinâmicos)
+    // 1a. Verifica colunas dinâmicas — headers presentes e células ausentes com "—"
     await expect(page.locator('th', { hasText: /Seguradora/i }).first()).toBeVisible()
     await expect(page.locator('th', { hasText: /Status/i }).first()).toBeVisible()
     await expect(page.locator('th', { hasText: /Tradicional/i }).first()).toBeVisible()
+    await expect(page.locator('th', { hasText: /Judicial/i }).first()).toBeVisible()
+    await expect(page.locator('th', { hasText: /Financeiro/i }).first()).toBeVisible()
     await expect(page.locator('th', { hasText: /Validade/i }).first()).toBeVisible()
 
-    // Verifica dados nas linhas
-    // Usa localizador mais específico para evitar ambiguidade com a barra de disponível vs utilizado
-    await expect(page.locator('.v-data-table__td').filter({ hasText: /Seguradora A/ }).first()).toBeVisible()
-    await expect(page.getByText(/50.?000/).nth(0)).toBeVisible() // tradicional limit (com/sem ponto separador)
-    await expect(page.locator('.v-data-table__td').filter({ hasText: /Seguradora B/ }).first()).toBeVisible()
-    await expect(page.getByText(/100.?000/).nth(0)).toBeVisible() // tradicional limit para B
+    // Seguradora A tem todos os 3 grupos → 1 "—" (apenas Validade)
+    const segARow = page.locator('tr').filter({ hasText: 'Seguradora A' }).first()
+    await expect(segARow.locator('.si-credit-inquiries__unavailable')).toHaveCount(1)
+
+    // Seguradora B tem apenas Tradicional → 2 "—" para grupos ausentes + 1 para Validade = 3 total
+    const segBRow = page.locator('tr').filter({ hasText: 'Seguradora B' }).first()
+    await expect(segBRow.locator('.si-credit-inquiries__unavailable')).toHaveCount(3)
+
+    // 1b. Verifica "Utilizado > 0" com valor formatado na célula (Seguradora A, Tradicional)
+    const utilizadoCell = segARow.locator('.si-credit-inquiries__group-used')
+    await expect(utilizadoCell).toBeVisible()
+    await expect(utilizadoCell).toContainText(/Utilizado/)
+    await expect(utilizadoCell).toContainText(/420/) // Valor formatado em BRL
+
+    // 1c. Verifica barra "Disponível vs Utilizado" — seção visível, nome seguradora, valores e percentual
+    const availabilitySection = page.locator('.si-credit-inquiries__availability-bars')
+    await expect(availabilitySection).toBeVisible()
+    await expect(availabilitySection.locator('.si-credit-inquiries__availability-title')).toBeVisible()
+
+    const segABar = page.locator('.si-credit-inquiries__bar-container').filter({ hasText: 'Seguradora A' })
+    await expect(segABar).toBeVisible()
+    await expect(segABar.locator('.si-credit-inquiries__bar-label')).toContainText('Seguradora A')
+    await expect(segABar.locator('.si-credit-inquiries__bar-amount')).toContainText(/Disponível/)
+    await expect(segABar.locator('.si-credit-inquiries__bar-used')).toContainText(/Utilizado/)
+    // 420k/(4.38M+420k) = 420k/4.8M ≈ 8.75% → 9%
+    await expect(segABar.locator('.si-credit-inquiries__bar-percentage')).toContainText(/9%/)
+
+    // 1d. Verifica coluna Validade renderiza "—"
+    await expect(page.locator('.si-credit-inquiries__unavailable').filter({ hasText: /^—$/ })).toHaveCount(4) // 1 para A + 3 para B
   })
 })
 
@@ -313,7 +333,6 @@ test.describe('Consulta de Crédito - RN-030 Falha Isolada', () => {
               insurerName: 'Seguradora A',
               status: 'Available',
               failureReason: null,
-              policyHolderName: null,
               limits: [
                 { groupName: 'Tradicional', groupType: 'credit', availableLimit: 50000, usedLimit: 0, rate: 2.5 },
                 { groupName: 'Judicial', groupType: 'credit', availableLimit: 30000, usedLimit: 0, rate: 3.0 },
@@ -325,7 +344,6 @@ test.describe('Consulta de Crédito - RN-030 Falha Isolada', () => {
               insurerName: 'Seguradora B',
               status: 'Unavailable',
               failureReason: 'Motor de Cálculo indisponível',
-              policyHolderName: null,
               limits: [],
             },
           ],
@@ -396,7 +414,6 @@ test.describe('Consulta de Crédito - RN-030 Falha Isolada', () => {
               insurerName: 'Seguradora A',
               status: 'Available',
               failureReason: null,
-              policyHolderName: null,
               limits: [
                 { groupName: 'Tradicional', groupType: 'credit', availableLimit: 50000, usedLimit: 0, rate: 2.5 },
                 { groupName: 'Judicial', groupType: 'credit', availableLimit: 30000, usedLimit: 0, rate: 3.0 },
@@ -408,7 +425,6 @@ test.describe('Consulta de Crédito - RN-030 Falha Isolada', () => {
               insurerName: 'Seguradora B',
               status: 'Unavailable',
               failureReason: 'Indisponível',
-              policyHolderName: null,
               limits: [],
             },
             {
@@ -416,7 +432,6 @@ test.describe('Consulta de Crédito - RN-030 Falha Isolada', () => {
               insurerName: 'Seguradora C',
               status: 'Unavailable',
               failureReason: 'Timeout',
-              policyHolderName: null,
               limits: [],
             },
           ],
@@ -534,7 +549,6 @@ test.describe('Consulta de Crédito - RN-031 Reconsulta', () => {
             insurerName: 'Seguradora A',
             status: 'Available',
             failureReason: null,
-            policyHolderName: null,
             limits: [
               { groupName: 'Tradicional', groupType: 'credit', availableLimit: 50000, usedLimit: 0, rate: 2.5 },
               { groupName: 'Judicial', groupType: 'credit', availableLimit: 30000, usedLimit: 0, rate: 3.0 },

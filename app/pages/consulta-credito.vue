@@ -388,7 +388,7 @@ function getLimitGroupData(result: CreditInquiryResultResponse, groupName: strin
                         {{ formatCurrencyBRL(getLimitGroupData(result, result.maxAvailableLimitGroup)!.usedLimit) }} Utilizado
                       </span>
                       <span class="si-credit-inquiries__bar-percentage">
-                        ({{ Math.round((Number(getLimitGroupData(result, result.maxAvailableLimitGroup)!.usedLimit) / result.maxAvailableLimit) * 100) }}%)
+                        ({{ Math.round((Number(getLimitGroupData(result, result.maxAvailableLimitGroup)!.usedLimit) / (result.maxAvailableLimit + Number(getLimitGroupData(result, result.maxAvailableLimitGroup)!.usedLimit))) * 100) }}%)
                       </span>
                     </template>
                   </div>
