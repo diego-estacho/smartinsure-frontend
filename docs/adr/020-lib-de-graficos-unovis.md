@@ -35,7 +35,7 @@ Opções consideradas:
 
 ## Consequências
 
-- Gráficos do produto usam unovis; primeiro uso é o `/painel` (troca o SVG à mão pela lib).
+- Gráficos do produto usam unovis; primeiro uso é o painel (home `/`) — troca o SVG à mão pela lib.
 - Cor do gráfico é whitelabel por construção (token → tema).
 - `@unovis/ts` traz dependências **opcionais** (three/maplibre, para mapas/3D) que **não** usamos em
   gráficos XY — ficam fora do bundle por tree-shaking; `@types/three` é só devDependency.

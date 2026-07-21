@@ -10,7 +10,7 @@ ADR-019 (DS/de-para), **ADR-020** (a escolha da lib), exec-plan 0009 (o painel).
 
 ## Objetivo
 
-Trocar o gráfico de tendência do `/painel` (hoje SVG desenhado à mão, exec-plan 0009) pela lib
+Trocar o gráfico de tendência do painel (home `/`, hoje SVG desenhado à mão, exec-plan 0009) pela lib
 **unovis** (ADR-020), deixando a lib integrada e tematizada por token — pronta para o dashboard real.
 Sem mudar os dados (seguem mock, ADR-019/0009): o valor validado aqui é a **integração da lib**
 (SSR-safe + whitelabel por token), não o número.
