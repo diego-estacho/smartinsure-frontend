@@ -10,6 +10,7 @@ describe('RN-029 — Consulta de Limites de Crédito do Tomador', () => {
       creditInquiryId: '123e4567-e89b-12d3-a456-426614174000',
       queriedAt: '2026-07-20T10:30:00Z',
       policyHolderCnpj: '12345678000123',
+      policyHolderName: 'EMPRESA LTDA',
       summary: {
         insurersQueried: 3,
         insurersAvailable: 2,
@@ -21,14 +22,12 @@ describe('RN-029 — Consulta de Limites de Crédito do Tomador', () => {
           insurerName: 'Seguradora A',
           status: 'Available',
           failureReason: null,
-          traditionalLimit: 50000,
-          traditionalRate: 2.5,
-          judicialLimit: 30000,
-          judicialRate: 3.0,
-          judicialFiscalRate: 1.5,
-          financialLimit: 20000,
-          financialRate: 4.0,
-          limitValidUntil: '2026-12-31T23:59:59Z',
+          policyHolderName: null,
+          limits: [
+            { groupName: 'Tradicional', groupType: 'credit', availableLimit: 50000, usedLimit: 0, rate: 2.5 },
+            { groupName: 'Judicial', groupType: 'credit', availableLimit: 30000, usedLimit: 0, rate: 3.0 },
+            { groupName: 'Financeiro', groupType: 'credit', availableLimit: 20000, usedLimit: 0, rate: 4.0 },
+          ],
         },
       ],
     }
@@ -67,6 +66,7 @@ describe('RN-029 — Consulta de Limites de Crédito do Tomador', () => {
       creditInquiryId: '123',
       queriedAt: '2026-07-20T10:30:00Z',
       policyHolderCnpj: '12345678000123',
+      policyHolderName: null,
       summary: { insurersQueried: 1, insurersAvailable: 1, consolidatedLimit: 50000 },
       results: [],
     })
@@ -94,6 +94,7 @@ describe('RN-029 — Consulta de Limites de Crédito do Tomador', () => {
       creditInquiryId: '123',
       queriedAt: '2026-07-20T10:30:00Z',
       policyHolderCnpj: '12345678000123',
+      policyHolderName: null,
       summary: { insurersQueried: 1, insurersAvailable: 1, consolidatedLimit: 50000 },
       results: [],
     })

@@ -1227,6 +1227,16 @@ export interface components {
             email: string;
             status: string;
         };
+        CreditInquiryLimitGroupResponse: {
+            groupName: string;
+            groupType: string;
+            /** Format: double */
+            availableLimit: number | string;
+            /** Format: double */
+            usedLimit: number | string;
+            /** Format: double */
+            rate: number | string;
+        };
         CreditInquiryListItemResponse: {
             /** Format: uuid */
             id: string;
@@ -1246,22 +1256,8 @@ export interface components {
             insurerName: string;
             status: string;
             failureReason: null | string;
-            /** Format: double */
-            traditionalLimit: null | number | string;
-            /** Format: double */
-            traditionalRate: null | number | string;
-            /** Format: double */
-            judicialLimit: null | number | string;
-            /** Format: double */
-            judicialRate: null | number | string;
-            /** Format: double */
-            judicialFiscalRate: null | number | string;
-            /** Format: double */
-            financialLimit: null | number | string;
-            /** Format: double */
-            financialRate: null | number | string;
-            /** Format: date-time */
-            limitValidUntil: null | string;
+            policyHolderName: null | string;
+            limits: components["schemas"]["CreditInquiryLimitGroupResponse"][];
         };
         CreditInquirySummary: {
             /** Format: int32 */
@@ -1282,6 +1278,7 @@ export interface components {
             /** Format: date-time */
             queriedAt: string;
             policyHolderCnpj: string;
+            policyHolderName: null | string;
             summary: components["schemas"]["CreditInquirySummary"];
             results: components["schemas"]["CreditInquiryResultResponse"][];
         };
@@ -1316,6 +1313,7 @@ export interface components {
             /** Format: date-time */
             queriedAt: string;
             policyHolderCnpj: string;
+            policyHolderName: null | string;
             summary: components["schemas"]["CreditInquirySummary"];
             results: components["schemas"]["CreditInquiryResultResponse"][];
         };

@@ -5,7 +5,7 @@ import { formatCnpj } from '~/lib/documents'
 import { cnpj, required } from '~/lib/rules'
 import { getBrokerageStatusView } from '~/lib/status/brokerages'
 import { getCreditInquiryInsurerStatusView } from '~/lib/status/creditInquiries'
-import { toBrDate, toBrDateTime } from '~/lib/dates'
+import { toBrDateTime } from '~/lib/dates'
 import { formatCurrencyBRL } from '~/lib/currency'
 import { mdiCreditCardOutline, mdiRefresh } from '~/lib/icons'
 
@@ -28,15 +28,61 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const response = ref<ExecuteCreditInquiryResponse | null>(null)
 
-// Table headers
-const headers = [
-  { title: 'Seguradora', key: 'insurerName', width: '25%' },
-  { title: 'Status', key: 'status', width: '15%', align: 'center' },
-  { title: 'Tradicional', key: 'traditional', width: '15%', align: 'right' },
-  { title: 'Judicial', key: 'judicial', width: '15%', align: 'right' },
-  { title: 'Financeiro', key: 'financial', width: '15%', align: 'right' },
-  { title: 'Validade', key: 'validity', width: '15%', align: 'right' },
-] as const
+// Dynamic column headers computed from results
+const dynamicGroupNames = computed(() => {
+  if (!response.value?.results || response.value.results.length === 0) {
+    return []
+  }
+
+  // Collect all unique group names with their max available limit
+  const groupLimits = new Map<string, number>()
+  response.value.results.forEach((result) => {
+    result.limits.forEach((limit) => {
+      const current = groupLimits.get(limit.groupName) || 0
+      const newValue = Math.max(current, Number(limit.availableLimit))
+      groupLimits.set(limit.groupName, newValue)
+    })
+  })
+
+  // Sort by max available limit descending
+  return Array.from(groupLimits.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([name]) => name)
+})
+
+// Build table rows with proper typing
+const tableRows = computed(() => {
+  return (response.value?.results.map(buildTableRow) || []) as TableRow[]
+})
+
+// Get available insurers with their row data for the availability bar
+const availableInsurersWithData = computed(() => {
+  return response.value?.results.filter(r => r.status === 'Available').map(r => buildTableRow(r)) || []
+})
+
+// Build table headers based on dynamic groups
+const headers = computed(() => {
+  const baseHeaders = [
+    { title: 'Seguradora', key: 'insurerName', width: '15%' },
+    { title: 'Status', key: 'status', width: '12%', align: 'center' },
+  ]
+
+  // Add dynamic columns for each group
+  const groupWidth = Math.max(12, Math.floor((100 - 15 - 12 - 15) / (dynamicGroupNames.value.length || 1)))
+  dynamicGroupNames.value.forEach((groupName) => {
+    baseHeaders.push({
+      title: groupName,
+      key: `group_${groupName}`,
+      width: `${groupWidth}%`,
+      align: 'right',
+    })
+  })
+
+  // Validade always at the end
+  baseHeaders.push({ title: 'Validade', key: 'validity', width: '15%', align: 'right' })
+
+  return baseHeaders
+})
 
 // Load brokerages on mount
 onMounted(async () => {
@@ -98,20 +144,38 @@ function fillRecentCnpj(document: string) {
 }
 
 // Table row data builder
-function buildTableRow(result: CreditInquiryResultResponse) {
+interface TableRow extends CreditInquiryResultResponse {
+  validity: string
+  maxAvailableLimit: number
+  maxAvailableLimitGroup: string | null
+}
+
+function buildTableRow(result: CreditInquiryResultResponse): TableRow {
+  // Find the group with highest available limit for the availability bar
+  let maxAvailableLimit = 0
+  let maxAvailableLimitGroup: string | null = null
+
+  if (result.limits && result.limits.length > 0) {
+    result.limits.forEach((limit) => {
+      const available = Number(limit.availableLimit)
+      if (available > maxAvailableLimit) {
+        maxAvailableLimit = available
+        maxAvailableLimitGroup = limit.groupName
+      }
+    })
+  }
+
   return {
     ...result,
-    traditional: result.traditionalLimit && result.traditionalRate !== null && result.traditionalRate !== undefined
-      ? `${formatCurrencyBRL(result.traditionalLimit)} - ${Number(result.traditionalRate).toFixed(2)}%`
-      : '—',
-    judicial: (result.judicialLimit || result.judicialRate !== null || result.judicialFiscalRate !== null)
-      ? `${result.judicialLimit ? formatCurrencyBRL(result.judicialLimit) : '—'} - ${result.judicialRate ? `${Number(result.judicialRate).toFixed(2)}%` : '—'}${result.judicialFiscalRate ? ` (fiscal: ${Number(result.judicialFiscalRate).toFixed(2)}%)` : ''}`
-      : '—',
-    financial: result.financialLimit && result.financialRate !== null && result.financialRate !== undefined
-      ? `${formatCurrencyBRL(result.financialLimit)} - ${Number(result.financialRate).toFixed(2)}%`
-      : '—',
-    validity: result.limitValidUntil ? toBrDate(new Date(result.limitValidUntil)) : '—',
+    validity: '—', // OPEN-08: Always empty per spec
+    maxAvailableLimit,
+    maxAvailableLimitGroup,
   }
+}
+
+// Helper to get limit group data for a specific group name and result
+function getLimitGroupData(result: CreditInquiryResultResponse, groupName: string) {
+  return result.limits?.find(l => l.groupName === groupName)
 }
 </script>
 
@@ -195,6 +259,10 @@ function buildTableRow(result: CreditInquiryResultResponse) {
         variant="outlined"
         class="si-credit-inquiries__summary-card"
       >
+        <div class="si-credit-inquiries__summary-header">
+          <h3 class="si-credit-inquiries__summary-title">Consulta para {{ formatCnpj(response.policyHolderCnpj) }}</h3>
+          <span v-if="response.policyHolderName" class="si-credit-inquiries__summary-subtitle">{{ response.policyHolderName }}</span>
+        </div>
         <div class="si-credit-inquiries__summary-content">
           <div class="si-credit-inquiries__summary-item">
             <div class="si-credit-inquiries__summary-label">Seguradoras consultadas</div>
@@ -248,7 +316,7 @@ function buildTableRow(result: CreditInquiryResultResponse) {
 
         <SiDataTable
           :headers="headers"
-          :items="response.results.map(buildTableRow)"
+          :items="tableRows"
           density="compact"
           class="si-credit-inquiries__table"
         >
@@ -271,36 +339,62 @@ function buildTableRow(result: CreditInquiryResultResponse) {
             </div>
           </template>
 
-          <template #[`item.traditional`]="{ item }">
-            <span
-              :class="{ 'si-credit-inquiries__unavailable': item.traditional === '—' }"
-            >
-              {{ item.traditional }}
-            </span>
-          </template>
-
-          <template #[`item.judicial`]="{ item }">
-            <span
-              :class="{ 'si-credit-inquiries__unavailable': item.judicial === '—' }"
-            >
-              {{ item.judicial }}
-            </span>
-          </template>
-
-          <template #[`item.financial`]="{ item }">
-            <span
-              :class="{ 'si-credit-inquiries__unavailable': item.financial === '—' }"
-            >
-              {{ item.financial }}
-            </span>
+          <!-- Dynamic group columns -->
+          <template
+            v-for="groupName in dynamicGroupNames"
+            :key="groupName"
+            #[`item.group_${groupName}`]="{ item }"
+          >
+            <div class="si-credit-inquiries__group-cell">
+              <template v-if="getLimitGroupData(item, groupName)">
+                <div class="si-credit-inquiries__group-limit">
+                  {{ formatCurrencyBRL(getLimitGroupData(item, groupName)!.availableLimit) }}
+                  <span class="si-credit-inquiries__group-rate">
+                    {{ Number(getLimitGroupData(item, groupName)!.rate).toFixed(2) }}%
+                  </span>
+                </div>
+                <div
+                  v-if="Number(getLimitGroupData(item, groupName)!.usedLimit) > 0"
+                  class="si-credit-inquiries__group-used"
+                >
+                  Utilizado: {{ formatCurrencyBRL(getLimitGroupData(item, groupName)!.usedLimit) }}
+                </div>
+              </template>
+              <span v-else class="si-credit-inquiries__unavailable">—</span>
+            </div>
           </template>
 
           <template #[`item.validity`]="{ item }">
-            <span
-              :class="{ 'si-credit-inquiries__unavailable': item.validity === '—' }"
-            >
-              {{ item.validity }}
-            </span>
+            <span class="si-credit-inquiries__unavailable">{{ item.validity }}</span>
+          </template>
+
+          <!-- Availability bar row (shown after each insurer) -->
+          <template v-if="response && availableInsurersWithData.length > 0" #bottom>
+            <div class="si-credit-inquiries__availability-bars">
+              <h4 class="si-credit-inquiries__availability-title">Disponível vs Utilizado por Seguradora</h4>
+              <div class="si-credit-inquiries__bars-grid">
+                <div
+                  v-for="result in availableInsurersWithData"
+                  :key="`bar-${result.insurerId}`"
+                  class="si-credit-inquiries__bar-container"
+                >
+                  <div class="si-credit-inquiries__bar-label">{{ result.insurerName }}</div>
+                  <div class="si-credit-inquiries__bar-values">
+                    <span v-if="result.maxAvailableLimit > 0" class="si-credit-inquiries__bar-amount">
+                      {{ formatCurrencyBRL(result.maxAvailableLimit) }} Disponível
+                    </span>
+                    <template v-if="result.maxAvailableLimitGroup && getLimitGroupData(result, result.maxAvailableLimitGroup)">
+                      <span class="si-credit-inquiries__bar-used">
+                        {{ formatCurrencyBRL(getLimitGroupData(result, result.maxAvailableLimitGroup)!.usedLimit) }} Utilizado
+                      </span>
+                      <span class="si-credit-inquiries__bar-percentage">
+                        ({{ Math.round((Number(getLimitGroupData(result, result.maxAvailableLimitGroup)!.usedLimit) / result.maxAvailableLimit) * 100) }}%)
+                      </span>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </div>
           </template>
         </SiDataTable>
       </SiCard>
@@ -376,6 +470,26 @@ function buildTableRow(result: CreditInquiryResultResponse) {
   overflow: hidden;
 }
 
+.si-credit-inquiries__summary-header {
+  padding: var(--si-space-4);
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--si-space-1);
+}
+
+.si-credit-inquiries__summary-title {
+  margin: 0;
+  font-size: var(--si-fs-base);
+  font-weight: 600;
+  color: var(--v-theme-on-surface);
+}
+
+.si-credit-inquiries__summary-subtitle {
+  font-size: var(--si-fs-small);
+  color: rgba(var(--v-theme-on-surface), 0.7);
+}
+
 .si-credit-inquiries__summary-content {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -439,6 +553,86 @@ function buildTableRow(result: CreditInquiryResultResponse) {
   font-size: var(--si-fs-small);
   color: rgba(var(--v-theme-on-surface), 0.7);
   line-height: 1.3;
+}
+
+.si-credit-inquiries__group-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--si-space-1);
+  text-align: right;
+}
+
+.si-credit-inquiries__group-limit {
+  font-weight: 600;
+  color: var(--v-theme-on-surface);
+}
+
+.si-credit-inquiries__group-rate {
+  display: block;
+  font-size: var(--si-fs-small);
+  font-weight: 400;
+  color: rgba(var(--v-theme-on-surface), 0.7);
+}
+
+.si-credit-inquiries__group-used {
+  font-size: var(--si-fs-small);
+  color: rgba(var(--v-theme-on-surface), 0.6);
+  font-weight: 500;
+}
+
+.si-credit-inquiries__availability-bars {
+  padding: var(--si-space-4);
+  border-top: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+  background-color: rgba(var(--v-theme-surface), 0.3);
+}
+
+.si-credit-inquiries__availability-title {
+  margin: 0 0 var(--si-space-3) 0;
+  font-size: var(--si-fs-small);
+  font-weight: 600;
+  color: var(--v-theme-on-surface);
+}
+
+.si-credit-inquiries__bars-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--si-space-3);
+}
+
+.si-credit-inquiries__bar-container {
+  padding: var(--si-space-3);
+  background-color: rgba(var(--v-theme-on-surface), 0.04);
+  border-radius: var(--si-radius-sm);
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+}
+
+.si-credit-inquiries__bar-label {
+  font-size: var(--si-fs-small);
+  font-weight: 600;
+  color: var(--v-theme-on-surface);
+  margin-bottom: var(--si-space-2);
+}
+
+.si-credit-inquiries__bar-values {
+  display: flex;
+  flex-direction: column;
+  gap: var(--si-space-1);
+  font-size: var(--si-fs-small);
+  color: rgba(var(--v-theme-on-surface), 0.7);
+}
+
+.si-credit-inquiries__bar-amount {
+  font-weight: 600;
+  color: var(--v-theme-on-surface);
+}
+
+.si-credit-inquiries__bar-used {
+  color: rgba(var(--v-theme-on-surface), 0.7);
+}
+
+.si-credit-inquiries__bar-percentage {
+  font-weight: 500;
+  color: var(--v-theme-on-surface);
 }
 
 .si-credit-inquiries__empty {
