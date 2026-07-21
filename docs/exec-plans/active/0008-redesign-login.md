@@ -64,3 +64,9 @@ usuário/corretora (OPEN-03).
 **Decisão (recuperação de senha):** o link "Esqueceu a senha?" existe no design QA, mas o fluxo
 (rota/serviço) ainda não existe. Até lá o link informa a indisponibilidade (aviso) em vez de navegar
 para uma rota inexistente — evita link morto sem materializar promessa de tela.
+
+**Decisão (login sem CNPJ, 2026-07-21 — dono + design system):** o login pede **só e-mail e senha**,
+sem CNPJ. O protótipo do design system (`design system/ui_kits/web/login.html`) documenta o porquê:
+usuários com múltiplas corretoras tinham que deslogar/logar para trocar; a corretora passa a ser
+escolhida **dentro** da plataforma (workspace picker pós-login — feature futura, fora deste escopo).
+Subtítulo ajustado para "Acesse com seu e-mail e senha." (sem prometer o picker, que ainda não existe).

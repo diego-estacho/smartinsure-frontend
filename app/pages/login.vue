@@ -93,7 +93,7 @@ async function submit() {
             Faça seu login
           </h1>
           <p class="si-login__subtitle">
-            Acesse com o CNPJ, e-mail e senha da sua corretora.
+            Acesse com seu e-mail e senha.
           </p>
         </header>
 
