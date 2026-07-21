@@ -619,6 +619,281 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/policy-holders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                    search?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PagedResponseOfPolicyHolderListItemResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreatePolicyHolderRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CreatePolicyHolderResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/policy-holders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GetPolicyHolderResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/policy-holders/{id}/addresses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AddPolicyHolderAddressBody"];
+                };
+            };
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/policy-holders/{id}/addresses/{addressId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    addressId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdatePolicyHolderAddressBody"];
+                };
+            };
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    addressId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/policy-holders/{id}/appointments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreatePolicyHolderAppointmentBody"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CreatePolicyHolderAppointmentResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/policy-holders/{id}/appointments/{appointmentId}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    appointmentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
     "/api/v1/users": {
         parameters: {
             query?: never;
@@ -743,6 +1018,15 @@ export interface components {
             id: string;
             status: string;
         };
+        AddPolicyHolderAddressBody: {
+            zipCode: null | string;
+            street: null | string;
+            number: null | string;
+            complement: null | string;
+            neighborhood: null | string;
+            city: null | string;
+            state: null | string;
+        };
         AuthenticateUserRequest: {
             email: string;
             password: string;
@@ -862,6 +1146,41 @@ export interface components {
             referenceExternalId: null | string;
             status: string;
         };
+        CreatePolicyHolderAppointmentBody: {
+            /** Format: uuid */
+            brokerageId: string;
+            /** Format: uuid */
+            insurerId: string;
+        };
+        CreatePolicyHolderAppointmentResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            policyHolderId: string;
+            /** Format: uuid */
+            brokerageId: string;
+            /** Format: uuid */
+            insurerId: string;
+            status: string;
+            /** Format: date-time */
+            startedAt: string;
+            /** Format: date-time */
+            endedAt: null | string;
+        };
+        CreatePolicyHolderRequest: {
+            cnpj: string;
+        };
+        CreatePolicyHolderResponse: {
+            /** Format: uuid */
+            id: string;
+            documentNumber: string;
+            name: string;
+            socialName: null | string;
+            legalNatureCode: null | string;
+            legalNatureDescription: null | string;
+            isPrivateSector: null | boolean;
+            mainAddress: null | components["schemas"]["ImportedPolicyHolderAddressResponse"];
+        };
         CreateUserRequest: {
             name: string;
             email: string;
@@ -908,7 +1227,28 @@ export interface components {
             referenceExternalId: null | string;
             status: string;
         };
+        GetPolicyHolderResponse: {
+            /** Format: uuid */
+            id: string;
+            documentNumber: string;
+            name: string;
+            socialName: null | string;
+            legalNatureCode: null | string;
+            legalNatureDescription: null | string;
+            isPrivateSector: null | boolean;
+            addresses: components["schemas"]["PolicyHolderAddressResponse"][];
+            appointments: components["schemas"]["PolicyHolderAppointmentResponse"][];
+        };
         ImportedBrokerageAddressResponse: {
+            zipCode: null | string;
+            street: null | string;
+            number: null | string;
+            complement: null | string;
+            neighborhood: null | string;
+            city: null | string;
+            state: null | string;
+        };
+        ImportedPolicyHolderAddressResponse: {
             zipCode: null | string;
             street: null | string;
             number: null | string;
@@ -959,6 +1299,17 @@ export interface components {
             /** Format: int64 */
             totalPages?: number | string;
         };
+        PagedResponseOfPolicyHolderListItemResponse: {
+            items: components["schemas"]["PolicyHolderListItemResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int64 */
+            totalCount: number | string;
+            /** Format: int64 */
+            totalPages?: number | string;
+        };
         PersonAddressResponse: {
             zipCode: null | string;
             street: null | string;
@@ -979,6 +1330,43 @@ export interface components {
             roles: string[];
             mainAddress: null | components["schemas"]["PersonAddressResponse"];
             preSelectedBranchDocumentNumber?: null | string;
+        };
+        PolicyHolderAddressResponse: {
+            /** Format: uuid */
+            id: string;
+            zipCode: null | string;
+            street: null | string;
+            number: null | string;
+            complement: null | string;
+            neighborhood: null | string;
+            city: null | string;
+            state: null | string;
+            isMain: boolean;
+        };
+        PolicyHolderAppointmentResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            insurerId: string;
+            insurerDocumentNumber: string;
+            insurerName: string;
+            /** Format: uuid */
+            brokerageId: string;
+            brokerageDocumentNumber: string;
+            brokerageName: string;
+            status: string;
+            /** Format: date-time */
+            startedAt: string;
+            /** Format: date-time */
+            endedAt: null | string;
+        };
+        PolicyHolderListItemResponse: {
+            /** Format: uuid */
+            id: string;
+            documentNumber: string;
+            name: string;
+            socialName: null | string;
+            isPrivateSector: null | boolean;
         };
         SearchPersonsResponse: {
             items: components["schemas"]["PersonSearchItemResponse"][];
@@ -1023,6 +1411,15 @@ export interface components {
             logoUrl: null | string;
             referenceExternalId: null | string;
             status: string;
+        };
+        UpdatePolicyHolderAddressBody: {
+            zipCode: null | string;
+            street: null | string;
+            number: null | string;
+            complement: null | string;
+            neighborhood: null | string;
+            city: null | string;
+            state: null | string;
         };
     };
     responses: never;

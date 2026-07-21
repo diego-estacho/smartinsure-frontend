@@ -21,6 +21,7 @@
 import {
   mdiFileDocumentOutline, mdiAccount, mdiLogout,
   mdiChevronDoubleLeft, mdiChevronDoubleRight, mdiOfficeBuildingOutline, mdiMenu,
+  mdiDomain, mdiViewDashboardOutline,
 } from '~/lib/icons'
 
 const { logout } = useAuth()
@@ -30,7 +31,9 @@ const drawerOpen = ref(true)
 const rail = ref(false)
 
 const nav = [
+  { title: 'Painel', to: '/', icon: mdiViewDashboardOutline },
   { title: 'Corretoras', to: '/corretoras', icon: mdiOfficeBuildingOutline },
+  { title: 'Tomadores', to: '/tomadores', icon: mdiDomain },
   { title: 'Página B', to: '/demo/b', icon: mdiFileDocumentOutline },
 ]
 
