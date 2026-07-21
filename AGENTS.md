@@ -12,6 +12,7 @@ A camada de produto vive no `smartinsure-backend`, clonado lado a lado (ADR-001 
 4. [Constituição](../smartinsure-backend/docs/constitution.md) e [Segurança](../smartinsure-backend/docs/SECURITY.md) do produto — princípios e regras obrigatórias.
 5. [docs/FRONTEND.md](docs/FRONTEND.md) — convenções deste repo (arquitetura Nuxt decidida).
 6. [docs/adr/](docs/adr/) — ADRs específicos de UI (numeração própria; ADRs de produto ficam no backend).
+7. [Design system](docs/design-system-map.md) — fonte de marca (tokens, componentes, protótipos) em `../design system/`; de-para para o stack em docs/design-system-map.md (ADR-019). Protótipo é planta: traduzir, nunca colar HTML cru.
 
 Conflito entre chat, memória e arquivos: **prevalecem os arquivos versionados**. Regra ambígua ou inexistente: **pare e registre em open-decisions.md** (camada de produto) com dono sugerido. Nunca invente regra de negócio.
 

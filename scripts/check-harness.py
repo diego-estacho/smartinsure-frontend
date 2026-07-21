@@ -15,6 +15,7 @@ Checagens:
 8. CSS global de componente escopado sob `.si-*` (ADR-015).
 9. Código de produto (app/ ou server/) alterado tem exec-plan ativo OU dispensa em commit (ADR-016).
 10. Identificador de código é inglês; só rota/UI em pt-BR (ADR-058; rede conservadora).
+11. Cor hex cru proibida em componente/folha global fora de styles/tokens/ (só token — ADR-006/019).
 
 IDs de produto (glossário/RN/OPEN e ADRs do produto) são validados no backend, que
 os define. Aqui só se validam os ADRs de UI locais (docs/adr/).
@@ -222,6 +223,28 @@ for raiz in (ROOT / "app", ROOT / "server"):
                 errors.append(f"{f.relative_to(ROOT)}: identificador de código em pt-BR -> "
                               f"'{ident}' (código é inglês; só rota/UI em pt-BR — ADR-058, "
                               f"AGENTS §Idioma). Termo(s): {', '.join(sorted(achados))}")
+
+# 11. Cor hardcoded (ADR-006 / ADR-019): hex cru é PROIBIDO em componente (.vue) e em folha
+#     global fora de styles/tokens/. `styles/tokens/` é a fonte cromática (base.css/tokens.ts) —
+#     é onde o hex é legítimo; em qualquer outro lugar, cor vem de design token
+#     (var(--si-*) ou rgb(var(--v-theme-*))). Dá teeth mecânico à regra "só tokens" pra que o
+#     design system seja respeitado sem depender de skill/ferramenta (ADR-019).
+HEX_RE = re.compile(r"#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b")
+app_dir = ROOT / "app"
+if app_dir.exists():
+    alvos = list(app_dir.rglob("*.vue"))
+    styles_root = app_dir / "assets" / "styles"
+    if styles_root.exists():
+        alvos += [c for c in styles_root.rglob("*.css")
+                  if "tokens" not in c.relative_to(styles_root).parts]
+    for f in sorted(set(alvos)):
+        if "tokens" in f.parts:
+            continue
+        achados = sorted(set(HEX_RE.findall(f.read_text(encoding="utf-8"))))
+        if achados:
+            errors.append(f"{f.relative_to(ROOT)}: cor hex hardcoded (ADR-006/019) -> "
+                          f"{', '.join(achados)} — use design token "
+                          f"(var(--si-*) ou rgb(var(--v-theme-*))).")
 
 for w in warnings:
     print(f"aviso: {w}")
