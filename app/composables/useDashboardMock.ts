@@ -40,7 +40,7 @@ export interface ActivityEntry {
 export interface TrendChart {
   title: string
   updatedAt: string
-  /** Séries em coordenadas y do viewBox 600×200 (menor = mais alto). x = índice × 50. */
+  /** Valores por ponto (nº de apólices emitidas); índice do ponto = eixo x. Maior = mais alto. */
   current: number[]
   previous: number[]
 }
@@ -68,8 +68,8 @@ export function useDashboardMock(): DashboardData {
     chart: {
       title: 'Apólices emitidas — últimos 30 dias',
       updatedAt: 'Atualizado às 14:32',
-      current: [140, 120, 130, 90, 110, 70, 85, 50, 65, 35, 60, 30, 45],
-      previous: [160, 150, 155, 140, 145, 130, 140, 125, 130, 120, 125, 118, 122],
+      current: [60, 80, 70, 110, 90, 130, 115, 150, 135, 165, 140, 170, 155],
+      previous: [40, 50, 45, 60, 55, 70, 60, 75, 70, 80, 75, 82, 78],
     },
     activity: [
       { id: 'A-2241', tone: 'success', icon: mdiCheck, title: 'Apólice', emphasis: '#A-2241', detail: 'emitida · Lucas Pereira · Auto', time: 'há 8 min' },
