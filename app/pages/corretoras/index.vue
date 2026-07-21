@@ -1,9 +1,13 @@
 <script setup lang="ts">
+/**
+ * Corretoras — listagem (RN de corretoras). Página orquestradora fina (ADR-018): mantém o
+ * estado de tela, chama o composable de dados e compõe os componentes de domínio
+ * (filtro, tabela responsiva, dialog de situação). Sem markup denso aqui.
+ */
 import type { BrokerageListItem } from '~/composables/useBrokerages'
 import type { BrokerageStatus } from '~/lib/status/brokerages'
-import { formatCnpj } from '~/lib/documents'
-import { mdiAccountPlusOutline, mdiEyeOutline, mdiRefresh } from '~/lib/icons'
-import { brokerageStatusOptions, getBrokerageStatusAction, getBrokerageStatusView } from '~/lib/status/brokerages'
+import { mdiAccountPlusOutline, mdiRefresh } from '~/lib/icons'
+import { getBrokerageStatusAction } from '~/lib/status/brokerages'
 
 definePageMeta({ layout: 'shell' })
 
@@ -15,23 +19,8 @@ const loading = ref(false)
 const status = ref<BrokerageStatus | null>(null)
 const error = ref<string | null>(null)
 const success = ref<string | null>(null)
-const confirmOpen = ref(false)
+const dialogOpen = ref(false)
 const selectedBrokerage = ref<BrokerageListItem | null>(null)
-const selectedStatusAction = computed(() =>
-  selectedBrokerage.value ? getBrokerageStatusAction(selectedBrokerage.value.status) : null,
-)
-
-const headers = [
-  { title: 'CNPJ', key: 'documentNumber' },
-  { title: 'Razão social', key: 'name' },
-  { title: 'Nome fantasia', key: 'socialName' },
-  { title: 'Situação', key: 'status', align: 'center' },
-  { title: 'Ações', key: 'actions', sortable: false, align: 'center' },
-] as const
-
-const statusActionLabel = computed(() =>
-  selectedStatusAction.value?.label ?? 'Alterar situação da corretora',
-)
 
 await refresh()
 
@@ -53,25 +42,25 @@ async function refresh() {
 }
 
 function openStatusDialog(item: BrokerageListItem) {
-  const action = getBrokerageStatusAction(item.status)
-  if (action.disabled) return
+  if (getBrokerageStatusAction(item.status).disabled) return
 
   selectedBrokerage.value = item
-  confirmOpen.value = true
+  dialogOpen.value = true
 }
 
 async function confirmStatusChange() {
-  const action = selectedStatusAction.value
-  if (!selectedBrokerage.value || !action?.targetStatus) return
+  const brokerage = selectedBrokerage.value
+  const action = brokerage ? getBrokerageStatusAction(brokerage.status) : null
+  if (!brokerage || !action?.targetStatus) return
 
   loading.value = true
   error.value = null
   success.value = null
 
   try {
-    await changeBrokerageStatus(selectedBrokerage.value.id, action.targetStatus)
+    await changeBrokerageStatus(brokerage.id, action.targetStatus)
     success.value = action.successMessage
-    confirmOpen.value = false
+    dialogOpen.value = false
     await refresh()
   }
   catch {
@@ -81,7 +70,6 @@ async function confirmStatusChange() {
     loading.value = false
   }
 }
-
 </script>
 
 <template>
@@ -111,7 +99,7 @@ async function confirmStatusChange() {
     </div>
 
     <SiCard
-      class="si-brokerages__table-card"
+      class="si-brokerages__card"
       variant="outlined"
     >
       <div class="si-brokerages__toolbar">
@@ -119,14 +107,8 @@ async function confirmStatusChange() {
           {{ totalCount }} corretora{{ totalCount === 1 ? '' : 's' }}
         </div>
 
-        <SiSelect
+        <BrokeragesStatusFilter
           v-model="status"
-          label="Situação"
-          :items="brokerageStatusOptions"
-          item-title="title"
-          item-value="value"
-          density="compact"
-          class="si-brokerages__filter"
           @update:model-value="refresh"
         />
       </div>
@@ -145,91 +127,19 @@ async function confirmStatusChange() {
         :text="success"
       />
 
-      <SiDataTable
-        :headers="headers"
+      <BrokeragesTable
         :items="items"
         :loading="loading"
-        :items-per-page="20"
-        density="compact"
-        class="si-brokerages__table"
-      >
-        <template #[`item.documentNumber`]="{ item }">
-          {{ formatCnpj(item.documentNumber) }}
-        </template>
-
-        <template #[`item.socialName`]="{ item }">
-          {{ item.socialName ?? '-' }}
-        </template>
-
-        <template #[`item.status`]="{ item }">
-          <div class="si-brokerages__status">
-            <SiChip
-              :color="getBrokerageStatusView(item.status).color"
-              size="small"
-            >
-              {{ getBrokerageStatusView(item.status).label }}
-            </SiChip>
-          </div>
-        </template>
-
-        <template #[`item.actions`]="{ item }">
-          <div class="si-brokerages__actions">
-            <SiButton
-              :to="`/corretoras/${item.id}`"
-              :prepend-icon="mdiEyeOutline"
-              size="small"
-              variant="tonal"
-              color="info"
-            >
-              Detalhes
-            </SiButton>
-
-            <SiButton
-              :prepend-icon="getBrokerageStatusAction(item.status).icon"
-              size="small"
-              variant="tonal"
-              :color="getBrokerageStatusAction(item.status).color"
-              :disabled="getBrokerageStatusAction(item.status).disabled"
-              @click="openStatusDialog(item)"
-            >
-              {{ getBrokerageStatusAction(item.status).shortLabel }}
-            </SiButton>
-          </div>
-        </template>
-      </SiDataTable>
+        @change-status="openStatusDialog"
+      />
     </SiCard>
 
-    <SiDialog v-model="confirmOpen">
-      <SiCard class="pa-5">
-        <h2 class="text-h6 mb-3">
-          {{ statusActionLabel }}
-        </h2>
-
-        <p class="mb-5">
-          {{ selectedBrokerage?.name }}
-        </p>
-
-        <div class="si-brokerages__dialog-actions">
-          <SiButton
-            variant="text"
-            size="small"
-            @click="confirmOpen = false"
-          >
-            Cancelar
-          </SiButton>
-
-          <SiButton
-            :prepend-icon="selectedStatusAction?.icon"
-            :loading="loading"
-            :disabled="selectedStatusAction?.disabled"
-            size="small"
-            @click="confirmStatusChange"
-          >
-            Confirmar
-          </SiButton>
-        </div>
-      </SiCard>
-    </SiDialog>
+    <BrokeragesStatusChangeDialog
+      v-model="dialogOpen"
+      :brokerage="selectedBrokerage"
+      :loading="loading"
+      @confirm="confirmStatusChange"
+    />
   </VContainer>
 </template>
 
@@ -260,7 +170,7 @@ async function confirmStatusChange() {
   gap: var(--si-space-2);
 }
 
-.si-brokerages__table-card {
+.si-brokerages__card {
   overflow: hidden;
 }
 
@@ -268,45 +178,18 @@ async function confirmStatusChange() {
   padding: var(--si-space-4);
 }
 
-.si-brokerages__filter {
-  flex: 0 0 220px;
-  max-width: 220px;
-  width: 220px;
-}
-
 .si-brokerages__count {
   color: rgba(var(--v-theme-on-surface), 0.7);
   font-size: var(--si-fs-small);
 }
 
-.si-brokerages__dialog-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--si-space-2);
-}
-
-.si-brokerages__status,
-.si-brokerages__actions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--si-space-2);
-}
-
-@media (max-width: 700px) {
+/* Mobile-first (ADR-017): header e toolbar empilham no xs; ficam em linha a partir de sm. */
+@media (max-width: 599.98px) {
   .si-brokerages__header,
   .si-brokerages__toolbar,
-  .si-brokerages__header-actions,
-  .si-brokerages__actions {
-    align-items: stretch;
+  .si-brokerages__header-actions {
     flex-direction: column;
-  }
-
-  .si-brokerages__filter {
-    flex: 1 1 auto;
-    max-width: none;
-    width: 100%;
+    align-items: stretch;
   }
 }
 </style>
