@@ -96,10 +96,16 @@ async function onLogout() {
       :rail="!mobile && rail"
       :rail-width="76"
     >
-      <div
-        v-if="!mobile"
-        class="si-shell-brand"
-        :class="{ 'si-shell-brand--rail': rail }"
+      <!-- Marca. Recolhido, o logo vira um botão "Expandir menu": um alvo grande e no topo
+           (onde se procura), além da seta do rodapé — reabrir não depende de achar o controle
+           pequeno lá embaixo. Expandido, é só a marca (não recolhe pelo logo, pra não surpreender). -->
+      <button
+        v-if="!mobile && rail"
+        type="button"
+        class="si-shell-brand si-shell-brand--rail si-shell-brand--toggle"
+        aria-label="Expandir menu"
+        title="Expandir menu"
+        @click="rail = false"
       >
         <img
           src="/brand/symbol.png"
@@ -108,10 +114,19 @@ async function onLogout() {
           width="32"
           height="32"
         >
-        <span
-          v-if="!rail"
-          class="si-shell-wordmark"
+      </button>
+      <div
+        v-else-if="!mobile"
+        class="si-shell-brand"
+      >
+        <img
+          src="/brand/symbol.png"
+          alt="SmartInsure"
+          class="si-shell-symbol"
+          width="32"
+          height="32"
         >
+        <span class="si-shell-wordmark">
           <span class="si-shell-wordmark-smart">Smart</span><span class="si-shell-wordmark-insure">insure</span>
         </span>
       </div>
@@ -230,6 +245,22 @@ async function onLogout() {
 .si-shell-brand--rail {
   justify-content: center;
   padding-inline: 0;
+}
+
+/* Recolhido, o logo é um botão de expandir: neutraliza o estilo de botão e dá realce no hover
+ * pra ler como clicável. Só entra no rail (o `--toggle` só é aplicado quando `rail`). */
+.si-shell-brand--toggle {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--si-radius-md);
+  transition: background-color var(--si-dur-fast) var(--si-ease-out);
+}
+
+.si-shell-brand--toggle:hover {
+  background: rgba(var(--v-theme-on-charcoal), 0.08);
 }
 
 .si-shell-symbol {
