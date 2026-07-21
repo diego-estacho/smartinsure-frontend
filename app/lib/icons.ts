@@ -28,4 +28,5 @@ export {
   mdiPowerOff,
   mdiRefresh,
   mdiTrashCanOutline,
+  mdiCreditCardOutline,
 } from '@mdi/js'
