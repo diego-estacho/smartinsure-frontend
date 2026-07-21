@@ -1,9 +1,19 @@
 <script setup lang="ts">
 /**
- * Painel de tendência do dashboard (ADR-018) — área + linha das apólices emitidas.
- * SVG estilizado 100% por design token (stroke/fill via `var(--…)`), sem cor hex
- * (ADR-006/019). Séries em coordenadas y do viewBox 600×200; x = índice × 50.
+ * Painel de tendência do dashboard (ADR-018) — área + linha das apólices emitidas,
+ * pela lib de gráficos unovis (ADR-020). Cores 100% por design token (ADR-006/019):
+ * as séries recebem `rgb(var(--v-theme-*))`, sem hex. O gráfico é montado client-side
+ * (`<ClientOnly>`, os componentes tocam o DOM); o fallback tem a mesma altura (sem layout shift).
  */
+import { VisXYContainer, VisArea, VisLine, VisAxis } from '@unovis/vue'
+import { CurveType } from '@unovis/ts'
+
+interface Point {
+  index: number
+  current: number
+  previous: number
+}
+
 const props = defineProps<{
   title: string
   updatedAt: string
@@ -11,24 +21,20 @@ const props = defineProps<{
   previous: number[]
 }>()
 
-const STEP = 50
-const BASE = 200
+const data = computed<Point[]>(() =>
+  props.current.map((value, index) => ({
+    index,
+    current: value,
+    previous: props.previous[index] ?? 0,
+  })),
+)
 
-function toPoints(series: number[]): string {
-  return series.map((y, i) => `${i * STEP},${y}`).join(' ')
-}
+const x = (d: Point) => d.index
+const yCurrent = (d: Point) => d.current
+const yPrevious = (d: Point) => d.previous
 
-const currentPoints = computed(() => toPoints(props.current))
-const previousPoints = computed(() => toPoints(props.previous))
-
-const areaPath = computed(() => {
-  const top = props.current.map((y, i) => `${i === 0 ? 'M' : 'L'}${i * STEP},${y}`).join(' ')
-  const lastX = (props.current.length - 1) * STEP
-  return `${top} L${lastX},${BASE} L0,${BASE} Z`
-})
-
-const dotX = computed(() => (props.current.length - 1) * STEP)
-const dotY = computed(() => props.current[props.current.length - 1] ?? 0)
+const CHART_HEIGHT = 200
+const margin = { top: 8, right: 8, bottom: 8, left: 8 }
 </script>
 
 <template>
@@ -45,59 +51,47 @@ const dotY = computed(() => props.current[props.current.length - 1] ?? 0)
 
     <div class="si-dash-panel__body">
       <div class="si-dash-chart">
-        <svg
-          viewBox="0 0 600 200"
-          preserveAspectRatio="none"
-          role="img"
-          :aria-label="title"
-        >
-          <defs>
-            <linearGradient
-              id="si-dash-area"
-              x1="0"
-              x2="0"
-              y1="0"
-              y2="1"
-            >
-              <stop
-                class="si-dash-chart__area-top"
-                offset="0%"
-              />
-              <stop
-                class="si-dash-chart__area-bottom"
-                offset="100%"
-              />
-            </linearGradient>
-          </defs>
+        <ClientOnly>
+          <VisXYContainer
+            :data="data"
+            :height="CHART_HEIGHT"
+            :margin="margin"
+          >
+            <VisAxis
+              type="y"
+              :num-ticks="4"
+              :grid-line="true"
+              :domain-line="false"
+              :tick-line="false"
+              :tick-format="() => ''"
+            />
+            <VisArea
+              :x="x"
+              :y="yCurrent"
+              color="rgb(var(--v-theme-primary))"
+              :opacity="0.16"
+              :curve-type="CurveType.Linear"
+            />
+            <VisLine
+              :x="x"
+              :y="yPrevious"
+              color="rgba(var(--v-theme-on-surface), 0.28)"
+              :line-width="2"
+              :curve-type="CurveType.Linear"
+            />
+            <VisLine
+              :x="x"
+              :y="yCurrent"
+              color="rgb(var(--v-theme-primary))"
+              :line-width="2.5"
+              :curve-type="CurveType.Linear"
+            />
+          </VisXYContainer>
 
-          <g class="si-dash-chart__grid">
-            <line x1="0" y1="40" x2="600" y2="40" />
-            <line x1="0" y1="90" x2="600" y2="90" />
-            <line x1="0" y1="140" x2="600" y2="140" />
-            <line x1="0" y1="180" x2="600" y2="180" />
-          </g>
-
-          <polyline
-            class="si-dash-chart__line-prev"
-            fill="none"
-            :points="previousPoints"
-          />
-          <path
-            class="si-dash-chart__area"
-            :d="areaPath"
-          />
-          <polyline
-            class="si-dash-chart__line"
-            fill="none"
-            :points="currentPoints"
-          />
-          <circle
-            class="si-dash-chart__dot"
-            :cx="dotX"
-            :cy="dotY"
-            r="4"
-          />
-        </svg>
+          <template #fallback>
+            <div class="si-dash-chart__fallback" />
+          </template>
+        </ClientOnly>
       </div>
 
       <div class="si-dash-chart__legend">
@@ -133,53 +127,18 @@ const dotY = computed(() => props.current[props.current.length - 1] ?? 0)
   padding: var(--si-space-4) var(--si-space-5);
 }
 
+/* Tema do unovis por token (ADR-006/020): CSS custom properties herdam por cascata, então
+ * setar as `--vis-*` aqui no pai já alcança o SVG do unovis dentro. Grade pela cor de hairline
+ * da marca, fonte pela família do DS. Sem cor hex — só token. */
 .si-dash-chart {
   height: 200px;
+  --vis-axis-grid-color: var(--si-cinza-claro);
+  --vis-axis-tick-color: var(--si-cinza-claro);
+  --vis-font-family: var(--si-font-family);
 }
 
-.si-dash-chart svg {
-  width: 100%;
-  height: 100%;
-}
-
-.si-dash-chart__grid line {
-  stroke: var(--si-cinza-claro);
-  stroke-width: 1;
-}
-
-.si-dash-chart__line-prev {
-  stroke: rgba(var(--v-theme-on-surface), 0.22);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.si-dash-chart__line {
-  stroke: rgb(var(--v-theme-primary));
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.si-dash-chart__area {
-  fill: url('#si-dash-area');
-  stroke: none;
-}
-
-.si-dash-chart__area-top {
-  stop-color: rgb(var(--v-theme-primary));
-  stop-opacity: 0.28;
-}
-
-.si-dash-chart__area-bottom {
-  stop-color: rgb(var(--v-theme-primary));
-  stop-opacity: 0;
-}
-
-.si-dash-chart__dot {
-  fill: rgb(var(--v-theme-primary));
-  stroke: rgb(var(--v-theme-surface));
-  stroke-width: 2;
+.si-dash-chart__fallback {
+  height: 200px;
 }
 
 .si-dash-chart__legend {

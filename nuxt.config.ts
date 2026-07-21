@@ -47,6 +47,10 @@ export default defineNuxtConfig({
 
   typescript: { strict: true },
 
+  // Lib de gráficos unovis (ADR-020): transpilar o wrapper Vue (compat ESM/d3). O gráfico
+  // em si é montado client-side (<ClientOnly>) porque toca o DOM.
+  build: { transpile: ['@unovis/vue'] },
+
   // Config só-servidor do BFF (ADR-008): o browser nunca vê estes valores.
   // Preenchidos por env (NUXT_BACKEND_BASE_URL, NUXT_DEV_AUTH_ENABLED).
   runtimeConfig: {
