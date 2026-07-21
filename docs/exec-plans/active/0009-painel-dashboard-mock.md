@@ -19,15 +19,16 @@ sai quando o backend existir (troca-se `useDashboardMock` por consumo do BFF, AD
 
 ## Escopo
 
-**Dentro:** rota `/painel` (`app/pages/painel.vue`, layout `shell`), orquestradora fina que compõe
+**Dentro:** o painel **é a home** — vive em `/` (`app/pages/index.vue`, layout `shell`) e
+**substitui a antiga home de atalhos**; o login redireciona pra cá. Orquestradora fina que compõe
 componentes de domínio em `app/components/dashboard/`:
 - `Kpis.vue` (`<DashboardKpis>`) — 4 cards de métrica, incl. o card de destaque em carvão.
 - `TrendChart.vue` (`<DashboardTrendChart>`) — área + linha (SVG) 100% por token, sem hex.
 - `Activity.vue` (`<DashboardActivity>`) — atividade recente com ícone de tom semântico.
 - `Filters.vue` (`<DashboardFilters>`) — chips de período (pill), ativo em carvão.
 - `useDashboardMock.ts` — dados mock tipados. `lib/icons.ts` — ícones do de-para (Lucide→mdi).
-- Item "Painel" no nav do `shell` (torna a rota acessível). Toolbar (busca + "Nova apólice") e
-  banner de aviso — a busca e o botão são **ilustrativos** (mock), com aviso explícito na tela.
+- Item "Painel" no nav do `shell` aponta pra `/`. Toolbar (busca + "Nova apólice") e banner de
+  aviso — a busca e o botão são **ilustrativos** (mock), com aviso explícito na tela.
 
 **Fora (e por quê):**
 - **Workspace switcher** ("trocar corretora") — é chrome do menu (shell) **e** feature de produto
@@ -58,7 +59,8 @@ componentes de domínio em `app/components/dashboard/`:
   existente (reuso do menu; item "Painel" adicionado ao nav).
 - **Mobile (~390px, ADR-017):** `docs/exec-plans/evidence/0009-painel-mobile.png` — toolbar empilha,
   KPIs viram 1 coluna, gráfico e atividade empilham; sem scroll horizontal.
-- **Arquivos:** `app/pages/painel.vue`; `app/components/dashboard/{Kpis,TrendChart,Activity,Filters}.vue`;
+- **Arquivos:** `app/pages/index.vue` (o painel é a home; substitui a home de atalhos);
+  `app/components/dashboard/{Kpis,TrendChart,Activity,Filters}.vue`;
   `app/composables/useDashboardMock.ts`; `app/lib/icons.ts` (+ícones do de-para); `app/layouts/shell.vue`
   (item "Painel").
 
