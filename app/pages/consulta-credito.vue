@@ -253,14 +253,22 @@ function buildTableRow(result: CreditInquiryResultResponse) {
           class="si-credit-inquiries__table"
         >
           <template #[`item.status`]="{ item }">
-            <SiChip
-              :color="getCreditInquiryInsurerStatusView(item.status).color"
-              label
-              size="small"
-              :title="item.failureReason || undefined"
-            >
-              {{ getCreditInquiryInsurerStatusView(item.status).label }}
-            </SiChip>
+            <div class="si-credit-inquiries__status-cell">
+              <SiChip
+                :color="getCreditInquiryInsurerStatusView(item.status).color"
+                label
+                size="small"
+                :title="item.failureReason || undefined"
+              >
+                {{ getCreditInquiryInsurerStatusView(item.status).label }}
+              </SiChip>
+              <div
+                v-if="item.failureReason"
+                class="si-credit-inquiries__failure-reason"
+              >
+                {{ item.failureReason }}
+              </div>
+            </div>
           </template>
 
           <template #[`item.traditional`]="{ item }">
@@ -419,6 +427,18 @@ function buildTableRow(result: CreditInquiryResultResponse) {
 
 .si-credit-inquiries__unavailable {
   color: rgba(var(--v-theme-on-surface), 0.5);
+}
+
+.si-credit-inquiries__status-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--si-space-2);
+}
+
+.si-credit-inquiries__failure-reason {
+  font-size: var(--si-fs-small);
+  color: rgba(var(--v-theme-on-surface), 0.7);
+  line-height: 1.3;
 }
 
 .si-credit-inquiries__empty {

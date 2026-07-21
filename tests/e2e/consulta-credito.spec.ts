@@ -148,6 +148,52 @@ test.describe('Consulta de Crédito - RN-029 Execução da Consulta', () => {
     await expect(summaryValues.filter({ hasText: /20.*07.*2026.*14:30/ })).toBeVisible() // data/hora
   })
 
+  test('CNPJ com dígito verificador inválido — mensagem de erro exibida (RN-029)', async ({ page }) => {
+    let creditInquiriesCalled = false
+
+    await page.route('**/api/brokerages*', route =>
+      route.fulfill({
+        json: {
+          items: [{
+            id: '01980000-0000-7000-8000-000000000001',
+            documentNumber: '11222333000144',
+            name: 'Corretora Alfa Ltda.',
+            socialName: null,
+            isPrivateSector: true,
+            status: 'Active',
+          }],
+          page: 1,
+          pageSize: 100,
+          totalCount: 1,
+        },
+      }))
+
+    await page.route('**/api/credit-inquiries', async (route) => {
+      creditInquiriesCalled = true
+      await route.abort()
+    })
+
+    await page.goto('/consulta-credito')
+    await page.waitForLoadState('networkidle')
+
+    // Preenche Corretora
+    await page.getByLabel('Corretora').click({ force: true })
+    await page.getByRole('option', { name: 'Corretora Alfa Ltda.' }).click()
+
+    // Preenche CNPJ com dígito verificador inválido
+    // 00.000.000/0000-00 — CNPJ com checksum inválido (todos zeros)
+    const cnpjField = page.getByLabel('CNPJ do Tomador')
+    await cnpjField.fill('00000000000000')
+    await cnpjField.blur() // Dispara validação
+
+    // Aguarda mensagem de erro
+    await expect(page.getByText('CNPJ inválido')).toBeVisible()
+
+    // Tenta clicar no button (pode estar disabled ou não)
+    // Garante que nenhuma chamada ao BFF foi feita
+    expect(creditInquiriesCalled).toBe(false)
+  })
+
   test('tabela com Seguradoras, Status, Limites, Validade — sem coluna Utilizado', async ({ page }) => {
     const brokerageId = '01980000-0000-7000-8000-000000000001'
 
@@ -253,7 +299,7 @@ test.describe('Consulta de Crédito - RN-030 Falha Isolada', () => {
     await page.request.post('/api/auth/dev-login')
   })
 
-  test('Seguradora indisponível mostra status com motivo em tooltip', async ({ page }) => {
+  test('Seguradora indisponível mostra status com motivo visível (RN-030)', async ({ page }) => {
     const brokerageId = '01980000-0000-7000-8000-000000000001'
 
     await page.route('**/api/brokerages*', route =>
@@ -330,9 +376,13 @@ test.describe('Consulta de Crédito - RN-030 Falha Isolada', () => {
     await expect(page.getByText('Quadro consolidado de limites')).toBeVisible()
 
     // Verifica status indisponível na linha da Seguradora B
-    // Verifica que o chip mostra "Indisponível"
+    // Verifica que o chip mostra "Indisponível" (dentro do v-chip__content)
     await expect(page.getByText('Seguradora B')).toBeVisible()
-    await expect(page.getByText('Indisponível')).toBeVisible()
+    const unavailableChip = page.locator('.v-chip__content').filter({ hasText: 'Indisponível' })
+    await expect(unavailableChip).toBeVisible()
+
+    // Verifica que o MOTIVO está VISÍVEL (não só em tooltip)
+    await expect(page.getByText('Motor de Cálculo indisponível')).toBeVisible()
 
     // Verifica que os campos de limite mostram "—" (não zero) em linha com Seguradora B
     const sgBContainer = page.locator('div:has-text("Seguradora B")')
@@ -434,6 +484,50 @@ test.describe('Consulta de Crédito - RN-030 Falha Isolada', () => {
     await expect(summaryValues.filter({ hasText: /^3$/ })).toBeVisible() // Total consultadas
     await expect(summaryValues.filter({ hasText: /^1$/ })).toBeVisible() // Apenas 1 disponível
     await expect(page.getByText('Aprovadas')).toBeVisible()
+  })
+
+  test('Corretora sem Habilitação Ativa — BFF retorna erro 4xx com ProblemDetails (RN-029)', async ({ page }) => {
+    const brokerageId = '01980000-0000-7000-8000-000000000001'
+
+    await page.route('**/api/brokerages*', route =>
+      route.fulfill({
+        json: {
+          items: [{
+            id: brokerageId,
+            documentNumber: '11222333000144',
+            name: 'Corretora Alfa Ltda.',
+            socialName: null,
+            isPrivateSector: true,
+            status: 'Active',
+          }],
+          page: 1,
+          pageSize: 100,
+          totalCount: 1,
+        },
+      }))
+
+    await page.route('**/api/credit-inquiries', route =>
+      route.fulfill({
+        status: 400,
+        json: {
+          type: 'https://smartinsure.api/problems/invalid-request',
+          title: 'Requisição inválida',
+          status: 400,
+          detail: 'Nenhuma Seguradora habilitada para esta Corretora.',
+        },
+      }))
+
+    await page.goto('/consulta-credito')
+    await page.waitForLoadState('networkidle')
+
+    // Preenche e tenta consultar
+    await page.getByLabel('Corretora').click({ force: true })
+    await page.getByRole('option', { name: 'Corretora Alfa Ltda.' }).click()
+    await page.getByLabel('CNPJ do Tomador').fill('12345678000195')
+    await page.getByRole('button', { name: 'Consultar' }).click()
+
+    // Aguarda e valida que mensagem de erro é exibida (título do ProblemDetails)
+    await expect(page.getByText('Requisição inválida')).toBeVisible()
   })
 })
 
