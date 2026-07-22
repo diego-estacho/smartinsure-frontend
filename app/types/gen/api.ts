@@ -581,6 +581,336 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/modalities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                    includeInactive?: boolean;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PagedResponseOfModalityListItemResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateModalityRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CreateModalityResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/modalities/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GetModalityResponse"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateModalityBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UpdateModalityResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/modalities/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ChangeModalityStatusBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChangeModalityStatusResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/modality-groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                    includeInactive?: boolean;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PagedResponseOfModalityGroupListItemResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateModalityGroupRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CreateModalityGroupResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/modality-groups/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GetModalityGroupResponse"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateModalityGroupBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UpdateModalityGroupResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/modality-groups/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ChangeModalityGroupStatusBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChangeModalityGroupStatusResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/api/v1/persons": {
         parameters: {
             query?: never;
@@ -1094,6 +1424,22 @@ export interface components {
             id: string;
             status: string;
         };
+        ChangeModalityGroupStatusBody: {
+            status: string;
+        };
+        ChangeModalityGroupStatusResponse: {
+            /** Format: uuid */
+            id: string;
+            status: string;
+        };
+        ChangeModalityStatusBody: {
+            status: string;
+        };
+        ChangeModalityStatusResponse: {
+            /** Format: uuid */
+            id: string;
+            status: string;
+        };
         CreateBrokerageInsurerEnablementRequest: {
             /** Format: uuid */
             brokerageId: string;
@@ -1144,6 +1490,38 @@ export interface components {
             tradeName: null | string;
             logoUrl: null | string;
             referenceExternalId: null | string;
+            status: string;
+        };
+        CreateModalityGroupRequest: {
+            name: string;
+            description: null | string;
+            /** Format: int32 */
+            displayOrder: number | string;
+            initialStatus: string;
+        };
+        CreateModalityGroupResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            description: null | string;
+            /** Format: int32 */
+            displayOrder: number | string;
+            status: string;
+        };
+        CreateModalityRequest: {
+            name: string;
+            /** Format: uuid */
+            modalityGroupId: string;
+            description: null | string;
+            initialStatus: string;
+        };
+        CreateModalityResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: uuid */
+            modalityGroupId: string;
+            description: null | string;
             status: string;
         };
         CreatePolicyHolderAppointmentBody: {
@@ -1227,6 +1605,24 @@ export interface components {
             referenceExternalId: null | string;
             status: string;
         };
+        GetModalityGroupResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            description: null | string;
+            /** Format: int32 */
+            displayOrder: number | string;
+            status: string;
+        };
+        GetModalityResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: uuid */
+            modalityGroupId: string;
+            description: null | string;
+            status: string;
+        };
         GetPolicyHolderResponse: {
             /** Format: uuid */
             id: string;
@@ -1266,6 +1662,25 @@ export interface components {
             logoUrl: null | string;
             status: string;
         };
+        ModalityGroupListItemResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            description: null | string;
+            /** Format: int32 */
+            displayOrder: number | string;
+            status: string;
+        };
+        ModalityListItemResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: uuid */
+            modalityGroupId: string;
+            modalityGroupName: string;
+            description: null | string;
+            status: string;
+        };
         PagedResponseOfBrokerageInsurerEnablementListItemResponse: {
             items: components["schemas"]["BrokerageInsurerEnablementListItemResponse"][];
             /** Format: int32 */
@@ -1290,6 +1705,28 @@ export interface components {
         };
         PagedResponseOfInsurerListItemResponse: {
             items: components["schemas"]["InsurerListItemResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int64 */
+            totalCount: number | string;
+            /** Format: int64 */
+            totalPages?: number | string;
+        };
+        PagedResponseOfModalityGroupListItemResponse: {
+            items: components["schemas"]["ModalityGroupListItemResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int64 */
+            totalCount: number | string;
+            /** Format: int64 */
+            totalPages?: number | string;
+        };
+        PagedResponseOfModalityListItemResponse: {
+            items: components["schemas"]["ModalityListItemResponse"][];
             /** Format: int32 */
             page: number | string;
             /** Format: int32 */
@@ -1410,6 +1847,36 @@ export interface components {
             tradeName: null | string;
             logoUrl: null | string;
             referenceExternalId: null | string;
+            status: string;
+        };
+        UpdateModalityBody: {
+            name: string;
+            /** Format: uuid */
+            modalityGroupId: string;
+            description: null | string;
+        };
+        UpdateModalityGroupBody: {
+            name: string;
+            description: null | string;
+            /** Format: int32 */
+            displayOrder: number | string;
+        };
+        UpdateModalityGroupResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            description: null | string;
+            /** Format: int32 */
+            displayOrder: number | string;
+            status: string;
+        };
+        UpdateModalityResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: uuid */
+            modalityGroupId: string;
+            description: null | string;
             status: string;
         };
         UpdatePolicyHolderAddressBody: {

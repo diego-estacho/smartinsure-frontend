@@ -39,4 +39,6 @@ export {
   mdiPowerOff,
   mdiRefresh,
   mdiTrashCanOutline,
+  mdiShapeOutline,
+  mdiTagOutline,
 } from '@mdi/js'
