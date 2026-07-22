@@ -416,6 +416,84 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/imported-modalities/{id}/map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["MapImportedModalityBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MapImportedModalityResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/imported-modalities/{id}/ignore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["IgnoreImportedModalityResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/insurers": {
         parameters: {
             query?: never;
@@ -909,6 +987,76 @@ export interface paths {
                 };
             };
         };
+        trace?: never;
+    };
+    "/api/v1/modality-imports/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ModalityImportSummaryResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/modality-map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ModalityMapResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/persons": {
@@ -1635,6 +1783,11 @@ export interface components {
             addresses: components["schemas"]["PolicyHolderAddressResponse"][];
             appointments: components["schemas"]["PolicyHolderAppointmentResponse"][];
         };
+        IgnoreImportedModalityResponse: {
+            /** Format: uuid */
+            importedModalityId: string;
+            ignored: boolean;
+        };
         ImportedBrokerageAddressResponse: {
             zipCode: null | string;
             street: null | string;
@@ -1662,6 +1815,25 @@ export interface components {
             logoUrl: null | string;
             status: string;
         };
+        MapImportedModalityBody: {
+            /** Format: uuid */
+            modalityId: string;
+        };
+        MapImportedModalityResponse: {
+            /** Format: uuid */
+            importedModalityId: string;
+            /** Format: uuid */
+            modalityId: string;
+            mappingStatus: string;
+        };
+        MapInsurerResponse: {
+            /** Format: uuid */
+            insurerId: string;
+            insurerName: string;
+            /** Format: uuid */
+            importedModalityId: string;
+            originName: string;
+        };
         ModalityGroupListItemResponse: {
             /** Format: uuid */
             id: string;
@@ -1670,6 +1842,15 @@ export interface components {
             /** Format: int32 */
             displayOrder: number | string;
             status: string;
+        };
+        ModalityImportSummaryResponse: {
+            /** Format: int32 */
+            insurersProcessed: number | string;
+            /** Format: int32 */
+            insurersSucceeded: number | string;
+            /** Format: int32 */
+            insurersFailed: number | string;
+            failures: string[];
         };
         ModalityListItemResponse: {
             /** Format: uuid */
@@ -1680,6 +1861,20 @@ export interface components {
             modalityGroupName: string;
             description: null | string;
             status: string;
+        };
+        ModalityMapEntryResponse: {
+            /** Format: uuid */
+            modalityId: string;
+            name: string;
+            groupName: string;
+            status: string;
+            offered: boolean;
+            branches: string[];
+            insurers: components["schemas"]["MapInsurerResponse"][];
+        };
+        ModalityMapResponse: {
+            modalities: components["schemas"]["ModalityMapEntryResponse"][];
+            pending: components["schemas"]["PendingImportedModalityResponse"][];
         };
         PagedResponseOfBrokerageInsurerEnablementListItemResponse: {
             items: components["schemas"]["BrokerageInsurerEnablementListItemResponse"][];
@@ -1746,6 +1941,17 @@ export interface components {
             totalCount: number | string;
             /** Format: int64 */
             totalPages?: number | string;
+        };
+        PendingImportedModalityResponse: {
+            /** Format: uuid */
+            importedModalityId: string;
+            /** Format: uuid */
+            insurerId: string;
+            insurerName: string;
+            originName: string;
+            branch: string;
+            engineModalityName: null | string;
+            groupName: string;
         };
         PersonAddressResponse: {
             zipCode: null | string;
