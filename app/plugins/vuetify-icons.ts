@@ -38,7 +38,9 @@ const aliases = {
   complete: 'check', cancel: 'circleX', close: 'close', delete: 'circleX', clear: 'circleX',
   success: 'circleCheck', info: 'info', warning: 'alertTriangle', error: 'circleX',
   prev: 'chevronLeft', next: 'chevronRight',
-  checkboxOn: 'squareCheck', checkboxOff: 'square', checkboxIndeterminate: 'squareMinus',
+  // Checkbox: só a MARCA (o quadrado é desenhado no skin). check quando marcado, traço
+  // quando indeterminado; off fica escondido pelo skin (opacity 0).
+  checkboxOn: 'check', checkboxOff: 'square', checkboxIndeterminate: 'minus',
   delimiter: 'circle', sortAsc: 'arrowUp', sortDesc: 'arrowDown',
   expand: 'chevronDown', menu: 'menu', subgroup: 'chevronDown', dropdown: 'chevronDown',
   collapse: 'chevronUp', radioOn: 'circleDot', radioOff: 'circle', edit: 'pencil',

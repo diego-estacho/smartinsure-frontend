@@ -101,10 +101,18 @@ no plugin (`vuetify-icons.ts`).
 - **Vitrine:** bloco combinado SiIcon/SiChip/SiBadge/SiAvatar separado em um `SiCard` por componente
   (facilita o de-para).
 
-**Escopo expandido pelo dono (em andamento):** DS **Stepper** — antes marcado como fora (sem consumidor);
-o dono confirmou que será usado, então será criado (`SiStepper`, horizontal + vertical). Também nesta
-leva: checkbox/radio pixel-fiéis ao DS (box verde preenchido / anel + dot), **label estático acima** dos
-campos (não o flutuante do Vuetify) e aproximação do calendário do `DateField`.
+**Escopo expandido pelo dono (em andamento):**
+- **Checkbox/Radio pixel-fiéis ao DS (feito, medido):** o quadrado (18×18, raio 6 ≈ 5 do DS) e o
+  anel (18×18) são DESENHADOS no CSS reusando o `::before` do Vuetify (a "state layer"; precisou
+  voltar `opacity:1`, inclusive no hover/foco, pois o Vuetify a mantém em 0). Checkbox marcado =
+  verde preenchido (`rgb(34,197,94)`) + check branco (glifo Lucide vira só a MARCA: `checkboxOn:
+  'check'`, `checkboxIndeterminate: 'minus'`); vazio = branco + borda `--si-border-strong` (#cbd5e1);
+  indeterminado detectado por `aria-checked="mixed"`. Radio selecionado = anel verde + dot verde 8px
+  (`::after` escala 0→1); não-selecionado = anel border-strong. Anel de foco 3px verde. Verificado por
+  medição (Playwright) e screenshot na vitrine.
+- **Pendentes:** DS **Stepper** (antes fora — sem consumidor; o dono confirmou uso → criar `SiStepper`
+  horizontal + vertical); **label estático acima** dos campos (não o flutuante do Vuetify); aproximação
+  do calendário do `DateField`.
 
 **Aberto (sob demanda):** Tabs `segmented` — variante do DS via VBtnToggle; sem consumidor hoje, fica
 para quando surgir a necessidade.

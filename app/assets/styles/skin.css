@@ -210,15 +210,139 @@
   box-shadow: 0 0 0 3px rgba(var(--v-theme-error), 0.18);
 }
 
-/* ─── Controles de seleção (.si-checkbox/.si-radio/.si-switch) ────────────────
- * DS (Checkbox/RadioGroup/Switch.jsx): verde quando ativo (já vem por color=primary nos
- * defaults) + anel de foco verde por teclado. Vuetify desenha a caixa/trilho; aqui só o
- * acabamento de marca (traduzir, não reconstruir — ADR-013/014). */
-.si-checkbox .v-selection-control__input:has(input:focus-visible),
-.si-radio .v-selection-control__input:has(input:focus-visible),
+/* ─── Controles de seleção (.si-checkbox / .si-radio / .si-switch) ────────────
+ * DS (Checkbox/RadioGroup.jsx): a caixa/anel são DESENHADOS (quadrado verde preenchido com
+ * check branco; anel neutro com dot verde), não os glifos de traço do Vuetify. O Vuetify
+ * troca o glifo por estado (--dirty quando marcado, aria-checked="mixed" quando
+ * indeterminado); aqui desenhamos a caixa no CSS e, no checkbox, reaproveitamos o glifo só
+ * como MARCA (check/traço) em branco. Traduzir o protótipo, não reconstruir (ADR-013/014). */
+
+/* Switch mantém o anel de foco no alvo (pílula do trilho). */
 .si-switch .v-selection-control__input:has(input:focus-visible) {
   border-radius: var(--si-radius-pill);
   box-shadow: 0 0 0 3px rgba(var(--v-theme-primary), 0.2);
+}
+
+/* Rótulo do controle (DS: 14px, peso 500, cor de texto cheia). */
+.si-checkbox .v-label,
+.si-radio .v-label {
+  font-size: var(--si-fs-small);
+  font-weight: var(--si-font-weight-medium);
+  color: rgb(var(--v-theme-on-surface));
+  opacity: 1;
+}
+
+/* ── Checkbox: quadrado 18×18 arredondado (DS Checkbox.jsx) ──
+ * Caixa via ::before, centrada no alvo de toque; o glifo Lucide vira a marca branca (check
+ * quando marcado, traço quando indeterminado), escondida quando vazio. */
+.si-checkbox .v-selection-control__input::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  inline-size: 18px;
+  block-size: 18px;
+  box-sizing: border-box;
+  border-radius: var(--si-radius-sm);
+  background: rgb(var(--v-theme-surface));
+  border: 1.5px solid var(--si-border-strong);
+  /* o ::before do Vuetify é a "state layer" com opacity:0 — reaproveitado como a caixa,
+   * então precisa voltar a opacity:1 (a marca de foco vira o box-shadow abaixo). */
+  opacity: 1;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  pointer-events: none;
+}
+
+.si-checkbox .v-selection-control__input .v-icon {
+  position: relative;
+  z-index: 1;
+  color: rgb(var(--v-theme-on-primary));
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none; /* a marca não intercepta o clique (o input embaixo é o alvo) */
+}
+
+.si-checkbox .v-selection-control__input .v-icon svg {
+  stroke-width: 3;
+}
+
+/* Ativo (marcado OU indeterminado): caixa verde preenchida + marca visível. */
+.si-checkbox .v-selection-control--dirty .v-selection-control__input::before,
+.si-checkbox .v-selection-control__input:has(input[aria-checked="mixed"])::before {
+  background: rgb(var(--v-theme-primary));
+  border-color: rgb(var(--v-theme-primary));
+}
+
+.si-checkbox .v-selection-control--dirty .v-icon,
+.si-checkbox .v-selection-control__input:has(input[aria-checked="mixed"]) .v-icon {
+  opacity: 1;
+}
+
+/* Anel de foco por teclado abraça a caixa de 18px. */
+.si-checkbox .v-selection-control__input:has(input:focus-visible)::before {
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary), 0.2);
+}
+
+/* ── Radio: anel 18×18 + dot verde de 8px (DS RadioGroup.jsx) ──
+ * Glifo do Vuetify escondido; anel via ::before, dot via ::after (escala 0 → 1). */
+.si-radio .v-selection-control__input .v-icon {
+  opacity: 0;
+  pointer-events: none; /* glifo escondido não bloqueia o clique no input */
+}
+
+.si-radio .v-selection-control__input::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  inline-size: 18px;
+  block-size: 18px;
+  box-sizing: border-box;
+  border-radius: var(--si-radius-pill);
+  background: rgb(var(--v-theme-surface));
+  border: 1.5px solid var(--si-border-strong);
+  opacity: 1; /* idem checkbox: reusa o ::before (state layer) do Vuetify como o anel */
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  pointer-events: none;
+}
+
+.si-radio .v-selection-control__input::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  z-index: 1;
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: var(--si-radius-pill);
+  background: rgb(var(--v-theme-primary));
+  transform: scale(0);
+  transition: transform 0.15s ease;
+  pointer-events: none;
+}
+
+/* VRadio aplica .si-radio no PRÓPRIO .v-selection-control (não há wrapper .v-input como no
+ * checkbox) → o estado "selecionado" é seletor composto, não descendente. */
+.si-radio.v-selection-control--dirty .v-selection-control__input::before {
+  border-color: rgb(var(--v-theme-primary));
+}
+
+.si-radio.v-selection-control--dirty .v-selection-control__input::after {
+  transform: scale(1);
+}
+
+.si-radio .v-selection-control__input:has(input:focus-visible)::before {
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary), 0.2);
+}
+
+/* O ::before do Vuetify sobe a opacidade no hover/foco (state layer). Como agora ele É a
+ * caixa/anel, seguramos opacity:1 nesses estados (o feedback de foco é o box-shadow acima).
+ * Especificidade (0,3,1) vence as regras de hover/focus-visible do Vuetify (0,2,1). */
+.si-checkbox .v-selection-control__input:hover::before,
+.si-checkbox .v-selection-control--focus-visible .v-selection-control__input::before,
+.si-radio .v-selection-control__input:hover::before,
+.si-radio.v-selection-control--focus-visible .v-selection-control__input::before {
+  opacity: 1;
 }
 
 /* ─── Chip / status pill (.si-chip na raiz do VChip) ─────────────────────────
