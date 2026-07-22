@@ -97,21 +97,23 @@ async function confirmStatusChange() {
       </div>
     </div>
 
+    <!-- Toolbar (contagem + filtro) fora do card, acima da tabela. O filtro é provisório —
+         vira um componente de filtro dedicado depois. -->
+    <div class="si-brokerages__toolbar">
+      <div class="si-brokerages__count">
+        {{ totalCount }} corretora{{ totalCount === 1 ? '' : 's' }}
+      </div>
+
+      <BrokeragesStatusFilter
+        v-model="status"
+        @update:model-value="refresh"
+      />
+    </div>
+
     <SiCard
       class="si-brokerages__card"
       variant="outlined"
     >
-      <div class="si-brokerages__toolbar">
-        <div class="si-brokerages__count">
-          {{ totalCount }} corretora{{ totalCount === 1 ? '' : 's' }}
-        </div>
-
-        <BrokeragesStatusFilter
-          v-model="status"
-          @update:model-value="refresh"
-        />
-      </div>
-
       <SiAlert
         v-if="error"
         type="error"
@@ -174,7 +176,7 @@ async function confirmStatusChange() {
 }
 
 .si-brokerages__toolbar {
-  padding: var(--si-space-4);
+  margin-bottom: var(--si-space-3);
 }
 
 .si-brokerages__count {

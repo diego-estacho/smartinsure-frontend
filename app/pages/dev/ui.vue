@@ -80,21 +80,44 @@ const items = [
         </VCardText>
       </SiCard>
 
-      <!-- Ícone, Chip, Badge, Avatar -->
+      <!-- SiIcon -->
       <SiCard class="mb-6">
-        <VCardTitle>SiIcon · SiChip · SiBadge · SiAvatar</VCardTitle>
+        <VCardTitle>SiIcon</VCardTitle>
         <VCardText class="d-flex flex-wrap align-center" style="gap: var(--si-space-4)">
           <SiIcon icon="shieldCheck" color="primary" size="large" />
           <SiIcon icon="menu" />
+        </VCardText>
+      </SiCard>
+
+      <!-- SiChip -->
+      <SiCard class="mb-6">
+        <VCardTitle>SiChip</VCardTitle>
+        <VCardText class="d-flex flex-wrap align-center" style="gap: var(--si-space-4)">
           <SiChip>Padrão</SiChip>
           <SiChip color="success">Sucesso</SiChip>
           <SiChip color="warning">Aviso</SiChip>
           <SiChip color="error" variant="outlined">Erro</SiChip>
+        </VCardText>
+      </SiCard>
+
+      <!-- SiBadge -->
+      <SiCard class="mb-6">
+        <VCardTitle>SiBadge</VCardTitle>
+        <VCardText class="d-flex flex-wrap align-center" style="gap: var(--si-space-4)">
           <SiBadge :content="3" color="error">
             <SiIcon icon="menu" />
           </SiBadge>
-          <SiAvatar color="primary"><SiIcon icon="user" /></SiAvatar>
-          <SiAvatar color="secondary" size="small">DE</SiAvatar>
+        </VCardText>
+      </SiCard>
+
+      <!-- SiAvatar — foto/iniciais, tamanhos xs..xl, dot de status (DS Avatar) -->
+      <SiCard class="mb-6">
+        <VCardTitle>SiAvatar</VCardTitle>
+        <VCardText class="d-flex flex-wrap align-center" style="gap: var(--si-space-4)">
+          <SiAvatar size="xl" status="online">AS</SiAvatar>
+          <SiAvatar size="lg" status="away">BC</SiAvatar>
+          <SiAvatar size="md">CD</SiAvatar>
+          <SiAvatar size="sm" status="offline">DR</SiAvatar>
         </VCardText>
       </SiCard>
 
@@ -161,8 +184,9 @@ const items = [
 
       <!-- Abas + Expansão -->
       <SiCard class="mb-6">
+        <!-- Badge de contagem OPCIONAL: "Cotações" com count, "Propostas" sem. -->
         <SiTabs v-model="tab">
-          <SiTab value="cotacoes" text="Cotações" />
+          <SiTab value="cotacoes" text="Cotações" :count="12" />
           <SiTab value="propostas" text="Propostas" />
         </SiTabs>
         <VCardText>

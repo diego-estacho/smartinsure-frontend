@@ -12,12 +12,14 @@ const loading = ref(false)
 const search = ref('')
 const error = ref<string | null>(null)
 const page = ref(1)
+const pageSize = ref(20)
 
+// DS (Table.jsx): rótulos à esquerda, ações à direita.
 const headers = [
   { title: 'CNPJ', key: 'documentNumber' },
   { title: 'Razão social', key: 'name' },
   { title: 'Nome fantasia', key: 'socialName' },
-  { title: 'Ações', key: 'actions', sortable: false, align: 'center' },
+  { title: 'Ações', key: 'actions', sortable: false, align: 'end' },
 ] as const
 
 await refresh()
@@ -29,7 +31,7 @@ async function refresh() {
   try {
     const response = await listPolicyHolders({
       page: page.value,
-      pageSize: 20,
+      pageSize: pageSize.value,
       search: search.value || undefined,
     })
     items.value = response.items
@@ -43,9 +45,23 @@ async function refresh() {
   }
 }
 
+// Busca nova volta à página 1 e refaz o fetch (server-side).
 watch(search, () => {
   page.value = 1
+  refresh()
 })
+
+// Navegação e tamanho de página vêm do SiPagination (server-side → refetch explícito).
+function goToPage(target: number) {
+  page.value = target
+  refresh()
+}
+
+function changePageSize(size: number) {
+  pageSize.value = size
+  page.value = 1
+  refresh()
+}
 </script>
 
 <template>
@@ -74,26 +90,25 @@ watch(search, () => {
       </div>
     </div>
 
+    <!-- Toolbar (contagem + busca) fora do card, acima da tabela. -->
+    <div class="si-policy-holders__toolbar">
+      <div class="si-policy-holders__count">
+        {{ totalCount }} tomador{{ totalCount === 1 ? '' : 'es' }}
+      </div>
+
+      <SiTextField
+        v-model="search"
+        placeholder="Buscar por nome ou CNPJ"
+        density="compact"
+        clearable
+        class="si-policy-holders__search"
+      />
+    </div>
+
     <SiCard
       class="si-policy-holders__table-card"
       variant="outlined"
     >
-      <div class="si-policy-holders__toolbar">
-        <div class="si-policy-holders__count">
-          {{ totalCount }} tomador{{ totalCount === 1 ? '' : 'es' }}
-        </div>
-
-        <SiTextField
-          v-model="search"
-          placeholder="Buscar por nome ou CNPJ"
-          density="compact"
-          clearable
-          class="si-policy-holders__search"
-          @keyup.enter="refresh"
-          @update:model-value="refresh"
-        />
-      </div>
-
       <SiAlert
         v-if="error"
         type="error"
@@ -105,12 +120,17 @@ watch(search, () => {
         :headers="headers"
         :items="items"
         :loading="loading"
-        :items-per-page="20"
-        density="compact"
+        :items-per-page="pageSize"
+        hide-default-footer
         class="si-policy-holders__table"
       >
         <template #[`item.documentNumber`]="{ item }">
           {{ formatCnpj(item.documentNumber) }}
+        </template>
+
+        <!-- Coluna prioritária em negrito (DS Table). -->
+        <template #[`item.name`]="{ item }">
+          <span class="si-cell-strong">{{ item.name }}</span>
         </template>
 
         <template #[`item.socialName`]="{ item }">
@@ -119,18 +139,30 @@ watch(search, () => {
 
         <template #[`item.actions`]="{ item }">
           <div class="si-policy-holders__actions">
-            <SiButton
-              :to="`/tomadores/${item.id}`"
-              :prepend-icon="'eye'"
-              size="small"
-              variant="tonal"
-              color="info"
-            >
-              Detalhes
-            </SiButton>
+            <SiTooltip text="Detalhes">
+              <template #activator="{ props }">
+                <VBtn
+                  v-bind="props"
+                  :to="`/tomadores/${item.id}`"
+                  icon="eye"
+                  variant="text"
+                  size="small"
+                  class="si-rowaction si-rowaction--view"
+                  aria-label="Detalhes"
+                />
+              </template>
+            </SiTooltip>
           </div>
         </template>
       </SiDataTable>
+
+      <SiPagination
+        :page="page"
+        :items-per-page="pageSize"
+        :total="totalCount"
+        @update:page="goToPage"
+        @update:items-per-page="changePageSize"
+      />
     </SiCard>
   </VContainer>
 </template>
@@ -167,7 +199,7 @@ watch(search, () => {
 }
 
 .si-policy-holders__toolbar {
-  padding: var(--si-space-4);
+  margin-bottom: var(--si-space-3);
 }
 
 .si-policy-holders__search {
@@ -184,7 +216,7 @@ watch(search, () => {
 .si-policy-holders__actions {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   gap: var(--si-space-2);
 }
 

@@ -18,12 +18,16 @@ const lucideSet: IconSet = {
     const cmp = typeof value === 'string' && value in appIcons
       ? appIcons[value as AppIconName]
       : value
-    // Dimensiona o SVG a 1em via style inline (vence a regra `.v-icon__svg{width:100%}` do
-    // Vuetify, que estoura fora de um box de tamanho fixo): 1em = font-size do VIcon = o size
-    // pedido. Cor por currentColor (Lucide usa stroke=currentColor); traço 1.5 do DS.
+    // Style inline (vence as regras de stylesheet do Vuetify, que não são `!important`):
+    //  - width/height 1em: o `.v-icon__svg{width:100%}` do Vuetify estoura fora de um box
+    //    de tamanho fixo; 1em = font-size do VIcon = o size pedido;
+    //  - fill:none: o Vuetify desenha para MDI (baseado em fill) e aplica `.v-icon__svg{fill:
+    //    currentColor}`, que sobrescreveria o atributo `fill="none"` do Lucide e PINTARIA os
+    //    ícones de path fechado (user, lock, eye…). Lucide é baseado em traço → forçamos fill:none.
+    // Cor por currentColor (Lucide usa stroke=currentColor); traço 1.5 do DS.
     return h(cmp as never, {
       class: 'v-icon__svg',
-      style: { width: '1em', height: '1em' },
+      style: { width: '1em', height: '1em', fill: 'none' },
       'stroke-width': 1.5,
     })
   },

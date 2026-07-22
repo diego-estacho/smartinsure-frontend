@@ -83,5 +83,28 @@ no plugin (`vuetify-icons.ts`).
 - **Default do `SiCard` → hairline** (variant `flat` + elevation 0), alinhado ao default do DS. As
   variantes `elevated` (shadow-2) e `charcoal` (dark) seguem disponíveis.
 
+**Leva de fidelidade DS (revisão de-para do dono):** revisitados os componentes contra o
+`components/<Nome>.card.html` medindo os valores computados (Playwright) antes/depois:
+- **Table:** ícones de ação passam a **cor neutra** (`--si-cinza`, era `primary` por causa do default
+  global `VBtn: color primary` — vencido com `!important` em `.si-rowaction`); **uma coluna prioritária
+  em negrito** (`.si-cell-strong` + slot `#item.name` — "Razão social" nas listas de corretoras/tomadores,
+  como o DS negrita "Cliente"); **texto do corpo carvão cheio** (`rgb(--v-theme-on-surface)`, era
+  `rgba(...,0.87)` acinzentado). Especificidade estrutural (`.si-table.v-table .v-table__wrapper > table
+  > tbody > tr > td`) para vencer os seletores de célula do Vuetify. Ações = olho (Detalhes) + menu ⋯;
+  paginação DS (`SiPagination`, sem footer nativo) na mesma receita da vitrine.
+- **Tabs:** badge de contagem agora **opcional** — `SiTab` ganhou prop `count`; sem `count` renderiza só
+  o rótulo (DS `Tabs.jsx`: `t.badge != null`).
+- **Avatar:** dot de status (online/away/offline/busy) com borda da superfície, canto inferior-direito,
+  tamanhos xs..xl (DS `Avatar.jsx`).
+- **Ícones (login/campos):** correção do `fill` — o `.v-icon__svg{fill:currentColor}` do Vuetify
+  preenchia os Lucide (que são outline); resolvido com `fill:'none'` inline no set (`vuetify-icons.ts`).
+- **Vitrine:** bloco combinado SiIcon/SiChip/SiBadge/SiAvatar separado em um `SiCard` por componente
+  (facilita o de-para).
+
+**Escopo expandido pelo dono (em andamento):** DS **Stepper** — antes marcado como fora (sem consumidor);
+o dono confirmou que será usado, então será criado (`SiStepper`, horizontal + vertical). Também nesta
+leva: checkbox/radio pixel-fiéis ao DS (box verde preenchido / anel + dot), **label estático acima** dos
+campos (não o flutuante do Vuetify) e aproximação do calendário do `DateField`.
+
 **Aberto (sob demanda):** Tabs `segmented` — variante do DS via VBtnToggle; sem consumidor hoje, fica
 para quando surgir a necessidade.

@@ -83,52 +83,101 @@
   block-size: 2.5px;
 }
 
-/* ─── Tabela (.si-table na raiz do VDataTable) ───────────────────────────────
- * O DS não define tabela; referência é o InsurePoint, tokenizado. DS README:
- * headers ALL-CAPS de utilidade, cinza, com letter-spacing; densidade; tabular. */
-.si-table th {
+/* Badge de contagem opcional da aba (DS Tabs.jsx): pill 20px, tabular; inativo cinza sobre o
+ * fundo da página, ativo em tint verde (verde-100 / verde-800). Só aparece quando há `count`. */
+.si-tab__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 20px;
+  block-size: 20px;
+  margin-inline-start: var(--si-space-2);
+  padding-inline: var(--si-space-2);
+  border-radius: var(--si-radius-pill);
+  background: rgb(var(--v-theme-background));
+  color: var(--si-cinza);
   font-size: var(--si-fs-caption);
   font-weight: var(--si-font-weight-semibold);
-  letter-spacing: var(--si-ls-eyebrow);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.si-tab.v-tab--selected .si-tab__count {
+  background: var(--si-verde-100);
+  color: var(--si-verde-800);
+}
+
+/* ─── Tabela (.si-table na raiz do VDataTable) ───────────────────────────────
+ * DS (components/Table.jsx, medido no Table.card.html): header CAIXA-ALTA 12px em cinza,
+ * letter-spacing 0.08em, sobre o fundo da página com sublinhado hairline; corpo 14px; padding
+ * 12/16 nas células (é isso que dá o respiro das linhas); divisórias bem leves (--divider),
+ * última linha sem divisória; numéricos à direita tabulares. Um acento concentrado.
+ *
+ * IMPORTANTE (especificidade): os seletores de célula do Vuetify — `.v-table .v-table__wrapper
+ * > table > … > td/th` — têm peso alto e FIXAM font-size e padding. Por isso font-size e padding
+ * PRECISAM ser escritos com a mesma estrutura (`.si-table.v-table …`) para vencer; senão o
+ * Vuetify zera o padding (linhas esmagadas) e força 14px no header. Como isto vive no skin
+ * global (ADR-014), vale para TODAS as tabelas do kit — listas e painéis. */
+.si-table.v-table .v-table__wrapper > table > thead > tr > th {
+  padding: var(--si-space-3) var(--si-space-4);
+  background: rgb(var(--v-theme-background));
+  border-bottom: thin solid var(--si-cinza-claro);
+  font-size: var(--si-fs-caption);
+  font-weight: var(--si-font-weight-semibold);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--si-cinza);
 }
 
-/* Faixa cinza atrás do header (validado no InsurePoint — header com fundo cinza). */
-.si-table thead th {
-  background: var(--si-cinza-suave);
-}
-
-/* Linhas com mais respiro (densidade validada). */
-.si-table tbody td {
-  padding-block: var(--si-space-3);
-}
-
-.si-table .v-data-table-header__content {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--si-space-2);
-}
-
-.si-table td {
+.si-table.v-table .v-table__wrapper > table > tbody > tr > td {
+  padding: var(--si-space-3) var(--si-space-4);
   font-size: var(--si-fs-small);
+  /* DS: corpo em carvão cheio (--fg), não o cinza translúcido (0.87) do Vuetify. */
+  color: rgb(var(--v-theme-on-surface));
 }
 
-/* Padding de borda validado (24px = space-6). */
-.si-table table > thead > tr > :first-child,
-.si-table table > tbody > tr > :first-child {
-  padding-inline-start: var(--si-space-6);
+/* Coluna prioritária em negrito (DS Table: uma coluna-chave forte, ex.: o nome). */
+.si-cell-strong {
+  font-weight: var(--si-font-weight-semibold);
 }
 
-.si-table table > thead > tr > :last-child,
-.si-table table > tbody > tr > :last-child {
-  padding-inline-end: var(--si-space-6);
+/* Divisória bem leve (DS --divider) trocando a cor do border do Vuetify (on-surface com
+ * opacity, mais escuro); o Vuetify já omite a divisória da última linha, como o DS. */
+.si-table.v-table .v-table__wrapper > table > tbody > tr:not(:last-child) > td {
+  border-bottom-color: var(--si-divider);
 }
 
-/* Numéricos à direita com fonte tabular (DS README). */
+/* Numéricos à direita com fonte tabular (DS). */
 .si-table td.text-end,
 .si-table th.text-end {
   font-variant-numeric: tabular-nums;
+}
+
+/* ─── Ação de linha em tabela (.si-rowaction — icon-button discreto do DS) ────
+ * DS (components/Table.card.html .iconbtn): botão-ícone quadrado arredondado, transparente,
+ * cinza (fg-muted); hover com faixa clara e texto carvão; o "ver" fica verde no hover. Padrão
+ * reutilizável nas colunas de ações das listas (corretoras, tomadores…). */
+.si-rowaction.v-btn {
+  /* Neutro por padrão (DS: ícones de linha em cinza, NÃO verde). `!important` vence o default
+   * global `VBtn: { color: 'primary' }` do nuxt.config, que pintaria o ícone de verde. */
+  color: var(--si-cinza) !important;
+  border-radius: var(--si-radius-sm);
+}
+
+.si-rowaction.v-btn:hover {
+  background: var(--si-cinza-suave);
+  color: rgb(var(--v-theme-on-surface)) !important;
+}
+
+/* Só o "ver" (olho) fica verde no hover (DS Table.card: .iconbtn:hover.view). */
+.si-rowaction--view.v-btn:hover {
+  color: var(--si-verde-800) !important;
+}
+
+/* Menu de ações de linha (.si-rowmenu no VList do SiMenu): itens na escala do corpo (14px),
+ * não no 16px padrão do VList — o 16px destoava (ficava maior que o texto da tabela). */
+.si-rowmenu .v-list-item-title {
+  font-size: var(--si-fs-small);
 }
 
 /* ─── Card (.si-card na raiz do VCard) ───────────────────────────────────────
@@ -244,6 +293,36 @@
   background: var(--si-verde-100);
   color: var(--si-verde-800);
   font-weight: var(--si-font-weight-semibold);
+}
+
+/* Dot de status (DS Avatar.jsx): wrapper posiciona o dot FORA do clip do VAvatar; dot no
+ * canto inferior direito com borda branca (surface). Cores semânticas do tema (não hex cru):
+ * online=primary, away=warning, offline=cinza, busy=error. Tamanho vem inline (28% do avatar). */
+.si-avatar-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.si-avatar__status {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-end: 0;
+  border-radius: var(--si-radius-pill);
+  border: 2px solid rgb(var(--v-theme-surface));
+  box-sizing: border-box;
+}
+
+.si-avatar__status--online {
+  background: rgb(var(--v-theme-primary));
+}
+.si-avatar__status--away {
+  background: rgb(var(--v-theme-warning));
+}
+.si-avatar__status--offline {
+  background: var(--si-cinza);
+}
+.si-avatar__status--busy {
+  background: rgb(var(--v-theme-error));
 }
 
 /* ─── ExpansionPanels (.si-expansion-panels / .si-expansion-panel) ────────────
