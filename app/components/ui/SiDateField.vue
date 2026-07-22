@@ -70,6 +70,7 @@ function displayBr(value: unknown): string {
         :density="density"
         :color="color"
         :display-format="displayBr"
+        :menu-props="{ contentClass: 'si-datepicker' }"
       >
         <template v-for="(_, name) in $slots" #[name]="slotProps">
           <slot :name="name" v-bind="slotProps ?? {}" />

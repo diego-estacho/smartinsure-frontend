@@ -210,6 +210,34 @@
   box-shadow: 0 0 0 3px rgba(var(--v-theme-error), 0.18);
 }
 
+/* ─── Calendário do SiDateField (.si-datepicker no overlay do VDateInput) ─────
+ * DS (DateField.jsx): dias em cor de TEXTO (carvão), não verde; dia selecionado = verde
+ * preenchido + branco; hoje = anel verde. O default global `VBtn { color: primary }` pinta
+ * TODOS os dias de verde (utilitário `.text-primary`, que é `!important`) → revertido aqui,
+ * também com `!important`. Escopo `.si-datepicker` chega ao overlay teleportado via
+ * `menu-props.contentClass` (ADR-015: seletor sob `.si-*`). */
+
+/* dias em carvão (revert do text-primary global) */
+.si-datepicker .v-date-picker-month__day-btn {
+  color: rgb(var(--v-theme-on-surface)) !important;
+}
+
+/* hoje: anel verde (variante outlined do Vuetify), texto carvão */
+.si-datepicker .v-date-picker-month__day-btn.v-btn--variant-outlined {
+  border-color: rgb(var(--v-theme-primary)) !important;
+}
+
+/* dia selecionado: verde preenchido + branco (DS: filled green) */
+.si-datepicker .v-date-picker-month__day--selected .v-date-picker-month__day-btn {
+  background-color: rgb(var(--v-theme-primary)) !important;
+  color: rgb(var(--v-theme-on-primary)) !important;
+}
+
+/* cabeçalho (mês/ano + setas): texto carvão, não verde (DS: título fg, setas neutras) */
+.si-datepicker .v-date-picker-controls .v-btn {
+  color: rgb(var(--v-theme-on-surface)) !important;
+}
+
 /* ─── Controles de seleção (.si-checkbox / .si-radio / .si-switch) ────────────
  * DS (Checkbox/RadioGroup.jsx): a caixa/anel são DESENHADOS (quadrado verde preenchido com
  * check branco; anel neutro com dot verde), não os glifos de traço do Vuetify. O Vuetify

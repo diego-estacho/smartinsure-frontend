@@ -123,7 +123,15 @@ no plugin (`vuetify-icons.ts`).
   border-strong + cinza); conectores verdes até a atual; horizontal e vertical; `v-model:current` +
   `clickable` (volta a etapas alcançadas). Tudo por token, escopado `.si-stepper*`. Registrado no
   de-para (design-system-map) e na vitrine. Medido no /dev/ui + 7 testes de comportamento (total 90).
-- **Pendente:** aproximação do calendário do `DateField` ao DS (dentro do possível).
+- **Calendário do `DateField` aproximado do DS (feito, verificado):** o VDatePicker (labs) pintava
+  TODOS os dias de verde (o default global `VBtn { color: primary }` aplica `.text-primary`). Hook
+  `.si-datepicker` no overlay via `menu-props.contentClass` (ADR-015); dias em carvão, dia selecionado
+  verde preenchido + branco, hoje com anel verde (variante outlined), cabeçalho mês/ano em carvão.
+  Medido no /dev/ui (dia normal rgb(15,23,42); hoje borda rgb(34,197,94); selecionado bg verde/branco).
+  O seletor mês/ano dividido é estrutura do Vuetify (VDatePicker) — mantido ("dentro do possível").
+
+**Todos os 7 itens da revisão de-para do dono concluídos** (Table, Tabs, Checkbox, Radio, inputs/label,
+Stepper, calendário) — cada um medido no `/dev/ui` e com os gates verdes.
 
 **Aberto (sob demanda):** Tabs `segmented` — variante do DS via VBtnToggle; sem consumidor hoje, fica
 para quando surgir a necessidade.
