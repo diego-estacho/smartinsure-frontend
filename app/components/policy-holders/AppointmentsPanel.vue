@@ -2,7 +2,6 @@
 import type { BrokerageListItem } from '~/composables/useBrokerages'
 import type { InsurerListItemResponse } from '~/composables/useInsurers'
 import type { PolicyHolderAppointment } from '~/composables/usePolicyHolders'
-import { mdiPlus } from '~/lib/icons'
 import { required } from '~/lib/rules'
 import { getPolicyHolderAppointmentStatusView, canEndPolicyHolderAppointment } from '~/lib/status/policyHolderAppointments'
 
@@ -193,7 +192,7 @@ function formatDateRange(appointment: PolicyHolderAppointment): string {
       class="si-policy-holder-appointments-panel__toolbar"
     >
       <SiButton
-        :prepend-icon="mdiPlus"
+        :prepend-icon="'plus'"
         @click="openCreateDialog"
       >
         Nova nomeação

@@ -6,7 +6,6 @@
  */
 import type { BrokerageListItem } from '~/composables/useBrokerages'
 import type { BrokerageStatus } from '~/lib/status/brokerages'
-import { mdiAccountPlusOutline, mdiRefresh } from '~/lib/icons'
 import { getBrokerageStatusAction } from '~/lib/status/brokerages'
 
 definePageMeta({ layout: 'shell' })
@@ -81,7 +80,7 @@ async function confirmStatusChange() {
 
       <div class="si-brokerages__header-actions">
         <SiButton
-          :prepend-icon="mdiRefresh"
+          :prepend-icon="'refresh'"
           variant="tonal"
           :loading="loading"
           @click="refresh"
@@ -91,7 +90,7 @@ async function confirmStatusChange() {
 
         <SiButton
           to="/corretoras/nova"
-          :prepend-icon="mdiAccountPlusOutline"
+          :prepend-icon="'userPlus'"
         >
           Nova corretora
         </SiButton>

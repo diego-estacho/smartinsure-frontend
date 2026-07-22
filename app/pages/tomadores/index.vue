@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { PolicyHolderListItem } from '~/composables/usePolicyHolders'
 import { formatCnpj } from '~/lib/documents'
-import { mdiAccountPlusOutline, mdiEyeOutline, mdiRefresh } from '~/lib/icons'
 
 definePageMeta({ layout: 'shell' })
 
@@ -58,7 +57,7 @@ watch(search, () => {
 
       <div class="si-policy-holders__header-actions">
         <SiButton
-          :prepend-icon="mdiRefresh"
+          :prepend-icon="'refresh'"
           variant="tonal"
           :loading="loading"
           @click="refresh"
@@ -68,7 +67,7 @@ watch(search, () => {
 
         <SiButton
           to="/tomadores/nova"
-          :prepend-icon="mdiAccountPlusOutline"
+          :prepend-icon="'userPlus'"
         >
           Novo tomador
         </SiButton>
@@ -122,7 +121,7 @@ watch(search, () => {
           <div class="si-policy-holders__actions">
             <SiButton
               :to="`/tomadores/${item.id}`"
-              :prepend-icon="mdiEyeOutline"
+              :prepend-icon="'eye'"
               size="small"
               variant="tonal"
               color="info"

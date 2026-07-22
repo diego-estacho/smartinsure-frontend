@@ -17,7 +17,13 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <VAvatar v-bind="$attrs" :size="size" :color="color" :rounded="rounded">
+  <VAvatar
+    :class="['si-avatar', !color ? 'si-avatar--initials' : undefined]"
+    v-bind="$attrs"
+    :size="size"
+    :color="color"
+    :rounded="rounded"
+  >
     <template v-for="(_, name) in $slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps ?? {}" />
     </template>

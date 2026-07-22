@@ -4,7 +4,6 @@
  * de produção — ver nuxt.config.ts). Consumidor vivo que valida os wrappers `Si` e serve
  * de documentação/onboarding. Componente novo entra aqui.
  */
-import { mdiShieldCheckOutline, mdiMenu, mdiDotsVertical, mdiAccount } from '~/lib/icons'
 import { required, email, cpfCnpj } from '~/lib/rules'
 
 useHead({ title: 'SmartInsure · Vitrine UI' })
@@ -19,6 +18,7 @@ const tab = ref('cotacoes')
 const panel = ref<number>()
 const dialog = ref(false)
 const menu = ref(false)
+const snackbar = ref(false)
 const progress = ref(65)
 
 const tablePage = ref(1)
@@ -84,16 +84,16 @@ const items = [
       <SiCard class="mb-6">
         <VCardTitle>SiIcon · SiChip · SiBadge · SiAvatar</VCardTitle>
         <VCardText class="d-flex flex-wrap align-center" style="gap: var(--si-space-4)">
-          <SiIcon :icon="mdiShieldCheckOutline" color="primary" size="large" />
-          <SiIcon :icon="mdiMenu" />
+          <SiIcon icon="shieldCheck" color="primary" size="large" />
+          <SiIcon icon="menu" />
           <SiChip>Padrão</SiChip>
           <SiChip color="success">Sucesso</SiChip>
           <SiChip color="warning">Aviso</SiChip>
           <SiChip color="error" variant="outlined">Erro</SiChip>
           <SiBadge :content="3" color="error">
-            <SiIcon :icon="mdiMenu" />
+            <SiIcon icon="menu" />
           </SiBadge>
-          <SiAvatar color="primary"><SiIcon :icon="mdiAccount" /></SiAvatar>
+          <SiAvatar color="primary"><SiIcon icon="user" /></SiAvatar>
           <SiAvatar color="secondary" size="small">DE</SiAvatar>
         </VCardText>
       </SiCard>
@@ -208,7 +208,7 @@ const items = [
           <SiMenu v-model="menu">
             <template #activator="{ props }">
               <SiButton variant="outlined" v-bind="props">
-                <SiIcon :icon="mdiDotsVertical" /> Menu
+                <SiIcon icon="dotsVertical" /> Menu
               </SiButton>
             </template>
             <SiList>
@@ -242,12 +242,21 @@ const items = [
 
       <!-- Feedback -->
       <SiCard class="mb-6">
-        <VCardTitle>SiAlert</VCardTitle>
+        <VCardTitle>SiAlert · SiSnackbar</VCardTitle>
         <VCardText class="d-flex flex-column" style="gap: var(--si-space-3)">
           <SiAlert type="success" text="Cotação recebida com sucesso." />
           <SiAlert type="info" text="Aguardando retorno da seguradora." />
           <SiAlert type="warning" text="Vigência próxima do vencimento." />
           <SiAlert type="error" text="Falha ao processar a proposta." />
+          <div>
+            <SiButton variant="outlined" @click="snackbar = true">Mostrar snackbar</SiButton>
+          </div>
+          <SiSnackbar v-model="snackbar">
+            Apólice salva.
+            <template #actions>
+              <SiButton variant="text" @click="snackbar = false">Desfazer</SiButton>
+            </template>
+          </SiSnackbar>
         </VCardText>
       </SiCard>
     </VContainer>

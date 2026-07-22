@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { GetBrokerageResponse } from '~/composables/useBrokerages'
 import { formatCnpj } from '~/lib/documents'
-import { mdiDotsVertical, mdiPlus } from '~/lib/icons'
 import { getBrokerageStatusAction, getBrokerageStatusView } from '~/lib/status/brokerages'
 
 definePageMeta({ layout: 'shell' })
@@ -157,7 +156,7 @@ function formatAddress(address: GetBrokerageResponse['mainAddress']) {
 
           <div class="si-brokerage-detail__hero-actions">
             <SiButton
-              :prepend-icon="mdiPlus"
+              :prepend-icon="'plus'"
               @click="openEnablementDialog"
             >
               Habilitar seguradora
@@ -172,7 +171,7 @@ function formatAddress(address: GetBrokerageResponse['mainAddress']) {
                   icon
                   aria-label="Mais ações"
                 >
-                  <SiIcon :icon="mdiDotsVertical" />
+                  <SiIcon :icon="'dotsVertical'" />
                 </SiButton>
               </template>
 

@@ -1,4 +1,4 @@
-import { mdiPower, mdiPowerOff } from '~/lib/icons'
+import type { AppIconName } from '~/lib/icons'
 
 export const brokerageStatuses = {
   active: 'Active',
@@ -17,7 +17,7 @@ type BrokerageStatusAction = {
   targetStatus: BrokerageStatus | null
   label: string
   shortLabel: string
-  icon: string
+  icon: AppIconName
   color: string
   successMessage: string
   disabled: boolean
@@ -32,7 +32,7 @@ const disabledBrokerageStatusAction: BrokerageStatusAction = {
   targetStatus: null,
   label: 'Ação indisponível',
   shortLabel: 'Indisponível',
-  icon: mdiPowerOff,
+  icon: 'powerOff',
   color: 'secondary',
   successMessage: '',
   disabled: true,
@@ -43,7 +43,7 @@ const brokerageStatusActions = {
     targetStatus: brokerageStatuses.inactive,
     label: 'Inativar corretora',
     shortLabel: 'Inativar',
-    icon: mdiPowerOff,
+    icon: 'powerOff',
     color: 'error',
     successMessage: 'Corretora inativada.',
     disabled: false,
@@ -52,7 +52,7 @@ const brokerageStatusActions = {
     targetStatus: brokerageStatuses.active,
     label: 'Ativar corretora',
     shortLabel: 'Ativar',
-    icon: mdiPower,
+    icon: 'power',
     color: 'primary',
     successMessage: 'Corretora ativada.',
     disabled: false,

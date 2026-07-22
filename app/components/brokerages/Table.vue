@@ -7,7 +7,6 @@
  */
 import type { BrokerageListItem } from '~/composables/useBrokerages'
 import { formatCnpj } from '~/lib/documents'
-import { mdiEyeOutline } from '~/lib/icons'
 import { getBrokerageStatusAction, getBrokerageStatusView } from '~/lib/status/brokerages'
 
 defineProps<{
@@ -62,7 +61,7 @@ const headers = [
       <div class="si-brokerages-table__center">
         <SiButton
           :to="`/corretoras/${item.id}`"
-          :prepend-icon="mdiEyeOutline"
+          :prepend-icon="'eye'"
           size="small"
           variant="tonal"
           color="info"
@@ -131,7 +130,7 @@ const headers = [
       <div class="si-brokerages-cards__actions">
         <SiButton
           :to="`/corretoras/${item.id}`"
-          :prepend-icon="mdiEyeOutline"
+          :prepend-icon="'eye'"
           size="small"
           variant="tonal"
           color="info"
