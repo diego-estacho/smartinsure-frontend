@@ -4,9 +4,13 @@
  * modalidade" quando ambas as Modalidades Importadas confirmam para ela). Apresentacional
  * (ADR-018): recebe as entradas por prop, não decide nada. `offered` (é ofertada) e `branches`
  * (ramos) são derivados no servidor (RN-033) — o cliente só renderiza, por nome estável (ADR-004).
- * Mobile-first (ADR-017): desktop = tabela densa; mobile = cards empilhados.
+ * A coluna Seguradoras exibe UMA badge por Seguradora distinta (o contrato entrega a lista plana,
+ * uma entrada por Modalidade Importada confirmada; a agregação por insurerId é só de visão) — a
+ * contagem vai na badge e os nomes de origem no tooltip. Mobile-first (ADR-017): desktop = tabela
+ * densa; mobile = cards empilhados.
  */
 import type { ModalityMapEntry } from '~/composables/useModalityMap'
+import { groupInsurersById } from '~/lib/modalityMap'
 import { getModalityStatusView } from '~/lib/status/modalities'
 import { getSuretyBranchView } from '~/lib/status/suretyBranches'
 
@@ -84,14 +88,41 @@ const headers = [
     <template #[`item.insurers`]="{ item }">
       <div class="si-modality-map-matrix__chips">
         <template v-if="item.insurers.length">
-          <SiChip
-            v-for="insurer in item.insurers"
-            :key="insurer.importedModalityId"
-            size="x-small"
-            variant="outlined"
+          <!-- Uma badge por Seguradora distinta (RN-033), não por Modalidade Importada. -->
+          <SiTooltip
+            v-for="insurer in groupInsurersById(item.insurers)"
+            :key="insurer.insurerId"
+            location="top"
           >
-            {{ insurer.insurerName }}
-          </SiChip>
+            <template #activator="{ props }">
+              <SiChip
+                v-bind="props"
+                size="x-small"
+                variant="outlined"
+              >
+                {{ insurer.insurerName }}
+                <template
+                  v-if="insurer.count > 1"
+                  #append
+                >
+                  <span class="si-modality-map-matrix__count">{{ insurer.count }}</span>
+                </template>
+              </SiChip>
+            </template>
+
+            <div class="si-modality-map-matrix__origins">
+              <strong>{{ insurer.insurerName }}</strong>
+              <span>{{ insurer.count }} Modalidade{{ insurer.count === 1 ? '' : 's' }} Importada{{ insurer.count === 1 ? '' : 's' }}</span>
+              <ul>
+                <li
+                  v-for="(origin, index) in insurer.origins"
+                  :key="index"
+                >
+                  {{ origin }}
+                </li>
+              </ul>
+            </div>
+          </SiTooltip>
         </template>
         <span
           v-else
@@ -173,14 +204,41 @@ const headers = [
           v-if="!entry.insurers.length"
           class="si-modality-map-matrix__muted"
         >Nenhuma Seguradora</span>
-        <SiChip
-          v-for="insurer in entry.insurers"
-          :key="insurer.importedModalityId"
-          size="x-small"
-          variant="outlined"
+        <!-- Uma badge por Seguradora distinta (RN-033), não por Modalidade Importada. -->
+        <SiTooltip
+          v-for="insurer in groupInsurersById(entry.insurers)"
+          :key="insurer.insurerId"
+          location="top"
         >
-          {{ insurer.insurerName }}
-        </SiChip>
+          <template #activator="{ props }">
+            <SiChip
+              v-bind="props"
+              size="x-small"
+              variant="outlined"
+            >
+              {{ insurer.insurerName }}
+              <template
+                v-if="insurer.count > 1"
+                #append
+              >
+                <span class="si-modality-map-matrix__count">{{ insurer.count }}</span>
+              </template>
+            </SiChip>
+          </template>
+
+          <div class="si-modality-map-matrix__origins">
+            <strong>{{ insurer.insurerName }}</strong>
+            <span>{{ insurer.count }} Modalidade{{ insurer.count === 1 ? '' : 's' }} Importada{{ insurer.count === 1 ? '' : 's' }}</span>
+            <ul>
+              <li
+                v-for="(origin, index) in insurer.origins"
+                :key="index"
+              >
+                {{ origin }}
+              </li>
+            </ul>
+          </div>
+        </SiTooltip>
       </div>
     </SiCard>
   </div>
@@ -203,6 +261,39 @@ const headers = [
 .si-modality-map-matrix__muted {
   color: rgba(var(--v-theme-on-surface), 0.6);
   font-size: var(--si-fs-small);
+}
+
+/* Contagem de Modalidades Importadas por trás da Seguradora, dentro da própria badge. */
+.si-modality-map-matrix__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25em;
+  height: 1.25em;
+  padding-inline: 0.35em;
+  margin-inline-start: var(--si-space-1);
+  border-radius: 999px;
+  background: rgba(var(--v-theme-on-surface), 0.12);
+  font-size: 0.85em;
+  font-weight: var(--si-font-weight-semibold);
+  line-height: 1;
+}
+
+.si-modality-map-matrix__origins {
+  display: flex;
+  flex-direction: column;
+  gap: var(--si-space-1);
+  max-width: 22rem;
+}
+
+.si-modality-map-matrix__origins span {
+  color: rgba(var(--v-theme-on-surface), 0.7);
+  font-size: var(--si-fs-small);
+}
+
+.si-modality-map-matrix__origins ul {
+  margin: 0;
+  padding-inline-start: var(--si-space-4);
 }
 
 .si-modality-map-cards {
