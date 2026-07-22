@@ -20,13 +20,13 @@ describe('RN-033/RN-034 Mapa de Modalidades - composable useModalityMap', () => 
     })
   })
 
-  it('RN-034: mapear confirma a Modalidade Importada a uma Modalidade existente', async () => {
-    fetchMock.mockResolvedValueOnce({ importedModalityId: 'i-1', modalityId: 'm-1', mappingStatus: 'Confirmed' })
-    const { mapImportedModality } = useModalityMap(api)
+  it('RN-034: reatribuir define manualmente a Modalidade da Importada (override)', async () => {
+    fetchMock.mockResolvedValueOnce({ importedModalityId: 'i-1', modalityId: 'm-1', linkSource: 'Manual' })
+    const { reassignImportedModality } = useModalityMap(api)
 
-    await mapImportedModality('i-1', 'm-1')
+    await reassignImportedModality('i-1', 'm-1')
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/imported-modalities/i-1/map', {
+    expect(fetchMock).toHaveBeenCalledWith('/api/imported-modalities/i-1/reassign', {
       method: 'POST',
       body: { modalityId: 'm-1' },
     })
@@ -39,6 +39,17 @@ describe('RN-033/RN-034 Mapa de Modalidades - composable useModalityMap', () => 
     await ignoreImportedModality('i-1')
 
     expect(fetchMock).toHaveBeenCalledWith('/api/imported-modalities/i-1/ignore', {
+      method: 'POST',
+    })
+  })
+
+  it('RN-034: reativar desfaz o Ignorar (sem corpo)', async () => {
+    fetchMock.mockResolvedValueOnce({ importedModalityId: 'i-1', ignored: false })
+    const { restoreImportedModality } = useModalityMap(api)
+
+    await restoreImportedModality('i-1')
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/imported-modalities/i-1/restore', {
       method: 'POST',
     })
   })

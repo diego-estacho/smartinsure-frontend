@@ -1,16 +1,15 @@
 <script setup lang="ts">
 /**
  * Matriz Seguradoras × Modalidades (RN-033: a Modalidade é o eixo; duas ofertas só são "a mesma
- * modalidade" quando ambas as Modalidades Importadas confirmam para ela). Apresentacional
- * (ADR-018): recebe as entradas por prop, não decide nada. `offered` (é ofertada) e `branches`
- * (ramos) são derivados no servidor (RN-033) — o cliente só renderiza, por nome estável (ADR-004).
- * A coluna Seguradoras exibe UMA badge por Seguradora distinta (o contrato entrega a lista plana,
- * uma entrada por Modalidade Importada confirmada; a agregação por insurerId é só de visão) — a
- * contagem vai na badge e os nomes de origem no tooltip. Mobile-first (ADR-017): desktop = tabela
- * densa; mobile = cards empilhados.
+ * modalidade" quando as Modalidades Importadas compartilham a mesma Modalidade — garantido pelo id
+ * da Modalidade Global, ADR-061). Apresentacional (ADR-018): recebe as entradas por prop, não
+ * decide nada. `offered` (é ofertada) e `branches` (ramos) são derivados no servidor (RN-033) — o
+ * cliente só renderiza, por nome estável (ADR-004). A coluna Seguradoras exibe UMA badge por
+ * Seguradora distinta: o backend já agrega uma entrada por Seguradora (`count` de Modalidades
+ * Importadas + `origins`) — o cliente renderiza direto, com a contagem na badge e os nomes de
+ * origem no tooltip. Mobile-first (ADR-017): desktop = tabela densa; mobile = cards empilhados.
  */
 import type { ModalityMapEntry } from '~/composables/useModalityMap'
-import { groupInsurersById } from '~/lib/modalityMap'
 import { getModalityStatusView } from '~/lib/status/modalities'
 import { getSuretyBranchView } from '~/lib/status/suretyBranches'
 
@@ -23,7 +22,6 @@ const { mobile } = useDisplay()
 
 const headers = [
   { title: 'Modalidade', key: 'name' },
-  { title: 'Grupo de Modalidade', key: 'groupName' },
   { title: 'Situação', key: 'status', align: 'center' },
   { title: 'Ofertada', key: 'offered', align: 'center' },
   { title: 'Ramos', key: 'branches' },
@@ -88,9 +86,9 @@ const headers = [
     <template #[`item.insurers`]="{ item }">
       <div class="si-modality-map-matrix__chips">
         <template v-if="item.insurers.length">
-          <!-- Uma badge por Seguradora distinta (RN-033), não por Modalidade Importada. -->
+          <!-- Uma badge por Seguradora distinta (RN-033): o backend já agrega count/origins. -->
           <SiTooltip
-            v-for="insurer in groupInsurersById(item.insurers)"
+            v-for="insurer in item.insurers"
             :key="insurer.insurerId"
             location="top"
           >
@@ -102,7 +100,7 @@ const headers = [
               >
                 {{ insurer.insurerName }}
                 <template
-                  v-if="insurer.count > 1"
+                  v-if="Number(insurer.count) > 1"
                   #append
                 >
                   <span class="si-modality-map-matrix__count">{{ insurer.count }}</span>
@@ -171,10 +169,6 @@ const headers = [
 
       <dl class="si-modality-map-cards__facts">
         <div class="si-modality-map-cards__fact">
-          <dt>Grupo de Modalidade</dt>
-          <dd>{{ entry.groupName }}</dd>
-        </div>
-        <div class="si-modality-map-cards__fact">
           <dt>Ofertada</dt>
           <dd>{{ entry.offered ? 'Sim' : 'Fora de operação' }}</dd>
         </div>
@@ -204,9 +198,9 @@ const headers = [
           v-if="!entry.insurers.length"
           class="si-modality-map-matrix__muted"
         >Nenhuma Seguradora</span>
-        <!-- Uma badge por Seguradora distinta (RN-033), não por Modalidade Importada. -->
+        <!-- Uma badge por Seguradora distinta (RN-033): o backend já agrega count/origins. -->
         <SiTooltip
-          v-for="insurer in groupInsurersById(entry.insurers)"
+          v-for="insurer in entry.insurers"
           :key="insurer.insurerId"
           location="top"
         >
@@ -218,7 +212,7 @@ const headers = [
             >
               {{ insurer.insurerName }}
               <template
-                v-if="insurer.count > 1"
+                v-if="Number(insurer.count) > 1"
                 #append
               >
                 <span class="si-modality-map-matrix__count">{{ insurer.count }}</span>

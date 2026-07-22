@@ -34,32 +34,31 @@ describe('RN-029 Modalidade - composable useModalities', () => {
     })
   })
 
-  it('cria vinculada a um Grupo, com initialStatus Active (item curado nasce Ativo)', async () => {
+  it('cria sem Grupo (ADR-061), com initialStatus Active (item curado nasce Ativo)', async () => {
     fetchMock.mockResolvedValueOnce({ id: 'm-1', status: modalityStatuses.active })
     const { createModality } = useModalities(api)
 
-    await createModality({ name: 'Fiança locatícia', modalityGroupId: 'g-1', description: null })
+    await createModality({ name: 'Fiança locatícia', description: null })
 
     expect(fetchMock).toHaveBeenCalledWith('/api/modalities', {
       method: 'POST',
       body: {
         name: 'Fiança locatícia',
-        modalityGroupId: 'g-1',
         description: null,
         initialStatus: modalityStatuses.active,
       },
     })
   })
 
-  it('atualiza a Modalidade existente via PUT, incluindo troca de Grupo', async () => {
+  it('atualiza a Modalidade existente via PUT (só nome/descrição, sem Grupo — ADR-061)', async () => {
     fetchMock.mockResolvedValueOnce({ id: 'm-1' })
     const { updateModality } = useModalities(api)
 
-    await updateModality('m-1', { name: 'Fiança', modalityGroupId: 'g-2', description: 'nova' })
+    await updateModality('m-1', { name: 'Fiança', description: 'nova' })
 
     expect(fetchMock).toHaveBeenCalledWith('/api/modalities/m-1', {
       method: 'PUT',
-      body: { name: 'Fiança', modalityGroupId: 'g-2', description: 'nova' },
+      body: { name: 'Fiança', description: 'nova' },
     })
   })
 

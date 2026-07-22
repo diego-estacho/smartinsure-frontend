@@ -23,7 +23,6 @@ const { mobile } = useDisplay()
 
 const headers = [
   { title: 'Nome', key: 'name' },
-  { title: 'Grupo de Modalidade', key: 'modalityGroupName' },
   { title: 'Descrição', key: 'description' },
   { title: 'Situação', key: 'status', align: 'center' },
   { title: 'Ações', key: 'actions', sortable: false, align: 'center' },
@@ -120,10 +119,6 @@ const headers = [
       </div>
 
       <dl class="si-modalities-cards__facts">
-        <div class="si-modalities-cards__fact">
-          <dt>Grupo de Modalidade</dt>
-          <dd>{{ item.modalityGroupName }}</dd>
-        </div>
         <div class="si-modalities-cards__fact">
           <dt>Descrição</dt>
           <dd>{{ item.description ?? '-' }}</dd>

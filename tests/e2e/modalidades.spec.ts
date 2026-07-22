@@ -1,26 +1,15 @@
 import { expect, test } from '@playwright/test'
 
-// RN-029 (catálogo curado; toda Modalidade pertence a um Grupo) e RN-036 (preservação: nunca
-// exclui, só alterna Ativa/Inativa) — jornada de cadastro de Modalidade.
-// BFF mockado via page.route: o E2E exercita a UI real (tabela, dialog de formulário com o
-// dropdown de Grupo e dialog de situação); o contrato é coberto por composable/BFF e backend.
+// RN-029 (catálogo importado e curado; sem Grupo de Modalidade no lado Smart — ADR-061) e RN-036
+// (preservação: nunca exclui, só alterna Ativa/Inativa) — jornada de cadastro de Modalidade.
+// BFF mockado via page.route: o E2E exercita a UI real (tabela, dialog de formulário e dialog de
+// situação); o contrato é coberto por composable/BFF e backend.
 
 const modalityId = '01990000-0000-7000-8000-000000000201'
-const groupId = '01990000-0000-7000-8000-000000000101'
-
-const group = {
-  id: groupId,
-  name: 'Fiança',
-  description: null,
-  displayOrder: 1,
-  status: 'Active',
-}
 
 const modality = {
   id: modalityId,
   name: 'Fiança locatícia',
-  modalityGroupId: groupId,
-  modalityGroupName: 'Fiança',
   description: 'Garantia de aluguel',
   status: 'Active',
 }
@@ -29,14 +18,9 @@ test.describe('RN-029 Modalidade — cadastro', () => {
   test.beforeEach(async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.request.post('/api/auth/dev-login')
-
-    await page.route('**/api/modality-groups**', route =>
-      route.fulfill({
-        json: { items: [group], page: 1, pageSize: 100, totalCount: 1 },
-      }))
   })
 
-  test('cria uma Modalidade escolhendo o Grupo no dropdown (RN-029)', async ({ page }) => {
+  test('cria uma Modalidade sem Grupo (RN-029/ADR-061)', async ({ page }) => {
     let createdBody: Record<string, unknown> | null = null
 
     await page.route('**/api/modalities**', async (route) => {
@@ -72,9 +56,8 @@ test.describe('RN-029 Modalidade — cadastro', () => {
     await expect(dialog.getByText('Nova Modalidade')).toBeVisible()
     await dialog.getByLabel('Nome').fill('Fiança locatícia')
 
-    // Vuetify: o wrapper .v-field__input intercepta o clique do input do select.
-    await dialog.getByLabel('Grupo de Modalidade').click({ force: true })
-    await page.getByRole('option', { name: 'Fiança' }).click()
+    // ADR-061: não há campo Grupo de Modalidade no formulário.
+    await expect(dialog.getByLabel('Grupo de Modalidade')).toHaveCount(0)
 
     await dialog.getByLabel('Descrição').fill('Garantia de aluguel')
     await dialog.getByRole('button', { name: 'Salvar' }).click()
@@ -82,8 +65,8 @@ test.describe('RN-029 Modalidade — cadastro', () => {
     await expect(page.getByText('Modalidade cadastrada.')).toBeVisible()
     expect(createdBody).not.toBeNull()
     expect(createdBody!.name).toBe('Fiança locatícia')
-    // RN-029: toda Modalidade pertence a um Grupo, escolhido no dropdown.
-    expect(createdBody!.modalityGroupId).toBe(groupId)
+    // ADR-061: o payload não carrega Grupo.
+    expect(createdBody!.modalityGroupId).toBeUndefined()
     // RN-029: item curado nasce Ativo.
     expect(createdBody!.initialStatus).toBe('Active')
 

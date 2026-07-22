@@ -1,14 +1,15 @@
 <script setup lang="ts">
 /**
- * Fila de Revisão (RN-034): o recorte "precisa de decisão" evidenciado dentro do Mapa de
- * Modalidades — não é tela separada. Cada pendência é uma Modalidade Importada que a importação
- * não mapeou com segurança; a equipe decide: Mapear (para Modalidade existente), Promover (cria
- * Modalidade nova e mapeia) ou Ignorar. Apresentacional (ADR-018): emite as intenções; a decisão
- * e a chamada ao backend ficam na página/composable. Ramo por nome estável (ADR-004).
+ * Fila de Revisão (RN-034): o recorte de exceções e curadoria evidenciado dentro do Mapa de
+ * Modalidades — não é tela separada. Como o vínculo Importada→Modalidade vem pronto pela
+ * Modalidade Global (ADR-061), a Fila trata só de curadoria: cada item é uma Modalidade Importada
+ * sem Modalidade vinculada (exceção) e a equipe decide: Reatribuir (override manual para uma
+ * Modalidade), Ignorar ou Reativar. Apresentacional (ADR-018): emite as intenções; a decisão e a
+ * chamada ao backend ficam na página/composable. Ramo por nome estável (ADR-004).
  * Mobile-first (ADR-017): desktop = tabela densa; mobile = cards.
  */
 import type { PendingImportedModality } from '~/composables/useModalityMap'
-import { mdiEyeOffOutline, mdiLinkVariant, mdiPlusCircleOutline } from '~/lib/icons'
+import { mdiEyeOffOutline, mdiEyeOutline, mdiRepeatVariant } from '~/lib/icons'
 import { getSuretyBranchView } from '~/lib/status/suretyBranches'
 
 defineProps<{
@@ -18,9 +19,9 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  'map': [item: PendingImportedModality]
-  'promote': [item: PendingImportedModality]
+  'reassign': [item: PendingImportedModality]
   'ignore': [item: PendingImportedModality]
+  'restore': [item: PendingImportedModality]
 }>()
 
 const { mobile } = useDisplay()
@@ -60,25 +61,14 @@ const headers = [
     <template #[`item.actions`]="{ item }">
       <div class="si-review-queue__actions">
         <SiButton
-          :prepend-icon="mdiLinkVariant"
+          :prepend-icon="mdiRepeatVariant"
           size="small"
           variant="tonal"
           color="primary"
           :disabled="busy"
-          @click="emit('map', item)"
+          @click="emit('reassign', item)"
         >
-          Mapear
-        </SiButton>
-
-        <SiButton
-          :prepend-icon="mdiPlusCircleOutline"
-          size="small"
-          variant="tonal"
-          color="info"
-          :disabled="busy"
-          @click="emit('promote', item)"
-        >
-          Promover
+          Reatribuir
         </SiButton>
 
         <SiButton
@@ -90,6 +80,17 @@ const headers = [
           @click="emit('ignore', item)"
         >
           Ignorar
+        </SiButton>
+
+        <SiButton
+          :prepend-icon="mdiEyeOutline"
+          size="small"
+          variant="tonal"
+          color="info"
+          :disabled="busy"
+          @click="emit('restore', item)"
+        >
+          Reativar
         </SiButton>
       </div>
     </template>
@@ -146,25 +147,14 @@ const headers = [
 
       <div class="si-review-queue-cards__actions">
         <SiButton
-          :prepend-icon="mdiLinkVariant"
+          :prepend-icon="mdiRepeatVariant"
           size="small"
           variant="tonal"
           color="primary"
           :disabled="busy"
-          @click="emit('map', item)"
+          @click="emit('reassign', item)"
         >
-          Mapear
-        </SiButton>
-
-        <SiButton
-          :prepend-icon="mdiPlusCircleOutline"
-          size="small"
-          variant="tonal"
-          color="info"
-          :disabled="busy"
-          @click="emit('promote', item)"
-        >
-          Promover
+          Reatribuir
         </SiButton>
 
         <SiButton
@@ -176,6 +166,17 @@ const headers = [
           @click="emit('ignore', item)"
         >
           Ignorar
+        </SiButton>
+
+        <SiButton
+          :prepend-icon="mdiEyeOutline"
+          size="small"
+          variant="tonal"
+          color="info"
+          :disabled="busy"
+          @click="emit('restore', item)"
+        >
+          Reativar
         </SiButton>
       </div>
     </SiCard>

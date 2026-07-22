@@ -1,37 +1,39 @@
 <script setup lang="ts">
 /**
  * Mapa de Modalidades (RN-033) + Fila de Revisão (RN-034) na MESMA tela: a matriz Seguradoras ×
- * Modalidades e o recorte "precisa de decisão" (pendências) convivem, não são páginas separadas.
+ * Modalidades e o recorte de exceções/curadoria (pendências) convivem, não são páginas separadas.
  * Página orquestradora fina (ADR-018): mantém o estado de tela, chama os composables e compõe os
- * componentes de domínio (matriz, fila, dialogs). Nenhuma regra de negócio aqui — oferta, ramos e
- * a trava de ramo do mapeamento são decididos no servidor (RN-033/RN-034). Sem markup denso.
+ * componentes de domínio (matriz, fila, dialogs). Nenhuma regra de negócio aqui — oferta e ramos
+ * são derivados no servidor (RN-033). Como o vínculo vem pronto pela Modalidade Global (ADR-061),
+ * a Fila só faz curadoria.
  *
- * Ações da Fila: Mapear (Modalidade existente → /map), Promover (cria Modalidade via o cadastro
- * da fatia 1 e mapeia a pendência a ela) e Ignorar (→ /ignore).
+ * Ações da Fila: Reatribuir (define manualmente a Modalidade da Importada → /reassign), Ignorar
+ * (→ /ignore) e Reativar (desfaz o Ignorar → /restore).
  */
 import type { ModalityListItem } from '~/composables/useModalities'
-import type { ModalityGroupListItem } from '~/composables/useModalityGroups'
 import type { ModalityMapEntry, PendingImportedModality } from '~/composables/useModalityMap'
 import { mdiRefresh, mdiSitemapOutline } from '~/lib/icons'
 
 definePageMeta({ layout: 'shell' })
 
-const { getModalityMap, mapImportedModality, ignoreImportedModality } = useModalityMap()
-const { listModalities, createModality } = useModalities()
-const { listModalityGroups } = useModalityGroups()
+const {
+  getModalityMap,
+  reassignImportedModality,
+  ignoreImportedModality,
+  restoreImportedModality,
+} = useModalityMap()
+const { listModalities } = useModalities()
 
 const entries = ref<ModalityMapEntry[]>([])
 const pending = ref<PendingImportedModality[]>([])
 const modalities = ref<ModalityListItem[]>([])
-const groups = ref<ModalityGroupListItem[]>([])
 const loading = ref(false)
 const saving = ref(false)
 const error = ref<string | null>(null)
 const success = ref<string | null>(null)
 
-const mapDialogOpen = ref(false)
+const reassignDialogOpen = ref(false)
 const ignoreDialogOpen = ref(false)
-const promoteDialogOpen = ref(false)
 const selectedPending = ref<PendingImportedModality | null>(null)
 
 await refresh()
@@ -41,17 +43,14 @@ async function refresh() {
   error.value = null
 
   try {
-    // A matriz + a Fila vêm juntas do mapa; a lista de Modalidades alimenta o Mapear e os Grupos
-    // (Ativos) alimentam o Promover (cadastro da fatia 1).
-    const [map, modalitiesPage, groupsPage] = await Promise.all([
+    // A matriz + a Fila vêm juntas do mapa; a lista de Modalidades alimenta o Reatribuir.
+    const [map, modalitiesPage] = await Promise.all([
       getModalityMap(),
       listModalities({ pageSize: 100 }),
-      listModalityGroups({ pageSize: 100 }),
     ])
     entries.value = [...map.modalities]
     pending.value = [...map.pending]
     modalities.value = [...modalitiesPage.items]
-    groups.value = [...groupsPage.items]
   }
   catch {
     error.value = 'Não foi possível carregar o Mapa de Modalidades.'
@@ -61,16 +60,10 @@ async function refresh() {
   }
 }
 
-function openMapDialog(item: PendingImportedModality) {
+function openReassignDialog(item: PendingImportedModality) {
   selectedPending.value = item
   success.value = null
-  mapDialogOpen.value = true
-}
-
-function openPromoteDialog(item: PendingImportedModality) {
-  selectedPending.value = item
-  success.value = null
-  promoteDialogOpen.value = true
+  reassignDialogOpen.value = true
 }
 
 function openIgnoreDialog(item: PendingImportedModality) {
@@ -79,7 +72,7 @@ function openIgnoreDialog(item: PendingImportedModality) {
   ignoreDialogOpen.value = true
 }
 
-async function confirmMap(modalityId: string) {
+async function confirmReassign(modalityId: string) {
   const item = selectedPending.value
   if (!item) return
 
@@ -88,37 +81,13 @@ async function confirmMap(modalityId: string) {
   success.value = null
 
   try {
-    await mapImportedModality(item.importedModalityId, modalityId)
-    success.value = 'Modalidade Importada mapeada.'
-    mapDialogOpen.value = false
+    await reassignImportedModality(item.importedModalityId, modalityId)
+    success.value = 'Modalidade Importada reatribuída.'
+    reassignDialogOpen.value = false
     await refresh()
   }
   catch {
-    error.value = 'Não foi possível mapear a Modalidade Importada.'
-  }
-  finally {
-    saving.value = false
-  }
-}
-
-// Promover (RN-034): cria a Modalidade no cadastro da fatia 1 e mapeia a pendência a ela.
-async function confirmPromote(payload: { name: string, modalityGroupId: string, description: string | null }) {
-  const item = selectedPending.value
-  if (!item) return
-
-  saving.value = true
-  error.value = null
-  success.value = null
-
-  try {
-    const created = await createModality(payload)
-    await mapImportedModality(item.importedModalityId, created.id)
-    success.value = 'Modalidade criada e mapeada.'
-    promoteDialogOpen.value = false
-    await refresh()
-  }
-  catch {
-    error.value = 'Não foi possível promover a Modalidade Importada.'
+    error.value = 'Não foi possível reatribuir a Modalidade Importada.'
   }
   finally {
     saving.value = false
@@ -141,6 +110,25 @@ async function confirmIgnore() {
   }
   catch {
     error.value = 'Não foi possível ignorar a Modalidade Importada.'
+  }
+  finally {
+    saving.value = false
+  }
+}
+
+// Reativar (RN-034): desfaz o Ignorar direto, sem dialog de confirmação.
+async function restore(item: PendingImportedModality) {
+  saving.value = true
+  error.value = null
+  success.value = null
+
+  try {
+    await restoreImportedModality(item.importedModalityId)
+    success.value = 'Modalidade Importada reativada.'
+    await refresh()
+  }
+  catch {
+    error.value = 'Não foi possível reativar a Modalidade Importada.'
   }
   finally {
     saving.value = false
@@ -199,8 +187,8 @@ async function confirmIgnore() {
           </SiChip>
         </div>
         <p class="si-modality-map__section-hint">
-          Modalidades Importadas que a importação não mapeou com segurança. Resolva cada pendência:
-          Mapear para uma Modalidade existente, Promover (criar uma nova) ou Ignorar.
+          Exceções da importação: Modalidades Importadas sem uma Modalidade vinculada. Resolva cada
+          uma: Reatribuir para uma Modalidade, Ignorar ou Reativar.
         </p>
       </div>
 
@@ -208,9 +196,9 @@ async function confirmIgnore() {
         :items="pending"
         :loading="loading"
         :busy="saving"
-        @map="openMapDialog"
-        @promote="openPromoteDialog"
+        @reassign="openReassignDialog"
         @ignore="openIgnoreDialog"
+        @restore="restore"
       />
     </SiCard>
 
@@ -228,8 +216,8 @@ async function confirmIgnore() {
           </span>
         </div>
         <p class="si-modality-map__section-hint">
-          Uma Modalidade é ofertada quando tem ao menos uma Modalidade Importada Ativa com
-          mapeamento confirmado. Disponibilidade por ramo é derivada, nunca digitada.
+          Uma Modalidade é ofertada quando tem ao menos uma Modalidade Importada Ativa e não
+          Ignorada vinculada. Disponibilidade por ramo é derivada, nunca digitada.
         </p>
       </div>
 
@@ -239,12 +227,12 @@ async function confirmIgnore() {
       />
     </SiCard>
 
-    <ModalityMapMappingDialog
-      v-model="mapDialogOpen"
+    <ModalityMapReassignDialog
+      v-model="reassignDialogOpen"
       :pending="selectedPending"
       :modalities="modalities"
       :saving="saving"
-      @confirm="confirmMap"
+      @confirm="confirmReassign"
     />
 
     <ModalityMapIgnoreDialog
@@ -252,15 +240,6 @@ async function confirmIgnore() {
       :pending="selectedPending"
       :loading="saving"
       @confirm="confirmIgnore"
-    />
-
-    <!-- Promover reaproveita o cadastro de Modalidade da fatia 1 (RN-034 → RN-029). -->
-    <ModalitiesFormDialog
-      v-model="promoteDialogOpen"
-      :modality="null"
-      :groups="groups"
-      :saving="saving"
-      @submit="confirmPromote"
     />
   </VContainer>
 </template>

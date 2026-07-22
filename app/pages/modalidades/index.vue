@@ -1,13 +1,12 @@
 <script setup lang="ts">
 /**
- * Modalidades — cadastro (RN-029: catálogo curado, escrita restrita ao Administrador; toda
- * Modalidade pertence a um Grupo de Modalidade; RN-036: nunca exclui, só alterna Ativa/Inativa).
- * Página orquestradora fina (ADR-018): mantém o estado de tela, chama os composables de dados e
- * compõe os componentes de domínio (filtro, tabela responsiva, dialog de formulário com o
- * dropdown de Grupo, dialog de situação). Sem markup denso aqui.
+ * Modalidades — cadastro (RN-029: catálogo importado e curado, escrita restrita ao Administrador;
+ * não há Grupo de Modalidade no lado Smart — ADR-061; RN-036: nunca exclui, só alterna
+ * Ativa/Inativa). Página orquestradora fina (ADR-018): mantém o estado de tela, chama os
+ * composables de dados e compõe os componentes de domínio (filtro, tabela responsiva, dialog de
+ * formulário, dialog de situação). Sem markup denso aqui.
  */
 import type { ModalityListItem } from '~/composables/useModalities'
-import type { ModalityGroupListItem } from '~/composables/useModalityGroups'
 import { mdiPlus, mdiRefresh } from '~/lib/icons'
 import { getModalityStatusAction } from '~/lib/status/modalities'
 
@@ -19,10 +18,8 @@ const {
   updateModality,
   changeModalityStatus,
 } = useModalities()
-const { listModalityGroups } = useModalityGroups()
 
 const items = ref<ModalityListItem[]>([])
-const groups = ref<ModalityGroupListItem[]>([])
 const totalCount = ref(0)
 const loading = ref(false)
 const saving = ref(false)
@@ -43,14 +40,9 @@ async function refresh() {
   error.value = null
 
   try {
-    // O dropdown do formulário oferece os Grupos disponíveis (Ativos) para vincular.
-    const [modalitiesPage, groupsPage] = await Promise.all([
-      listModalities({ includeInactive: includeInactive.value }),
-      listModalityGroups({ pageSize: 100 }),
-    ])
+    const modalitiesPage = await listModalities({ includeInactive: includeInactive.value })
     items.value = [...modalitiesPage.items]
     totalCount.value = Number(modalitiesPage.totalCount)
-    groups.value = [...groupsPage.items]
   }
   catch {
     error.value = 'Não foi possível carregar as Modalidades.'
@@ -72,7 +64,7 @@ function openEditDialog(modality: ModalityListItem) {
   formOpen.value = true
 }
 
-async function submitForm(payload: { name: string, modalityGroupId: string, description: string | null }) {
+async function submitForm(payload: { name: string, description: string | null }) {
   saving.value = true
   error.value = null
   success.value = null
@@ -200,7 +192,6 @@ async function confirmStatusChange() {
     <ModalitiesFormDialog
       v-model="formOpen"
       :modality="editingModality"
-      :groups="groups"
       :saving="saving"
       @submit="submitForm"
     />

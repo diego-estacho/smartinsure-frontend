@@ -1,9 +1,10 @@
 <script setup lang="ts">
 /**
- * Dialog de Mapear (RN-034): escolhe uma Modalidade existente para confirmar o mapeamento manual
- * da pendência selecionada. Apresentacional (ADR-018): valida a FORMA (obrigatório) e emite
- * `confirm` com o id escolhido; a decisão (trava de ramo) e a chamada ficam no servidor — nenhuma
- * regra de negócio no cliente. As Modalidades ofertáveis vêm do cadastro da fatia 1.
+ * Dialog de Reatribuir (RN-034): escolhe uma Modalidade para definir manualmente o vínculo da
+ * Modalidade Importada selecionada (override — preservado na reimportação, RN-032/ADR-061).
+ * Apresentacional (ADR-018): valida a FORMA (obrigatório) e emite `confirm` com o id escolhido; a
+ * decisão e a chamada ficam no servidor — nenhuma regra de negócio no cliente. As Modalidades vêm
+ * do cadastro (RN-029).
  */
 import type { ModalityListItem } from '~/composables/useModalities'
 import type { PendingImportedModality } from '~/composables/useModalityMap'
@@ -40,14 +41,14 @@ async function submit() {
 
 <template>
   <SiDialog v-model="open">
-    <SiCard class="si-mapping-dialog">
+    <SiCard class="si-reassign-dialog">
       <h2 class="text-h6 mb-3">
-        Mapear Modalidade Importada
+        Reatribuir Modalidade Importada
       </h2>
 
       <p
         v-if="pending"
-        class="si-mapping-dialog__origin mb-4"
+        class="si-reassign-dialog__origin mb-4"
       >
         <strong>{{ pending.originName }}</strong>
         — {{ pending.insurerName }}
@@ -72,7 +73,7 @@ async function submit() {
         />
       </SiForm>
 
-      <div class="si-mapping-dialog__actions">
+      <div class="si-reassign-dialog__actions">
         <SiButton
           variant="text"
           @click="open = false"
@@ -84,7 +85,7 @@ async function submit() {
           :loading="saving"
           @click="submit"
         >
-          Confirmar mapeamento
+          Confirmar reatribuição
         </SiButton>
       </div>
     </SiCard>
@@ -92,16 +93,16 @@ async function submit() {
 </template>
 
 <style scoped>
-.si-mapping-dialog {
+.si-reassign-dialog {
   padding: var(--si-space-5);
 }
 
-.si-mapping-dialog__origin {
+.si-reassign-dialog__origin {
   font-size: var(--si-fs-small);
   color: rgba(var(--v-theme-on-surface), 0.8);
 }
 
-.si-mapping-dialog__actions {
+.si-reassign-dialog__actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;

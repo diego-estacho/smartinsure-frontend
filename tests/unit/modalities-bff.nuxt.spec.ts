@@ -6,10 +6,11 @@ afterEach(() => {
   vi.resetModules()
 })
 
-describe('RN-029 Grupo de Modalidade - BFF Nitro', () => {
+describe('RN-029 Modalidade - BFF Nitro', () => {
   it('encaminha corpo e token ao criar no backend, sem o browser falar direto (ADR-008)', async () => {
-    const backendFetchMock = vi.fn().mockResolvedValue({ id: 'g-1', status: 'Active' })
-    const body = { name: 'Fiança', description: null, displayOrder: 1, initialStatus: 'Active' }
+    const backendFetchMock = vi.fn().mockResolvedValue({ id: 'm-1', status: 'Active' })
+    // ADR-061: sem Grupo de Modalidade — só nome, descrição e initialStatus.
+    const body = { name: 'Fiança locatícia', description: null, initialStatus: 'Active' }
     const runtimeConfig = useRuntimeConfig() as { backendBaseUrl: string }
     runtimeConfig.backendBaseUrl = 'https://backend.test'
 
@@ -18,10 +19,10 @@ describe('RN-029 Grupo de Modalidade - BFF Nitro', () => {
     vi.stubGlobal('readBody', vi.fn().mockResolvedValue(body))
     vi.stubGlobal('$fetch', backendFetchMock)
 
-    const { default: handler } = await import('../../server/api/modality-groups.post')
+    const { default: handler } = await import('../../server/api/modalities.post')
     await (handler as (event: unknown) => Promise<unknown>)({})
 
-    expect(backendFetchMock).toHaveBeenCalledWith('/api/v1/modality-groups', {
+    expect(backendFetchMock).toHaveBeenCalledWith('/api/v1/modalities', {
       baseURL: 'https://backend.test',
       method: 'POST',
       body,

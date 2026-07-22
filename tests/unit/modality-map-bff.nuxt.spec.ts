@@ -28,8 +28,8 @@ describe('RN-033 Mapa de Modalidades - BFF Nitro', () => {
 })
 
 describe('RN-034 Fila de Revisão - BFF Nitro', () => {
-  it('encaminha corpo, token e rota ao mapear a Modalidade Importada', async () => {
-    const backendFetchMock = vi.fn().mockResolvedValue({ importedModalityId: 'i-1', modalityId: 'm-1', mappingStatus: 'Confirmed' })
+  it('encaminha corpo, token e rota ao reatribuir a Modalidade Importada', async () => {
+    const backendFetchMock = vi.fn().mockResolvedValue({ importedModalityId: 'i-1', modalityId: 'm-1', linkSource: 'Manual' })
     const body = { modalityId: 'm-1' }
     const runtimeConfig = useRuntimeConfig() as { backendBaseUrl: string }
     runtimeConfig.backendBaseUrl = 'https://backend.test'
@@ -40,10 +40,10 @@ describe('RN-034 Fila de Revisão - BFF Nitro', () => {
     vi.stubGlobal('readBody', vi.fn().mockResolvedValue(body))
     vi.stubGlobal('$fetch', backendFetchMock)
 
-    const { default: handler } = await import('../../server/api/imported-modalities/[id]/map.post')
+    const { default: handler } = await import('../../server/api/imported-modalities/[id]/reassign.post')
     await (handler as (event: unknown) => Promise<unknown>)({})
 
-    expect(backendFetchMock).toHaveBeenCalledWith('/api/v1/imported-modalities/i-1/map', {
+    expect(backendFetchMock).toHaveBeenCalledWith('/api/v1/imported-modalities/i-1/reassign', {
       baseURL: 'https://backend.test',
       method: 'POST',
       body,
@@ -65,6 +65,26 @@ describe('RN-034 Fila de Revisão - BFF Nitro', () => {
     await (handler as (event: unknown) => Promise<unknown>)({})
 
     expect(backendFetchMock).toHaveBeenCalledWith('/api/v1/imported-modalities/i-1/ignore', {
+      baseURL: 'https://backend.test',
+      method: 'POST',
+      headers: { Authorization: 'Bearer session-token' },
+    })
+  })
+
+  it('encaminha token e rota ao reativar a Modalidade Importada', async () => {
+    const backendFetchMock = vi.fn().mockResolvedValue({ importedModalityId: 'i-1', ignored: false })
+    const runtimeConfig = useRuntimeConfig() as { backendBaseUrl: string }
+    runtimeConfig.backendBaseUrl = 'https://backend.test'
+
+    vi.stubGlobal('defineEventHandler', (handler: unknown) => handler)
+    vi.stubGlobal('getCookie', () => 'session-token')
+    vi.stubGlobal('getRouterParam', () => 'i-1')
+    vi.stubGlobal('$fetch', backendFetchMock)
+
+    const { default: handler } = await import('../../server/api/imported-modalities/[id]/restore.post')
+    await (handler as (event: unknown) => Promise<unknown>)({})
+
+    expect(backendFetchMock).toHaveBeenCalledWith('/api/v1/imported-modalities/i-1/restore', {
       baseURL: 'https://backend.test',
       method: 'POST',
       headers: { Authorization: 'Bearer session-token' },

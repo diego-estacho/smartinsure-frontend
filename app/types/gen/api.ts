@@ -416,7 +416,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/imported-modalities/{id}/map": {
+    "/api/v1/imported-modalities/{id}/reassign": {
         parameters: {
             query?: never;
             header?: never;
@@ -436,7 +436,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["MapImportedModalityBody"];
+                    "application/json": components["schemas"]["ReassignImportedModalityBody"];
                 };
             };
             responses: {
@@ -446,7 +446,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["MapImportedModalityResponse"];
+                        "application/json": components["schemas"]["ReassignImportedModalityResponse"];
                     };
                 };
             };
@@ -484,6 +484,43 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["IgnoreImportedModalityResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/imported-modalities/{id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RestoreImportedModalityResponse"];
                     };
                 };
             };
@@ -818,171 +855,6 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["ChangeModalityStatusResponse"];
-                    };
-                };
-            };
-        };
-        trace?: never;
-    };
-    "/api/v1/modality-groups": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    page?: number | string;
-                    pageSize?: number | string;
-                    includeInactive?: boolean;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["PagedResponseOfModalityGroupListItemResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["CreateModalityGroupRequest"];
-                };
-            };
-            responses: {
-                /** @description Created */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["CreateModalityGroupResponse"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/modality-groups/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["GetModalityGroupResponse"];
-                    };
-                };
-            };
-        };
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["UpdateModalityGroupBody"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["UpdateModalityGroupResponse"];
-                    };
-                };
-            };
-        };
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/modality-groups/{id}/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["ChangeModalityGroupStatusBody"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ChangeModalityGroupStatusResponse"];
                     };
                 };
             };
@@ -1572,14 +1444,6 @@ export interface components {
             id: string;
             status: string;
         };
-        ChangeModalityGroupStatusBody: {
-            status: string;
-        };
-        ChangeModalityGroupStatusResponse: {
-            /** Format: uuid */
-            id: string;
-            status: string;
-        };
         ChangeModalityStatusBody: {
             status: string;
         };
@@ -1640,26 +1504,8 @@ export interface components {
             referenceExternalId: null | string;
             status: string;
         };
-        CreateModalityGroupRequest: {
-            name: string;
-            description: null | string;
-            /** Format: int32 */
-            displayOrder: number | string;
-            initialStatus: string;
-        };
-        CreateModalityGroupResponse: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            description: null | string;
-            /** Format: int32 */
-            displayOrder: number | string;
-            status: string;
-        };
         CreateModalityRequest: {
             name: string;
-            /** Format: uuid */
-            modalityGroupId: string;
             description: null | string;
             initialStatus: string;
         };
@@ -1667,8 +1513,6 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
-            /** Format: uuid */
-            modalityGroupId: string;
             description: null | string;
             status: string;
         };
@@ -1753,21 +1597,10 @@ export interface components {
             referenceExternalId: null | string;
             status: string;
         };
-        GetModalityGroupResponse: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            description: null | string;
-            /** Format: int32 */
-            displayOrder: number | string;
-            status: string;
-        };
         GetModalityResponse: {
             /** Format: uuid */
             id: string;
             name: string;
-            /** Format: uuid */
-            modalityGroupId: string;
             description: null | string;
             status: string;
         };
@@ -1815,33 +1648,13 @@ export interface components {
             logoUrl: null | string;
             status: string;
         };
-        MapImportedModalityBody: {
-            /** Format: uuid */
-            modalityId: string;
-        };
-        MapImportedModalityResponse: {
-            /** Format: uuid */
-            importedModalityId: string;
-            /** Format: uuid */
-            modalityId: string;
-            mappingStatus: string;
-        };
         MapInsurerResponse: {
             /** Format: uuid */
             insurerId: string;
             insurerName: string;
-            /** Format: uuid */
-            importedModalityId: string;
-            originName: string;
-        };
-        ModalityGroupListItemResponse: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            description: null | string;
             /** Format: int32 */
-            displayOrder: number | string;
-            status: string;
+            count: number | string;
+            origins: string[];
         };
         ModalityImportSummaryResponse: {
             /** Format: int32 */
@@ -1856,9 +1669,6 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
-            /** Format: uuid */
-            modalityGroupId: string;
-            modalityGroupName: string;
             description: null | string;
             status: string;
         };
@@ -1866,7 +1676,6 @@ export interface components {
             /** Format: uuid */
             modalityId: string;
             name: string;
-            groupName: string;
             status: string;
             offered: boolean;
             branches: string[];
@@ -1900,17 +1709,6 @@ export interface components {
         };
         PagedResponseOfInsurerListItemResponse: {
             items: components["schemas"]["InsurerListItemResponse"][];
-            /** Format: int32 */
-            page: number | string;
-            /** Format: int32 */
-            pageSize: number | string;
-            /** Format: int64 */
-            totalCount: number | string;
-            /** Format: int64 */
-            totalPages?: number | string;
-        };
-        PagedResponseOfModalityGroupListItemResponse: {
-            items: components["schemas"]["ModalityGroupListItemResponse"][];
             /** Format: int32 */
             page: number | string;
             /** Format: int32 */
@@ -2011,6 +1809,22 @@ export interface components {
             socialName: null | string;
             isPrivateSector: null | boolean;
         };
+        ReassignImportedModalityBody: {
+            /** Format: uuid */
+            modalityId: string;
+        };
+        ReassignImportedModalityResponse: {
+            /** Format: uuid */
+            importedModalityId: string;
+            /** Format: uuid */
+            modalityId: string;
+            linkSource: string;
+        };
+        RestoreImportedModalityResponse: {
+            /** Format: uuid */
+            importedModalityId: string;
+            ignored: boolean;
+        };
         SearchPersonsResponse: {
             items: components["schemas"]["PersonSearchItemResponse"][];
             notice?: null | string;
@@ -2057,31 +1871,12 @@ export interface components {
         };
         UpdateModalityBody: {
             name: string;
-            /** Format: uuid */
-            modalityGroupId: string;
             description: null | string;
-        };
-        UpdateModalityGroupBody: {
-            name: string;
-            description: null | string;
-            /** Format: int32 */
-            displayOrder: number | string;
-        };
-        UpdateModalityGroupResponse: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            description: null | string;
-            /** Format: int32 */
-            displayOrder: number | string;
-            status: string;
         };
         UpdateModalityResponse: {
             /** Format: uuid */
             id: string;
             name: string;
-            /** Format: uuid */
-            modalityGroupId: string;
             description: null | string;
             status: string;
         };

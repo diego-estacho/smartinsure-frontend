@@ -21,7 +21,7 @@
 import {
   mdiFileDocumentOutline, mdiAccount, mdiLogout,
   mdiChevronDoubleLeft, mdiChevronDoubleRight, mdiOfficeBuildingOutline, mdiMenu,
-  mdiDomain, mdiViewDashboardOutline, mdiShapeOutline, mdiTagOutline, mdiSitemapOutline,
+  mdiDomain, mdiViewDashboardOutline, mdiTagOutline, mdiSitemapOutline,
 } from '~/lib/icons'
 
 const { logout } = useAuth()
@@ -34,7 +34,6 @@ const nav = [
   { title: 'Painel', to: '/', icon: mdiViewDashboardOutline },
   { title: 'Corretoras', to: '/corretoras', icon: mdiOfficeBuildingOutline },
   { title: 'Tomadores', to: '/tomadores', icon: mdiDomain },
-  { title: 'Grupos de Modalidade', to: '/grupos-de-modalidade', icon: mdiShapeOutline },
   { title: 'Modalidades', to: '/modalidades', icon: mdiTagOutline },
   { title: 'Mapa de Modalidades', to: '/mapa-de-modalidades', icon: mdiSitemapOutline },
   { title: 'Página B', to: '/demo/b', icon: mdiFileDocumentOutline },
