@@ -110,9 +110,15 @@ no plugin (`vuetify-icons.ts`).
   indeterminado detectado por `aria-checked="mixed"`. Radio selecionado = anel verde + dot verde 8px
   (`::after` escala 0→1); não-selecionado = anel border-strong. Anel de foco 3px verde. Verificado por
   medição (Playwright) e screenshot na vitrine.
+- **Label estático acima dos campos (feito, verificado):** o DS (TextField.jsx) mostra o rótulo
+  ESTÁTICO ACIMA (12px semibold), não o flutuante do Vuetify. Nova moldura `SiFieldShell` desenha o
+  rótulo + liga `for`↔`id` do input; os 6 wrappers de campo (TextField/Select/Textarea/Currency/Doc/
+  DateField) passam `label`/`required` à moldura e NÃO repassam `label` ao controle Vuetify (que usa
+  `placeholder`). Id do controle = `$attrs.id ?? useId()` (preserva o `#login-email` da tela de login).
+  Estados de foco/erro do Vuetify seguem funcionando (rótulo fica, campo vermelho, mensagem embaixo).
+  Verificado no /dev/ui (rótulo 12px/600, sem `.v-field-label` flutuante) + build/typecheck/lint/test.
 - **Pendentes:** DS **Stepper** (antes fora — sem consumidor; o dono confirmou uso → criar `SiStepper`
-  horizontal + vertical); **label estático acima** dos campos (não o flutuante do Vuetify); aproximação
-  do calendário do `DateField`.
+  horizontal + vertical); aproximação do calendário do `DateField`.
 
 **Aberto (sob demanda):** Tabs `segmented` — variante do DS via VBtnToggle; sem consumidor hoje, fica
 para quando surgir a necessidade.

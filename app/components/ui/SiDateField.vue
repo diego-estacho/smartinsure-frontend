@@ -14,11 +14,14 @@ defineOptions({ inheritAttrs: false })
 const model = defineModel<string | Date | null>()
 
 const props = withDefaults(defineProps<{
+  label?: string
+  required?: boolean
   variant?: 'outlined' | 'filled' | 'underlined' | 'solo' | 'plain'
   density?: 'default' | 'comfortable' | 'compact'
   color?: string
   valueFormat?: 'iso' | 'br' | 'date'
 }>(), {
+  label: undefined,
   variant: 'outlined',
   density: 'comfortable',
   color: 'primary',
@@ -53,17 +56,25 @@ function displayBr(value: unknown): string {
 </script>
 
 <template>
-  <VDateInput
-    v-model="inner"
-    class="si-field"
-    v-bind="$attrs"
-    :variant="variant"
-    :density="density"
-    :color="color"
-    :display-format="displayBr"
+  <SiFieldShell
+    :label="label"
+    :required="required"
   >
-    <template v-for="(_, name) in $slots" #[name]="slotProps">
-      <slot :name="name" v-bind="slotProps ?? {}" />
+    <template #default="{ fieldId }">
+      <VDateInput
+        v-bind="$attrs"
+        :id="($attrs.id as string | undefined) ?? fieldId"
+        v-model="inner"
+        class="si-field"
+        :variant="variant"
+        :density="density"
+        :color="color"
+        :display-format="displayBr"
+      >
+        <template v-for="(_, name) in $slots" #[name]="slotProps">
+          <slot :name="name" v-bind="slotProps ?? {}" />
+        </template>
+      </VDateInput>
     </template>
-  </VDateInput>
+  </SiFieldShell>
 </template>
