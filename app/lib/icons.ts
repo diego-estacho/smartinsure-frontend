@@ -41,4 +41,7 @@ export {
   mdiTrashCanOutline,
   mdiShapeOutline,
   mdiTagOutline,
+  mdiLinkVariant,
+  mdiPlusCircleOutline,
+  mdiSitemapOutline,
 } from '@mdi/js'
