@@ -107,6 +107,7 @@ em forma e registre aqui.
 | `<i data-lucide>` | `SiIcon :icon="<chave-lucide>"` (ADR-021) |
 | `.toast` | `SiSnackbar` |
 | popover / menu | `SiMenu` |
+| trilha de etapas (`Stepper.jsx`) | `SiStepper` (`:steps`, `v-model:current`, `orientation`, `clickable`) — componente próprio (o Vuetify não tem primitivo equivalente ao dot-stepper do DS) |
 
 ## Voz (do README do DS)
 

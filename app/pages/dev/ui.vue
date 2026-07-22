@@ -24,6 +24,15 @@ const progress = ref(65)
 const tablePage = ref(1)
 const tablePerPage = ref(10)
 
+// Stepper (DS): etapas concluída/atual/futura. `current` clicável volta a etapas já alcançadas.
+const stepperStep = ref(1)
+const stepperSteps = [
+  { label: 'Dados', description: 'Tomador e vigência' },
+  { label: 'Coberturas', description: 'Limites e franquia' },
+  { label: 'Revisão', description: 'Confirmar proposta' },
+  { label: 'Emissão' },
+]
+
 const options = ['Cliente', 'Corretora', 'Seguradora']
 
 // Formulário (onda 2) — composição dos campos Si + validação nativa.
@@ -198,6 +207,49 @@ const items = [
               <template #text>Prazos e coberturas.</template>
             </SiExpansionPanel>
           </SiExpansionPanels>
+        </VCardText>
+      </SiCard>
+
+      <!-- Stepper — trilha de etapas (DS Stepper): concluída/atual/futura + conectores -->
+      <SiCard class="mb-6">
+        <VCardTitle>SiStepper</VCardTitle>
+        <VCardText class="d-flex flex-column" style="gap: var(--si-space-6)">
+          <div class="d-flex align-center flex-wrap" style="gap: var(--si-space-3)">
+            <SiButton
+              variant="outlined"
+              size="small"
+              :disabled="stepperStep === 0"
+              @click="stepperStep = Math.max(0, stepperStep - 1)"
+            >
+              Anterior
+            </SiButton>
+            <SiButton
+              size="small"
+              :disabled="stepperStep === stepperSteps.length - 1"
+              @click="stepperStep = Math.min(stepperSteps.length - 1, stepperStep + 1)"
+            >
+              Próximo
+            </SiButton>
+            <span class="text-caption text-medium-emphasis">etapa {{ stepperStep + 1 }}/{{ stepperSteps.length }} (clique numa etapa concluída para voltar)</span>
+          </div>
+
+          <!-- Horizontal, clicável (v-model:current) -->
+          <SiStepper
+            v-model:current="stepperStep"
+            :steps="stepperSteps"
+            clickable
+          />
+
+          <SiDivider />
+
+          <!-- Vertical, estático (current fixo) -->
+          <div style="max-width: 320px">
+            <SiStepper
+              :current="2"
+              :steps="stepperSteps"
+              orientation="vertical"
+            />
+          </div>
         </VCardText>
       </SiCard>
 

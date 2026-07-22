@@ -9,6 +9,7 @@ import SiTextField from '~/components/ui/SiTextField.vue'
 import SiCurrencyField from '~/components/ui/SiCurrencyField.vue'
 import SiForm from '~/components/ui/SiForm.vue'
 import SiPagination from '~/components/ui/SiPagination.vue'
+import SiStepper from '~/components/ui/SiStepper.vue'
 
 describe('SiButton — curado + passthrough (ADR-013)', () => {
   it('aplica defaults do DS: primary, rounded-md, variante flat', async () => {
@@ -90,5 +91,60 @@ describe('SiPagination — navegação (ref InsurePoint)', () => {
     const ativa = w.find('.si-pagination__page--active')
     expect(ativa.exists()).toBe(true)
     expect(ativa.text()).toBe('2')
+  })
+})
+
+describe('SiStepper — estados e navegação (DS Stepper)', () => {
+  const steps = [{ label: 'A' }, { label: 'B' }, { label: 'C' }]
+
+  function statesOf(w: Awaited<ReturnType<typeof mountSuspended>>) {
+    return w.findAll('.si-stepper__step').map((s) => {
+      if (s.classes().some(c => c.endsWith('--done'))) return 'done'
+      if (s.classes().some(c => c.endsWith('--current'))) return 'current'
+      return 'todo'
+    })
+  }
+
+  it('classifica etapas: concluída (<current), atual (=current), futura (>current)', async () => {
+    const w = await mountSuspended(SiStepper, { props: { steps, current: 1 } })
+    expect(statesOf(w)).toEqual(['done', 'current', 'todo'])
+  })
+
+  it('etapa concluída não mostra número (mostra o check); atual/futura mostram o número', async () => {
+    const w = await mountSuspended(SiStepper, { props: { steps, current: 1 } })
+    const dots = w.findAll('.si-stepper__dot')
+    expect(dots[0]!.text()).toBe('') // done → check, sem número
+    expect(dots[1]!.text()).toBe('2') // current → número
+    expect(dots[2]!.text()).toBe('3') // todo → número
+  })
+
+  it('conector fica verde só até a etapa atual', async () => {
+    const w = await mountSuspended(SiStepper, { props: { steps, current: 1 } })
+    const conns = w.findAll('.si-stepper__connector')
+    expect(conns[0]!.classes()).toContain('si-stepper__connector--done')
+    expect(conns[1]!.classes()).not.toContain('si-stepper__connector--done')
+  })
+
+  it('clickable: clicar numa etapa já alcançada (<=current) emite update:current', async () => {
+    const w = await mountSuspended(SiStepper, { props: { steps, current: 2, clickable: true } })
+    await w.findAll('.si-stepper__label-block')[0]!.trigger('click')
+    expect(w.emitted('update:current')?.at(-1)).toEqual([0])
+  })
+
+  it('clickable: clicar numa etapa futura (>current) não navega', async () => {
+    const w = await mountSuspended(SiStepper, { props: { steps, current: 0, clickable: true } })
+    await w.findAll('.si-stepper__label-block')[2]!.trigger('click')
+    expect(w.emitted('update:current')).toBeFalsy()
+  })
+
+  it('sem clickable: clicar não emite (indicador só de leitura)', async () => {
+    const w = await mountSuspended(SiStepper, { props: { steps, current: 2 } })
+    await w.findAll('.si-stepper__label-block')[0]!.trigger('click')
+    expect(w.emitted('update:current')).toBeFalsy()
+  })
+
+  it('orientação vertical aplica o modificador', async () => {
+    const w = await mountSuspended(SiStepper, { props: { steps, current: 0, orientation: 'vertical' } })
+    expect(w.find('.si-stepper').classes()).toContain('si-stepper--vertical')
   })
 })

@@ -20,7 +20,7 @@ Deixar todos os wrappers `Si` do kit `components/ui/` aderentes ao **SmartInsure
 - Skin componente a componente sob `.si-*` (ADR-015), na ordem do HANDOFF §5: botões e campos → feedback → dados → superfícies. Cada wrapper ganha classe raiz `.si-*` se ainda não tiver.
 - **Novo:** `SiSnackbar` (VSnackbar, superfície carvão, ação verde) — o de-para já o previa.
 
-**Fora:** reconstruir componentes ou mudar a API curada dos wrappers (ADR-013); dark mode (ADR-013 §4); importar `@core`/mixins do template antigo (ADR-014); DS **Stepper** (fora do checklist do HANDOFF, sem wrapper); componentes de domínio (só re-skin do kit `ui/`, que as telas herdam).
+**Fora:** reconstruir componentes ou mudar a API curada dos wrappers (ADR-013); dark mode (ADR-013 §4); importar `@core`/mixins do template antigo (ADR-014); componentes de domínio (só re-skin do kit `ui/`, que as telas herdam). [DS **Stepper** estava fora — sem consumidor — mas o dono trouxe pro escopo; ver Evidências.]
 
 ## Tarefas
 
@@ -117,8 +117,13 @@ no plugin (`vuetify-icons.ts`).
   `placeholder`). Id do controle = `$attrs.id ?? useId()` (preserva o `#login-email` da tela de login).
   Estados de foco/erro do Vuetify seguem funcionando (rótulo fica, campo vermelho, mensagem embaixo).
   Verificado no /dev/ui (rótulo 12px/600, sem `.v-field-label` flutuante) + build/typecheck/lint/test.
-- **Pendentes:** DS **Stepper** (antes fora — sem consumidor; o dono confirmou uso → criar `SiStepper`
-  horizontal + vertical); aproximação do calendário do `DateField`.
+- **SiStepper criado (feito, verificado):** trilha de etapas do DS (Stepper.jsx) — componente
+  apresentacional próprio (o Vuetify não tem primitivo equivalente; o VStepper é um assistente com
+  painéis). Bolinha 28×28 concluída (verde + check branco) / atual (anel verde + nº) / futura (neutra
+  border-strong + cinza); conectores verdes até a atual; horizontal e vertical; `v-model:current` +
+  `clickable` (volta a etapas alcançadas). Tudo por token, escopado `.si-stepper*`. Registrado no
+  de-para (design-system-map) e na vitrine. Medido no /dev/ui + 7 testes de comportamento (total 90).
+- **Pendente:** aproximação do calendário do `DateField` ao DS (dentro do possível).
 
 **Aberto (sob demanda):** Tabs `segmented` — variante do DS via VBtnToggle; sem consumidor hoje, fica
 para quando surgir a necessidade.
