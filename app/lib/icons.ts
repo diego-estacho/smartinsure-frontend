@@ -73,6 +73,7 @@ import UserRound from 'lucide-vue-next/dist/esm/icons/user-round'
 import KeyRound from 'lucide-vue-next/dist/esm/icons/key-round'
 import Settings from 'lucide-vue-next/dist/esm/icons/settings'
 import ChartColumn from 'lucide-vue-next/dist/esm/icons/chart-column'
+import CreditCard from 'lucide-vue-next/dist/esm/icons/credit-card'
 
 /**
  * Registry: chave estável (inglês) → componente Lucide. Fonte única consumida pelo `SiIcon`
@@ -118,6 +119,7 @@ export const appIcons = {
   trash: Trash2,
   download: Download,
   calendar: CalendarDays,
+  creditCard: CreditCard,
 
   // ── Alvos de aliases internos do Vuetify + primitivos de forma ────────
   check: Check,

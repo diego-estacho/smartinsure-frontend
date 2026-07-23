@@ -50,6 +50,7 @@ const primaryNav: NavItem[] = [
   { key: 'cotacoes', title: 'Cotações', icon: 'fileText' },
   { key: 'apolices', title: 'Apólices', icon: 'shieldCheck' },
   { key: 'tomadores', title: 'Tomadores', icon: 'users', to: '/tomadores' },
+  { key: 'consultaCredito', title: 'Consulta de Crédito', icon: 'creditCard', to: '/consulta-credito' },
   { key: 'corretoras', title: 'Corretoras', icon: 'building', to: '/corretoras' },
   { key: 'usuarios', title: 'Usuários', icon: 'userRound' },
   { key: 'perfis', title: 'Perfis de acesso', icon: 'keyRound' },
