@@ -24,6 +24,12 @@ const {
 } = useModalityMap()
 const { listModalities } = useModalities()
 
+// Feature-flag (OPEN-14): a Fila de Revisão fica OCULTA por padrão. A implementação permanece
+// intacta (composables, ações, dialogs); só a exibição é condicionada. Reexibir só quando o
+// cadastro manual de Modalidades / tratamento de exceções for decidido — ver open-decisions OPEN-14.
+const runtimeConfig = useRuntimeConfig()
+const reviewQueueVisible = computed(() => runtimeConfig.public.modalityReviewQueue === true)
+
 const entries = ref<ModalityMapEntry[]>([])
 const pending = ref<PendingImportedModality[]>([])
 const modalities = ref<ModalityListItem[]>([])
@@ -167,8 +173,9 @@ async function restore(item: PendingImportedModality) {
       :text="success"
     />
 
-    <!-- Fila de Revisão evidenciada NA MESMA tela (RN-034): destacada no topo quando há pendência. -->
+    <!-- Fila de Revisão (RN-034) na MESMA tela. Oculta por feature-flag (OPEN-14); implementação intacta. -->
     <SiCard
+      v-if="reviewQueueVisible"
       class="si-modality-map__card si-modality-map__card--queue"
       variant="outlined"
     >
