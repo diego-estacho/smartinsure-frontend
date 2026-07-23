@@ -5,12 +5,12 @@
 > Base de decisão: **ADR-014** (skin), **ADR-019** (DS fonte de marca + de-para) e o novo
 > **ADR-021** (adotar Lucide, substitui a parte de ícones do 019). Continua o 0003 (skin).
 
-Status: em andamento
-Contexto obrigatório (ler antes de executar): `AGENTS.md`, `docs/FRONTEND.md`, os ADRs em `docs/adr/` (em especial **014**, **013**, **015**, **019**, **021**, 006, 010, 012), o DS em `../design system/` (HANDOFF.md, colors_and_type.css, `components/*.card.html` e `*.jsx`, `preview/`), e o exec-plan 0003 (skin anterior).
+Status: concluído
+Contexto obrigatório (ler antes de executar): `AGENTS.md`, `docs/FRONTEND.md`, os ADRs em `docs/adr/` (em especial **014**, **013**, **015**, **019**, **021**, 006, 010, 012), o DS em `../design system/` (`HANDOFF.md`, `colors_and_type.css`, `components/*.card.html` e `*.jsx`, `preview/`), e o exec-plan 0003 (skin anterior).
 
 ## Objetivo
 
-Deixar todos os wrappers `Si` do kit `components/ui/` aderentes ao **SmartInsure Design System** (HANDOFF.md), validando cada família contra o `components/<Nome>.card.html` correspondente. Inclui: fechar as lacunas do tema global (tokens faltantes, anel de foco em todo focável), **trocar o set de ícones de `@mdi/js` para Lucide** (ADR-021) e criar o wrapper que faltava (`SiSnackbar`). Ao fim, `/dev/ui` renderiza o kit no padrão do DS, comprovado por screenshot desktop + mobile.
+Deixar todos os wrappers `Si` do kit `components/ui/` aderentes ao **SmartInsure Design System** (`HANDOFF.md`), validando cada família contra o `components/<Nome>.card.html` correspondente. Inclui: fechar as lacunas do tema global (tokens faltantes, anel de foco em todo focável), **trocar o set de ícones de `@mdi/js` para Lucide** (ADR-021) e criar o wrapper que faltava (`SiSnackbar`). Ao fim, `/dev/ui` renderiza o kit no padrão do DS, comprovado por screenshot desktop + mobile.
 
 ## Escopo
 
