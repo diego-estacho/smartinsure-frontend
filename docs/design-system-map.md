@@ -74,7 +74,11 @@ por essa chave. Ícone novo entra no registry de `lib/icons.ts`.
 | `file-text` | `FileText` | `fileText` |
 | `shield-check` | `ShieldCheck` | `shieldCheck` |
 | `building-2` | `Building2` | `building` |
-| `users` / `user` | `User` / `UserPlus` | `user` / `userPlus` |
+| `users` / `user` / `user-round` | `Users` / `User` / `UserRound` | `users` / `user` / `userRound` |
+| `user-plus` | `UserPlus` | `userPlus` |
+| `key-round` | `KeyRound` | `keyRound` |
+| `chart-column` (ex `bar-chart-3`, renomeado no Lucide 1.0) | `ChartColumn` | `barChart` |
+| `settings` | `Settings` | `settings` |
 | `search` | `Search` | `search` |
 | `filter` | `Filter` | `filter` |
 | `bell` | `Bell` | `bell` |

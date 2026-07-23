@@ -504,3 +504,111 @@
   font-size: var(--si-fs-small);
   color: var(--si-cinza);
 }
+
+/* ─── Popover do workspace switcher (.si-shell-ws-overlay no overlay do SiMenu) ─────
+ * Teleportado pelo VMenu para fora do drawer — por isso o skin fica aqui (global), não no
+ * shell.vue escopado. Card branco DS (raio 14, hairline, shadow-3). Escopo `.si-shell-ws-*`
+ * (ADR-015). Estrutura visual do seletor de corretora (exec-plan 0014); os dados reais
+ * (lista/ativa) dependem de contrato e estão em OPEN-03 — hoje a lista nasce vazia. */
+.si-shell-ws-overlay .si-shell-ws-pop {
+  min-width: 260px;
+  padding: var(--si-space-2);
+  background: rgb(var(--v-theme-surface));
+  border: thin solid var(--si-cinza-claro);
+  border-radius: var(--si-radius-lg);
+  box-shadow: var(--si-shadow-3);
+}
+
+.si-shell-ws-overlay .si-shell-ws-eyebrow {
+  margin: var(--si-space-2) var(--si-space-2) var(--si-space-2);
+  font-size: var(--si-fs-eyebrow);
+  line-height: var(--si-lh-eyebrow);
+  letter-spacing: var(--si-ls-eyebrow);
+  text-transform: uppercase;
+  font-weight: var(--si-font-weight-semibold);
+  color: var(--si-cinza);
+}
+
+.si-shell-ws-overlay .si-shell-ws-empty {
+  margin: 0;
+  padding: var(--si-space-2) var(--si-space-2) var(--si-space-3);
+  font-size: var(--si-fs-small);
+  color: var(--si-cinza);
+}
+
+.si-shell-ws-overlay .si-shell-ws-item {
+  display: flex;
+  align-items: center;
+  gap: var(--si-space-3);
+  width: 100%;
+  min-height: var(--si-space-12);
+  padding: var(--si-space-2);
+  border: 0;
+  border-radius: var(--si-radius-md);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: start;
+  transition: background-color var(--si-dur-fast) var(--si-ease-out);
+}
+
+.si-shell-ws-overlay .si-shell-ws-item:hover {
+  background: var(--si-cinza-suave);
+}
+
+.si-shell-ws-overlay .si-shell-ws-item--active {
+  background: var(--si-verde-100);
+}
+
+.si-shell-ws-overlay .si-shell-ws-item-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.si-shell-ws-overlay .si-shell-ws-item-name {
+  font-size: var(--si-fs-small);
+  font-weight: var(--si-font-weight-semibold);
+  color: rgb(var(--v-theme-on-surface));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.si-shell-ws-overlay .si-shell-ws-item-doc {
+  font-size: var(--si-fs-caption);
+  color: var(--si-cinza);
+}
+
+.si-shell-ws-overlay .si-shell-ws-item-check {
+  margin-inline-start: auto;
+  color: rgb(var(--v-theme-primary));
+}
+
+.si-shell-ws-overlay .si-shell-ws-divider {
+  height: 1px;
+  margin: var(--si-space-1) var(--si-space-1);
+  background: var(--si-divider);
+}
+
+.si-shell-ws-overlay .si-shell-ws-add {
+  display: flex;
+  align-items: center;
+  gap: var(--si-space-3);
+  width: 100%;
+  padding: var(--si-space-3) var(--si-space-2);
+  border: 0;
+  border-radius: var(--si-radius-md);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--si-fs-small);
+  font-weight: var(--si-font-weight-semibold);
+  color: rgb(var(--v-theme-primary));
+  text-align: start;
+}
+
+.si-shell-ws-overlay .si-shell-ws-add:hover {
+  background: var(--si-verde-100);
+}
