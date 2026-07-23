@@ -416,6 +416,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/credit-inquiries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista histórico de consultas de crédito (paginado) */
+        get: operations["ListCreditInquiries"];
+        put?: never;
+        /** Executa consulta de limites de crédito do tomador */
+        post: operations["ExecuteCreditInquiry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/credit-inquiries/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recupera histórico de uma consulta de crédito */
+        get: operations["GetCreditInquiry"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/insurers": {
         parameters: {
             query?: never;
@@ -1192,6 +1227,60 @@ export interface components {
             email: string;
             status: string;
         };
+        CreditInquiryLimitGroupResponse: {
+            groupName: string;
+            groupType: string;
+            /** Format: double */
+            availableLimit: number | string;
+            /** Format: double */
+            usedLimit: number | string;
+            /** Format: double */
+            rate: number | string;
+        };
+        CreditInquiryListItemResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            brokerageId: string;
+            policyHolderCnpj: string;
+            /** Format: date-time */
+            queriedAt: string;
+            /** Format: int32 */
+            resultsCount: number | string;
+            /** Format: int32 */
+            availableResults: number | string;
+        };
+        CreditInquiryResultResponse: {
+            /** Format: uuid */
+            insurerId: string;
+            insurerName: string;
+            status: string;
+            failureReason: null | string;
+            limits: components["schemas"]["CreditInquiryLimitGroupResponse"][];
+        };
+        CreditInquirySummary: {
+            /** Format: int32 */
+            insurersQueried: number | string;
+            /** Format: int32 */
+            insurersAvailable: number | string;
+            /** Format: double */
+            consolidatedLimit: number | string;
+        };
+        ExecuteCreditInquiryRequest: {
+            /** Format: uuid */
+            brokerageId: string;
+            policyHolderCnpj: string;
+        };
+        ExecuteCreditInquiryResponse: {
+            /** Format: uuid */
+            creditInquiryId: string;
+            /** Format: date-time */
+            queriedAt: string;
+            policyHolderCnpj: string;
+            policyHolderName: null | string;
+            summary: components["schemas"]["CreditInquirySummary"];
+            results: components["schemas"]["CreditInquiryResultResponse"][];
+        };
         GetBrokerageInsurerEnablementResponse: {
             /** Format: uuid */
             id: string;
@@ -1216,6 +1305,16 @@ export interface components {
             isPrivateSector: null | boolean;
             status: string;
             mainAddress: null | components["schemas"]["BrokerageAddressResponse"];
+        };
+        GetCreditInquiryResponse: {
+            /** Format: uuid */
+            creditInquiryId: string;
+            /** Format: date-time */
+            queriedAt: string;
+            policyHolderCnpj: string;
+            policyHolderName: null | string;
+            summary: components["schemas"]["CreditInquirySummary"];
+            results: components["schemas"]["CreditInquiryResultResponse"][];
         };
         GetInsurerResponse: {
             /** Format: uuid */
@@ -1279,6 +1378,17 @@ export interface components {
         };
         PagedResponseOfBrokerageListItemResponse: {
             items: components["schemas"]["BrokerageListItemResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int64 */
+            totalCount: number | string;
+            /** Format: int64 */
+            totalPages?: number | string;
+        };
+        PagedResponseOfCreditInquiryListItemResponse: {
+            items: components["schemas"]["CreditInquiryListItemResponse"][];
             /** Format: int32 */
             page: number | string;
             /** Format: int32 */
@@ -1429,4 +1539,104 @@ export interface components {
     pathItems: never;
 }
 export type $defs = Record<string, never>;
-export type operations = Record<string, never>;
+export interface operations {
+    ListCreditInquiries: {
+        parameters: {
+            query?: {
+                brokerageId?: string;
+                policyHolderCnpj?: string;
+                page?: number | string;
+                pageSize?: number | string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagedResponseOfCreditInquiryListItemResponse"];
+                };
+            };
+        };
+    };
+    ExecuteCreditInquiry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExecuteCreditInquiryRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExecuteCreditInquiryResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetCreditInquiry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetCreditInquiryResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+}

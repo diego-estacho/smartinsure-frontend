@@ -68,6 +68,7 @@ import Circle from 'lucide-vue-next/dist/esm/icons/circle'
 import CircleDot from 'lucide-vue-next/dist/esm/icons/circle-dot'
 import Paperclip from 'lucide-vue-next/dist/esm/icons/paperclip'
 import Upload from 'lucide-vue-next/dist/esm/icons/upload'
+import CreditCard from 'lucide-vue-next/dist/esm/icons/credit-card'
 
 /**
  * Registry: chave estável (inglês) → componente Lucide. Fonte única consumida pelo `SiIcon`
@@ -108,6 +109,7 @@ export const appIcons = {
   trash: Trash2,
   download: Download,
   calendar: CalendarDays,
+  creditCard: CreditCard,
 
   // ── Alvos de aliases internos do Vuetify + primitivos de forma ────────
   check: Check,

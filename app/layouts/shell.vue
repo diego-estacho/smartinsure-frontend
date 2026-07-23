@@ -30,6 +30,7 @@ const nav: { title: string, to: string, icon: AppIconName }[] = [
   { title: 'Painel', to: '/', icon: 'dashboard' },
   { title: 'Corretoras', to: '/corretoras', icon: 'building' },
   { title: 'Tomadores', to: '/tomadores', icon: 'domain' },
+  { title: 'Consulta de Crédito', to: '/consulta-credito', icon: 'creditCard' },
   { title: 'Página B', to: '/demo/b', icon: 'fileText' },
 ]
 
