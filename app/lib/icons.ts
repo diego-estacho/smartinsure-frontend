@@ -68,6 +68,11 @@ import Circle from 'lucide-vue-next/dist/esm/icons/circle'
 import CircleDot from 'lucide-vue-next/dist/esm/icons/circle-dot'
 import Paperclip from 'lucide-vue-next/dist/esm/icons/paperclip'
 import Upload from 'lucide-vue-next/dist/esm/icons/upload'
+import Users from 'lucide-vue-next/dist/esm/icons/users'
+import UserRound from 'lucide-vue-next/dist/esm/icons/user-round'
+import KeyRound from 'lucide-vue-next/dist/esm/icons/key-round'
+import Settings from 'lucide-vue-next/dist/esm/icons/settings'
+import ChartColumn from 'lucide-vue-next/dist/esm/icons/chart-column'
 
 /**
  * Registry: chave estável (inglês) → componente Lucide. Fonte única consumida pelo `SiIcon`
@@ -83,6 +88,11 @@ export const appIcons = {
   dotsHorizontal: Ellipsis,
   user: User,
   userPlus: UserPlus,
+  users: Users,
+  userRound: UserRound,
+  keyRound: KeyRound,
+  settings: Settings,
+  barChart: ChartColumn,
   lock: Lock,
   arrowLeft: ArrowLeft,
   arrowRight: ArrowRight,
