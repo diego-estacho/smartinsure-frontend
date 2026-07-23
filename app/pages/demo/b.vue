@@ -1,7 +1,6 @@
 <script setup lang="ts">
 // Página de demonstração — visivelmente diferente da A, para confirmar que a navegação
 // troca rota E conteúdo. Rota neutra, sem termo de domínio (OPEN-01 / disciplina do glossário).
-import { mdiShieldCheckOutline } from '~/lib/icons'
 
 definePageMeta({ layout: 'shell' })
 useHead({ title: 'Página B — SmartInsure' })
@@ -26,7 +25,7 @@ useHead({ title: 'Página B — SmartInsure' })
         style="gap: var(--si-space-3)"
       >
         <SiIcon
-          :icon="mdiShieldCheckOutline"
+          :icon="'shieldCheck'"
           color="primary"
           size="28"
         />

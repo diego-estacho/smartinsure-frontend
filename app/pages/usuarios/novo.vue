@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { mdiAccountPlusOutline } from '~/lib/icons'
 import { required, email as emailRule } from '~/lib/rules'
 import { userStatusLabels } from '~/lib/status/users'
 
@@ -72,7 +71,7 @@ async function submit() {
       <SiButton
         type="submit"
         :loading="submitting"
-        :prepend-icon="mdiAccountPlusOutline"
+        :prepend-icon="'userPlus'"
       >
         Criar usuário
       </SiButton>

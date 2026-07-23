@@ -6,9 +6,7 @@
  *
  * Identificadores em inglês (AGENTS §Idioma); os textos de UI (pt-BR) são valores, não código.
  */
-import {
-  mdiCheck, mdiClockOutline, mdiRepeatVariant, mdiClose,
-} from '~/lib/icons'
+import type { AppIconName } from '~/lib/icons'
 
 export type Trend = 'up' | 'down'
 export type ActivityTone = 'success' | 'warning' | 'info' | 'error'
@@ -29,7 +27,7 @@ export interface KpiCard {
 export interface ActivityEntry {
   id: string
   tone: ActivityTone
-  icon: string
+  icon: AppIconName
   /** Título com um trecho em negrito — ver `<DashboardActivity>`. */
   title: string
   emphasis: string
@@ -72,10 +70,10 @@ export function useDashboardMock(): DashboardData {
       previous: [40, 50, 45, 60, 55, 70, 60, 75, 70, 80, 75, 82, 78],
     },
     activity: [
-      { id: 'A-2241', tone: 'success', icon: mdiCheck, title: 'Apólice', emphasis: '#A-2241', detail: 'emitida · Lucas Pereira · Auto', time: 'há 8 min' },
-      { id: 'S-1882', tone: 'warning', icon: mdiClockOutline, title: 'Sinistro', emphasis: '#S-1882', detail: 'aguarda análise · 52h em aberto', time: 'há 1h' },
-      { id: 'renew', tone: 'info', icon: mdiRepeatVariant, title: 'Renovação automática', emphasis: '· 14 apólices', detail: 'Vencimento em 7 dias', time: 'há 3h' },
-      { id: 'F-9914', tone: 'error', icon: mdiClose, title: 'Pagamento recusado', emphasis: '· #F-9914', detail: 'Cartão expirado', time: 'hoje 09:14' },
+      { id: 'A-2241', tone: 'success', icon: 'check', title: 'Apólice', emphasis: '#A-2241', detail: 'emitida · Lucas Pereira · Auto', time: 'há 8 min' },
+      { id: 'S-1882', tone: 'warning', icon: 'clock', title: 'Sinistro', emphasis: '#S-1882', detail: 'aguarda análise · 52h em aberto', time: 'há 1h' },
+      { id: 'renew', tone: 'info', icon: 'repeat', title: 'Renovação automática', emphasis: '· 14 apólices', detail: 'Vencimento em 7 dias', time: 'há 3h' },
+      { id: 'F-9914', tone: 'error', icon: 'close', title: 'Pagamento recusado', emphasis: '· #F-9914', detail: 'Cartão expirado', time: 'hoje 09:14' },
     ],
   }
 }

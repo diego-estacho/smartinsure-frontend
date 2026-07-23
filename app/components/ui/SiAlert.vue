@@ -19,6 +19,7 @@ withDefaults(defineProps<{
 
 <template>
   <VAlert
+    :class="['si-alert', type ? `si-alert--${type}` : undefined]"
     v-bind="$attrs"
     :type="type"
     :variant="variant"

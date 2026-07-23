@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { PolicyHolderAddress, AddPolicyHolderAddressBody, UpdatePolicyHolderAddressBody } from '~/composables/usePolicyHolders'
 import { MASK_CEP } from '~/lib/masks'
-import { mdiPencilOutline, mdiTrashCanOutline, mdiPlus } from '~/lib/icons'
 import { required } from '~/lib/rules'
 
 const props = withDefaults(defineProps<{ policyHolderId: string, addresses: PolicyHolderAddress[], hideToolbar?: boolean }>(), {
@@ -157,7 +156,7 @@ function formatAddressLine(address: PolicyHolderAddress): string {
       class="si-policy-holder-addresses-panel__toolbar"
     >
       <SiButton
-        :prepend-icon="mdiPlus"
+        :prepend-icon="'plus'"
         @click="openCreateDialog"
       >
         Novo endereço
@@ -190,7 +189,7 @@ function formatAddressLine(address: PolicyHolderAddress): string {
               v-if="!item.isMain"
               variant="text"
               size="small"
-              :prepend-icon="mdiPencilOutline"
+              :prepend-icon="'pencil'"
               @click="openEditDialog(item)"
             >
               Editar
@@ -201,7 +200,7 @@ function formatAddressLine(address: PolicyHolderAddress): string {
               variant="text"
               size="small"
               color="error"
-              :prepend-icon="mdiTrashCanOutline"
+              :prepend-icon="'trash'"
               @click="removeAddress(item)"
             >
               Remover

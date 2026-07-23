@@ -48,6 +48,31 @@
   --si-cinza: #64748b;        /* texto secundário / header de tabela */
   --si-cinza-claro: #e2e8f0;  /* hairline, divisórias, bordas de card */
   --si-cinza-suave: #f1f5f9;  /* faixa de fundo do header de tabela / zebra */
+  --si-border-strong: #cbd5e1; /* borda forte (hover de secundário, caixa de check/radio) */
+  --si-divider: #eef2f6;       /* divisória interna (entre itens de painel/lista) */
+
+  /* Escala do verde de marca — estados e superfícies de acento. Não-whitelabel enquanto
+   * não há tela de config por corretora; hoje constantes de plataforma (DS colors). Pressed
+   * e tint entram aqui porque o tema Vuetify só carrega primary + primary-darken-1 (hover). */
+  --si-verde-800: #15803d;    /* pressed do CTA primário */
+  --si-verde-100: #dcfce7;    /* tint de acento (superfície suave, iniciais de avatar) */
+  --si-verde-700-text: #15803d; /* texto sobre tint (ex.: iniciais de avatar) */
+
+  /* Carvão elevado (superfície escura de feedback transitório — snackbar). O tema tem
+   * `charcoal` (#0f172a, base); este é o degrau elevado do DS (colors_and_type: carvao-800). */
+  --si-carvao-800: #1e293b;
+
+  /* Feedback semântico — tint suave + texto legível por variante (DS: components/Alert.jsx).
+   * Não-whitelabel (lei de plataforma, como as cores semânticas do tema). Success reaproveita
+   * verde-100 / verde-800. Ícone usa a cor viva semântica do tema (info/warning/error). */
+  --si-info-tint: #e0f2fe;    --si-info-fg: #075985;
+  --si-warning-tint: #fef3c7; --si-warning-fg: #92400e;
+  --si-danger-tint: #fee2e2;  --si-danger-fg: #991b1b;
+
+  /* Danger sutil para BOTÃO (DS components-buttons): fundo branco, borda rosa, texto #B91C1C
+   * (mesmo vermelho da mensagem de erro dos campos). Distinto do alert (fg #991b1b). */
+  --si-danger-border: #fecaca;
+  --si-danger-strong: #b91c1c;
 
   /* Escala tipográfica: tamanho / line-height / letter-spacing */
   --si-fs-display: 56px;

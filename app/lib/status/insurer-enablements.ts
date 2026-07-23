@@ -1,4 +1,4 @@
-import { mdiPower, mdiPowerOff } from '~/lib/icons'
+import type { AppIconName } from '~/lib/icons'
 
 export const enablementStatuses = {
   active: 'Active',
@@ -17,7 +17,7 @@ type EnablementStatusAction = {
   targetStatus: EnablementStatus | null
   label: string
   shortLabel: string
-  icon: string
+  icon: AppIconName
   color: string
   successMessage: string
   disabled: boolean
@@ -32,7 +32,7 @@ const disabledEnablementStatusAction: EnablementStatusAction = {
   targetStatus: null,
   label: 'Ação indisponível',
   shortLabel: 'Indisponível',
-  icon: mdiPowerOff,
+  icon: 'powerOff',
   color: 'secondary',
   successMessage: '',
   disabled: true,
@@ -43,7 +43,7 @@ const enablementStatusActions = {
     targetStatus: enablementStatuses.inactive,
     label: 'Inativar habilitação',
     shortLabel: 'Inativar',
-    icon: mdiPowerOff,
+    icon: 'powerOff',
     color: 'error',
     successMessage: 'Habilitação inativada.',
     disabled: false,
@@ -52,7 +52,7 @@ const enablementStatusActions = {
     targetStatus: enablementStatuses.active,
     label: 'Ativar habilitação',
     shortLabel: 'Ativar',
-    icon: mdiPower,
+    icon: 'power',
     color: 'primary',
     successMessage: 'Habilitação ativada.',
     disabled: false,

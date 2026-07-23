@@ -70,6 +70,16 @@ watch(itemsPerPage, () => {
     </div>
 
     <nav class="si-pagination__nav d-flex align-center" aria-label="Paginação">
+      <button
+        type="button"
+        class="si-pagination__arrow"
+        :disabled="page <= 1"
+        aria-label="Página anterior"
+        @click="goTo(page - 1)"
+      >
+        <SiIcon icon="chevronLeft" :size="16" />
+      </button>
+
       <template v-for="(p, idx) in pages" :key="`${p}-${idx}`">
         <button
           v-if="typeof p === 'number'"
@@ -83,6 +93,16 @@ watch(itemsPerPage, () => {
         </button>
         <span v-else class="si-pagination__ellipsis">…</span>
       </template>
+
+      <button
+        type="button"
+        class="si-pagination__arrow"
+        :disabled="page >= pageCount"
+        aria-label="Próxima página"
+        @click="goTo(page + 1)"
+      >
+        <SiIcon icon="chevronRight" :size="16" />
+      </button>
     </nav>
   </div>
 </template>
@@ -114,31 +134,49 @@ watch(itemsPerPage, () => {
   gap: var(--si-space-2);
 }
 
-.si-pagination__page {
+/* Botões numéricos — DS (components/Pagination.jsx): caixa 34px, raio sm, borda hairline,
+ * superfície branca, número em tabular-nums; ativo preenchido de verde com texto branco. */
+.si-pagination__page,
+.si-pagination__arrow {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-inline-size: 36px;
-  block-size: 36px;
+  min-inline-size: 34px;
+  block-size: 34px;
   padding-inline: var(--si-space-2);
-  border: 1px solid transparent;
+  border: 1px solid var(--si-cinza-claro);
   border-radius: var(--si-radius-sm);
-  background: transparent;
-  color: var(--si-cinza);
+  background: rgb(var(--v-theme-surface));
+  color: rgb(var(--v-theme-on-surface));
   font-size: var(--si-fs-small);
+  font-variant-numeric: tabular-nums;
   cursor: pointer;
-  transition: background-color var(--si-dur-fast) var(--si-ease-out);
+  transition:
+    background-color var(--si-dur-fast) var(--si-ease-out),
+    border-color var(--si-dur-fast) var(--si-ease-out);
 }
 
-.si-pagination__page:hover {
+.si-pagination__page:hover,
+.si-pagination__arrow:not(:disabled):hover {
   background: var(--si-cinza-suave);
 }
 
-.si-pagination__page--active {
+.si-pagination__page--active,
+.si-pagination__page--active:hover {
   border-color: rgb(var(--v-theme-primary));
-  background: rgba(var(--v-theme-primary), 0.12);
-  color: rgb(var(--v-theme-primary));
+  background: rgb(var(--v-theme-primary));
+  color: rgb(var(--v-theme-on-primary));
   font-weight: var(--si-font-weight-semibold);
+}
+
+/* Setas: ícone discreto (cinza); desabilitadas nas pontas. */
+.si-pagination__arrow {
+  color: var(--si-cinza);
+}
+
+.si-pagination__arrow:disabled {
+  color: var(--si-border-strong);
+  cursor: not-allowed;
 }
 
 .si-pagination__ellipsis {

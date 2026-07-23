@@ -66,3 +66,7 @@ O log de decisões do front é o próprio diretório [docs/adr/](adr/) — uma d
 | [016](adr/016-gate-exec-plan-no-harness.md) | Gate de exec-plan no harness |
 | [017](adr/017-mobile-first-responsividade.md) | Mobile-first e estratégia responsiva |
 | [018](adr/018-pagina-fina-componentes-dominio.md) | Página fina + componentes de domínio |
+| [019](adr/019-design-system-fonte-e-de-para.md) | Design system: fonte de marca + de-para de tokens |
+| [020](adr/020-lib-de-graficos-unovis.md) | Lib de gráficos: unovis |
+| [021](adr/021-iconografia-lucide.md) | Iconografia em Lucide (substitui `@mdi/js`) |
+| [022](adr/022-design-system-primeiro-kit-si-obrigatorio.md) | Design system primeiro: toda tela usa o kit `Si` (vitrine `/dev/ui` = catálogo vivo) |
