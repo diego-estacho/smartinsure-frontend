@@ -35,3 +35,23 @@ export function fromBrDashDate(s: string): Date | null {
   if (!m) return null
   return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]))
 }
+
+/**
+ * Exibição pt-BR com hora: 15/07/2026 10:45. Parse de ISO 8601 (2026-07-15T10:45:00Z).
+ * Extrai hora/minuto da string ISO (UTC) sem conversão de fuso, mantendo
+ * o horário conforme gravado no servidor (padrão RN-031).
+ */
+export function toBrDateTime(isoString: string): string {
+  // Extrai componentes da string ISO diretamente (sem conversão de fuso)
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/.exec(isoString)
+  if (!m) return isoString
+
+  const year = Number(m[1])
+  const month = Number(m[2]) - 1
+  const day = Number(m[3])
+  const hour = m[4]
+  const minute = m[5]
+
+  const date = `${pad(day)}/${pad(month + 1)}/${year}`
+  return `${date} ${hour}:${minute}`
+}
