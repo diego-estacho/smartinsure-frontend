@@ -7,7 +7,6 @@
  */
 import type { BrokerageListItem } from '~/composables/useBrokerages'
 import { formatCnpj } from '~/lib/documents'
-import { mdiEyeOutline } from '~/lib/icons'
 import { getBrokerageStatusAction, getBrokerageStatusView } from '~/lib/status/brokerages'
 
 defineProps<{
@@ -19,28 +18,40 @@ const emit = defineEmits<{ 'change-status': [item: BrokerageListItem] }>()
 
 const { mobile } = useDisplay()
 
+// Paginação client-side (a lista já vem inteira): dirige o VDataTable (hide-default-footer)
+// e a barra SiPagination do DS logo abaixo — mesma receita da vitrine `/dev/ui`.
+const page = ref(1)
+const itemsPerPage = ref(20)
+
+// DS (Table.jsx): rótulos à esquerda, ações à direita (align 'end').
 const headers = [
   { title: 'CNPJ', key: 'documentNumber' },
   { title: 'Razão social', key: 'name' },
   { title: 'Nome fantasia', key: 'socialName' },
-  { title: 'Situação', key: 'status', align: 'center' },
-  { title: 'Ações', key: 'actions', sortable: false, align: 'center' },
+  { title: 'Situação', key: 'status' },
+  { title: 'Ações', key: 'actions', sortable: false, align: 'end' },
 ] as const
 </script>
 
 <template>
-  <!-- Desktop: tabela densa -->
-  <SiDataTable
-    v-if="!mobile"
-    :headers="headers"
-    :items="items"
-    :loading="loading"
-    :items-per-page="20"
-    density="compact"
-    class="si-brokerages-table"
-  >
+  <!-- Desktop: tabela + paginação DS (mesma receita da vitrine: sem footer nativo). -->
+  <template v-if="!mobile">
+    <SiDataTable
+      v-model:page="page"
+      :headers="headers"
+      :items="items"
+      :loading="loading"
+      :items-per-page="itemsPerPage"
+      hide-default-footer
+      class="si-brokerages-table"
+    >
     <template #[`item.documentNumber`]="{ item }">
       {{ formatCnpj(item.documentNumber) }}
+    </template>
+
+    <!-- Coluna prioritária em negrito (DS Table). -->
+    <template #[`item.name`]="{ item }">
+      <span class="si-cell-strong">{{ item.name }}</span>
     </template>
 
     <template #[`item.socialName`]="{ item }">
@@ -48,41 +59,61 @@ const headers = [
     </template>
 
     <template #[`item.status`]="{ item }">
-      <div class="si-brokerages-table__center">
-        <SiChip
-          :color="getBrokerageStatusView(item.status).color"
-          size="small"
-        >
-          {{ getBrokerageStatusView(item.status).label }}
-        </SiChip>
-      </div>
+      <SiChip
+        :color="getBrokerageStatusView(item.status).color"
+        size="small"
+      >
+        {{ getBrokerageStatusView(item.status).label }}
+      </SiChip>
     </template>
 
+    <!-- DS (Table.card.html): ações são icon-buttons discretos — olho = Detalhes; menu ⋯
+         abre as demais ações (Inativar/Ativar). Cinza, hover verde só no "ver". -->
     <template #[`item.actions`]="{ item }">
-      <div class="si-brokerages-table__center">
-        <SiButton
-          :to="`/corretoras/${item.id}`"
-          :prepend-icon="mdiEyeOutline"
-          size="small"
-          variant="tonal"
-          color="info"
-        >
-          Detalhes
-        </SiButton>
+      <div class="si-brokerages-table__actions">
+        <SiTooltip text="Detalhes">
+          <template #activator="{ props }">
+            <SiIconButton
+              v-bind="props"
+              :to="`/corretoras/${item.id}`"
+              icon="eye"
+              tone="view"
+              aria-label="Detalhes"
+            />
+          </template>
+        </SiTooltip>
 
-        <SiButton
-          :prepend-icon="getBrokerageStatusAction(item.status).icon"
-          size="small"
-          variant="tonal"
-          :color="getBrokerageStatusAction(item.status).color"
-          :disabled="getBrokerageStatusAction(item.status).disabled"
-          @click="emit('change-status', item)"
-        >
-          {{ getBrokerageStatusAction(item.status).shortLabel }}
-        </SiButton>
+        <SiMenu location="bottom end">
+          <template #activator="{ props }">
+            <SiIconButton
+              v-bind="props"
+              icon="dotsHorizontal"
+              aria-label="Mais ações"
+            />
+          </template>
+
+          <SiList
+            density="compact"
+            class="si-rowmenu"
+          >
+            <SiListItem
+              :prepend-icon="getBrokerageStatusAction(item.status).icon"
+              :title="getBrokerageStatusAction(item.status).label"
+              :disabled="getBrokerageStatusAction(item.status).disabled"
+              @click="emit('change-status', item)"
+            />
+          </SiList>
+        </SiMenu>
       </div>
     </template>
-  </SiDataTable>
+    </SiDataTable>
+
+    <SiPagination
+      v-model:page="page"
+      v-model:items-per-page="itemsPerPage"
+      :total="items.length"
+    />
+  </template>
 
   <!-- Mobile: lista de cards empilhados (ADR-017) -->
   <div
@@ -131,7 +162,7 @@ const headers = [
       <div class="si-brokerages-cards__actions">
         <SiButton
           :to="`/corretoras/${item.id}`"
-          :prepend-icon="mdiEyeOutline"
+          :prepend-icon="'eye'"
           size="small"
           variant="tonal"
           color="info"
@@ -155,11 +186,11 @@ const headers = [
 </template>
 
 <style scoped>
-.si-brokerages-table__center {
+.si-brokerages-table__actions {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--si-space-2);
+  justify-content: flex-end;
+  gap: var(--si-space-1);
 }
 
 .si-brokerages-cards {

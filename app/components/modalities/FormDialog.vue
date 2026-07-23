@@ -1,9 +1,9 @@
 <script setup lang="ts">
 /**
- * Dialog de cadastro/edição de Modalidade (RN-029: catálogo importado e curado).
+ * Dialog de cadastro/edição de Modalidade (RN-032: catálogo importado e curado).
  * Apresentacional (ADR-018): mantém o estado do formulário e valida a FORMA (obrigatório);
  * a decisão e a chamada ao backend ficam na página/composable. A situação NÃO é editada aqui
- * — o ciclo Ativa/Inativa é a ação de situação (RN-036). Não há Grupo de Modalidade no lado
+ * — o ciclo Ativa/Inativa é a ação de situação (RN-039). Não há Grupo de Modalidade no lado
  * Smart (ADR-061): a Modalidade tem só nome e descrição.
  */
 import type { ModalityListItem } from '~/composables/useModalities'

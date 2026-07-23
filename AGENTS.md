@@ -23,6 +23,7 @@ Conflito entre chat, memória e arquivos: **prevalecem os arquivos versionados**
 - Status: renderizado pelo **nome estável** vindo do contrato; label/cor num único mapa por domínio. Nunca por posição ordinal.
 - Nenhuma regra de negócio no cliente: dinheiro, transição de status e permissão são decididos no servidor; o front valida forma, não decisão.
 - Nenhuma cor/fonte/espaçamento hardcoded em componente — só design tokens (whitelabel por corretora desde o dia 1).
+- **Tela é DS-first (ADR-022):** toda tela — **com ou sem protótipo** do Claude design — é composta pelo kit `Si` (vitrine `/dev/ui` = catálogo vivo; [docs/design-system-map.md](docs/design-system-map.md) = de-para). Nada de elemento HTML cru estilizado à mão. Componente que falta entra **no kit primeiro** (wrapper/apresentacional + skin + vitrine + de-para), nunca como acabamento one-off na página. Com protótipo, ele é planta: traduzir, não colar (ADR-019).
 - Toda classe CSS autoral leva prefixo `si-`; CSS de componente é escopado sob `.si-*` (isolamento de microfrontend, ADR-015). O harness cobra.
 - Segredo nunca em arquivo versionado; token nunca em localStorage (SECURITY do produto).
 - Pasta de trabalho de framework não é versionada (ADR-004 do produto); o resultado é aterrissado nos docs.
@@ -52,7 +53,7 @@ Conflito entre chat, memória e arquivos: **prevalecem os arquivos versionados**
 
 ## Convenções
 
-- Toda tarefa nasce numa worktree do(s) repo(s) da triagem (cross-repo = worktrees irmãs sob a mesma pasta da atividade); branch `ab-NNNNN-slug-curto` (sem `#`), `AB#NNNNN` no commit/PR; worktrees nativas em `C:\wt\<id>\<repo>` (raiz curta: MAX_PATH, ADR-002 do produto). **Provisório até o AB#:** o `<slug>` da tarefa faz o papel de `ab-NNNNN` (branch e pasta-pai das irmãs). Após o merge, `python scripts/worktree-gc.py` remove a worktree.
+- Toda tarefa nasce numa worktree do(s) repo(s) da triagem (cross-repo = worktrees irmãs sob a mesma pasta da atividade); branch `ab-NNNNN-slug-curto` (sem `#`), `AB#NNNNN` no commit/PR; worktrees nativas em `C:\wt\<id>\<repo>` (raiz curta: MAX_PATH, ADR-002 do produto). **Provisório até o AB#:** o `<slug>` da tarefa faz o papel de `ab-NNNNN` (branch e pasta-pai das irmãs). No **início de cada tarefa** (e após o merge), rodar `python scripts/worktree-gc.py` — remove as worktrees já mergeadas (merge commit, squash ou rebase) e libera o disco; o `doctor.py` avisa quando há alguma ocupando espaço. **Antes do `git push`/abrir PR**, `git pull origin main` na branch — nenhuma branch abre PR atrás da main (o `worktree-gc` avisa quando a branch atual está atrás de `origin/main`).
 - Workspace lado a lado: `smartinsure-backend` e `smartinsure-frontend` na mesma pasta — `../smartinsure-backend/docs/` precisa resolver (o lint valida).
 - Mudança cross-repo: backend primeiro (contrato publicado), front consome — PRs linkados pelo mesmo `AB#NNNNN` (ADR-001 do produto).
 - Ferramenta de IA e framework de desenvolvimento são livres: o harness valida o resultado, não a ferramenta (ADR-003 do produto). `CLAUDE.md` e equivalentes são apenas ponteiros para este arquivo.

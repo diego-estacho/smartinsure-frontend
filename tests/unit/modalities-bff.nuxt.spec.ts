@@ -6,7 +6,7 @@ afterEach(() => {
   vi.resetModules()
 })
 
-describe('RN-029 Modalidade - BFF Nitro', () => {
+describe('RN-032 Modalidade - BFF Nitro', () => {
   it('encaminha corpo e token ao criar no backend, sem o browser falar direto (ADR-008)', async () => {
     const backendFetchMock = vi.fn().mockResolvedValue({ id: 'm-1', status: 'Active' })
     // ADR-061: sem Grupo de Modalidade — só nome, descrição e initialStatus.
@@ -31,7 +31,7 @@ describe('RN-029 Modalidade - BFF Nitro', () => {
   })
 })
 
-describe('RN-036 Modalidade - BFF Nitro', () => {
+describe('RN-039 Modalidade - BFF Nitro', () => {
   it('encaminha corpo, token e rota de status ao backend', async () => {
     const backendFetchMock = vi.fn().mockResolvedValue({ id: 'm-1', status: 'Inactive' })
     const body = { status: 'Inactive' }

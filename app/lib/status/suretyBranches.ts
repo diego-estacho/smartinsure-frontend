@@ -1,8 +1,8 @@
 /**
- * Ramo (SuretyBranch) — enum de domínio exposto por nome estável no contrato (RN-032/RN-033):
+ * Ramo (SuretyBranch) — enum de domínio exposto por nome estável no contrato (RN-035/RN-036):
  * `Public` / `Private`. Renderizado pelo nome estável, nunca por posição ordinal (ADR-004);
  * label pt-BR do glossário ("Setor Público"/"Setor Privado") num único mapa. A disponibilidade
- * da Modalidade por Ramo é derivada no servidor (RN-033), nunca digitada no cliente.
+ * da Modalidade por Ramo é derivada no servidor (RN-036), nunca digitada no cliente.
  */
 export const suretyBranches = {
   public: 'Public',

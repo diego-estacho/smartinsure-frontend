@@ -1,19 +1,25 @@
 <script setup lang="ts">
 /**
  * SiTextField — wrapper de VTextField (ADR-013). v-model via defineModel; variante/
- * densidade/cor curadas com defaults do DS; resto (`label`, `rules`, `type`, `prepend-inner-icon`…)
+ * densidade/cor curadas com defaults do DS; resto (`rules`, `type`, `prepend-inner-icon`…)
  * por $attrs. Slots livres.
+ *
+ * DS (TextField.jsx): o rótulo é ESTÁTICO ACIMA da caixa (não o flutuante do Vuetify) → o
+ * `label` vai para a SiFieldShell e NÃO é repassado ao VTextField (que usa `placeholder`).
  */
 defineOptions({ inheritAttrs: false })
 
 const model = defineModel<string | number | null>()
 
 withDefaults(defineProps<{
+  label?: string
+  required?: boolean
   variant?: 'outlined' | 'filled' | 'underlined' | 'solo' | 'plain'
   density?: 'default' | 'comfortable' | 'compact'
   color?: string
   clearable?: boolean
 }>(), {
+  label: undefined,
   variant: 'outlined',
   density: 'comfortable',
   color: 'primary',
@@ -21,17 +27,25 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <VTextField
-    v-bind="$attrs"
-    v-model="model"
-    class="si-field"
-    :variant="variant"
-    :density="density"
-    :color="color"
-    :clearable="clearable"
+  <SiFieldShell
+    :label="label"
+    :required="required"
   >
-    <template v-for="(_, name) in $slots" #[name]="slotProps">
-      <slot :name="name" v-bind="slotProps ?? {}" />
+    <template #default="{ fieldId }">
+      <VTextField
+        v-bind="$attrs"
+        :id="($attrs.id as string | undefined) ?? fieldId"
+        v-model="model"
+        class="si-field"
+        :variant="variant"
+        :density="density"
+        :color="color"
+        :clearable="clearable"
+      >
+        <template v-for="(_, name) in $slots" #[name]="slotProps">
+          <slot :name="name" v-bind="slotProps ?? {}" />
+        </template>
+      </VTextField>
     </template>
-  </VTextField>
+  </SiFieldShell>
 </template>

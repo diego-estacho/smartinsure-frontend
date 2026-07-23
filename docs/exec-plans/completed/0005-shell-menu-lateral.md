@@ -4,7 +4,7 @@
 > Origem: grill `.grill/menu-lateral-navegacao.md` (16/07). Referência de aparência: print do dono
 > (drawer com logo + itens + área de conteúdo).
 
-Status: em andamento
+Status: concluído
 Contexto obrigatório (ler antes de executar): `AGENTS.md`, `docs/FRONTEND.md`, ADRs **006** (tokens
 whitelabel), **013** (composição `ui/`), **015** (css `si-*`); camada de produto: `open-decisions.md`
 (OPEN-01) e `glossario.md`.

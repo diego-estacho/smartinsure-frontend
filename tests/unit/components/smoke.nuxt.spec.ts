@@ -9,6 +9,7 @@ import SiAppBar from '~/components/ui/SiAppBar.vue'
 import SiNavigationDrawer from '~/components/ui/SiNavigationDrawer.vue'
 
 import SiButton from '~/components/ui/SiButton.vue'
+import SiIconButton from '~/components/ui/SiIconButton.vue'
 import SiIcon from '~/components/ui/SiIcon.vue'
 import SiChip from '~/components/ui/SiChip.vue'
 import SiCard from '~/components/ui/SiCard.vue'
@@ -43,6 +44,7 @@ import SiExpansionPanel from '~/components/ui/SiExpansionPanel.vue'
 // Vitrine viva em teste (ADR-013 §7): todo wrapper monta sem erro.
 const standalone: Array<[string, unknown, Record<string, unknown>]> = [
   ['SiButton', SiButton, {}],
+  ['SiIconButton', SiIconButton, { icon: 'eye', 'aria-label': 'ver' }],
   ['SiIcon', SiIcon, { icon: mdiMenu }],
   ['SiChip', SiChip, {}],
   ['SiCard', SiCard, {}],

@@ -6,7 +6,6 @@
  * (dados, decisão) fica na página. Situação por nome estável (ADR-004), nunca por posição.
  */
 import type { ModalityListItem } from '~/composables/useModalities'
-import { mdiPencilOutline } from '~/lib/icons'
 import { getModalityStatusAction, getModalityStatusView } from '~/lib/status/modalities'
 
 defineProps<{
@@ -58,7 +57,7 @@ const headers = [
     <template #[`item.actions`]="{ item }">
       <div class="si-modalities-table__center">
         <SiButton
-          :prepend-icon="mdiPencilOutline"
+          :prepend-icon="'pencil'"
           size="small"
           variant="tonal"
           color="info"
@@ -127,7 +126,7 @@ const headers = [
 
       <div class="si-modalities-cards__actions">
         <SiButton
-          :prepend-icon="mdiPencilOutline"
+          :prepend-icon="'pencil'"
           size="small"
           variant="tonal"
           color="info"

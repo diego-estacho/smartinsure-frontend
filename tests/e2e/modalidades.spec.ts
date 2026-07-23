@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-// RN-029 (catálogo importado e curado; sem Grupo de Modalidade no lado Smart — ADR-061) e RN-036
+// RN-032 (catálogo importado e curado; sem Grupo de Modalidade no lado Smart — ADR-061) e RN-039
 // (preservação: nunca exclui, só alterna Ativa/Inativa) — jornada de cadastro de Modalidade.
 // BFF mockado via page.route: o E2E exercita a UI real (tabela, dialog de formulário e dialog de
 // situação); o contrato é coberto por composable/BFF e backend.
@@ -14,13 +14,13 @@ const modality = {
   status: 'Active',
 }
 
-test.describe('RN-029 Modalidade — cadastro', () => {
+test.describe('RN-032 Modalidade — cadastro', () => {
   test.beforeEach(async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.request.post('/api/auth/dev-login')
   })
 
-  test('cria uma Modalidade sem Grupo (RN-029/ADR-061)', async ({ page }) => {
+  test('cria uma Modalidade sem Grupo (RN-032/ADR-061)', async ({ page }) => {
     let createdBody: Record<string, unknown> | null = null
 
     await page.route('**/api/modalities**', async (route) => {
@@ -67,13 +67,13 @@ test.describe('RN-029 Modalidade — cadastro', () => {
     expect(createdBody!.name).toBe('Fiança locatícia')
     // ADR-061: o payload não carrega Grupo.
     expect(createdBody!.modalityGroupId).toBeUndefined()
-    // RN-029: item curado nasce Ativo.
+    // RN-032: item curado nasce Ativo.
     expect(createdBody!.initialStatus).toBe('Active')
 
     await expect(page.getByRole('cell', { name: 'Fiança locatícia' })).toBeVisible()
   })
 
-  test('inativa uma Modalidade com confirmação — sem opção de excluir (RN-036)', async ({ page }) => {
+  test('inativa uma Modalidade com confirmação — sem opção de excluir (RN-039)', async ({ page }) => {
     let patchedBody: Record<string, unknown> | null = null
 
     await page.route('**/api/modalities**', async (route) => {

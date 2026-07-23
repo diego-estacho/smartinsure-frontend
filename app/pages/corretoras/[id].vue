@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { GetBrokerageResponse } from '~/composables/useBrokerages'
 import { formatCnpj } from '~/lib/documents'
-import { mdiDotsVertical, mdiPlus } from '~/lib/icons'
 import { getBrokerageStatusAction, getBrokerageStatusView } from '~/lib/status/brokerages'
 
 definePageMeta({ layout: 'shell' })
@@ -157,13 +156,13 @@ function formatAddress(address: GetBrokerageResponse['mainAddress']) {
 
           <div class="si-brokerage-detail__hero-actions">
             <SiButton
-              :prepend-icon="mdiPlus"
+              :prepend-icon="'plus'"
               @click="openEnablementDialog"
             >
               Habilitar seguradora
             </SiButton>
 
-            <VMenu>
+            <SiMenu location="bottom end">
               <template #activator="{ props: menuProps }">
                 <SiButton
                   v-bind="menuProps"
@@ -172,19 +171,21 @@ function formatAddress(address: GetBrokerageResponse['mainAddress']) {
                   icon
                   aria-label="Mais ações"
                 >
-                  <SiIcon :icon="mdiDotsVertical" />
+                  <SiIcon :icon="'dotsVertical'" />
                 </SiButton>
               </template>
 
-              <VList density="compact">
-                <VListItem
+              <SiList
+                density="compact"
+                class="si-rowmenu"
+              >
+                <SiListItem
+                  :title="statusAction?.label"
                   :disabled="statusAction?.disabled"
                   @click="openStatusDialog"
-                >
-                  <VListItemTitle>{{ statusAction?.label }}</VListItemTitle>
-                </VListItem>
-              </VList>
-            </VMenu>
+                />
+              </SiList>
+            </SiMenu>
           </div>
         </div>
 

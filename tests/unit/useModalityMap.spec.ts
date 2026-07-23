@@ -8,7 +8,7 @@ afterEach(() => {
   fetchMock.mockReset()
 })
 
-describe('RN-033/RN-034 Mapa de Modalidades - composable useModalityMap', () => {
+describe('RN-036/RN-037 Mapa de Modalidades - composable useModalityMap', () => {
   it('carrega o mapa (matriz + Fila) via BFF', async () => {
     fetchMock.mockResolvedValueOnce({ modalities: [], pending: [] })
     const { getModalityMap } = useModalityMap(api)
@@ -20,7 +20,7 @@ describe('RN-033/RN-034 Mapa de Modalidades - composable useModalityMap', () => 
     })
   })
 
-  it('RN-034: reatribuir define manualmente a Modalidade da Importada (override)', async () => {
+  it('RN-037: reatribuir define manualmente a Modalidade da Importada (override)', async () => {
     fetchMock.mockResolvedValueOnce({ importedModalityId: 'i-1', modalityId: 'm-1', linkSource: 'Manual' })
     const { reassignImportedModality } = useModalityMap(api)
 
@@ -32,7 +32,7 @@ describe('RN-033/RN-034 Mapa de Modalidades - composable useModalityMap', () => 
     })
   })
 
-  it('RN-034: ignorar marca a Modalidade Importada como Ignorada (sem corpo)', async () => {
+  it('RN-037: ignorar marca a Modalidade Importada como Ignorada (sem corpo)', async () => {
     fetchMock.mockResolvedValueOnce({ importedModalityId: 'i-1', ignored: true })
     const { ignoreImportedModality } = useModalityMap(api)
 
@@ -43,7 +43,7 @@ describe('RN-033/RN-034 Mapa de Modalidades - composable useModalityMap', () => 
     })
   })
 
-  it('RN-034: reativar desfaz o Ignorar (sem corpo)', async () => {
+  it('RN-037: reativar desfaz o Ignorar (sem corpo)', async () => {
     fetchMock.mockResolvedValueOnce({ importedModalityId: 'i-1', ignored: false })
     const { restoreImportedModality } = useModalityMap(api)
 

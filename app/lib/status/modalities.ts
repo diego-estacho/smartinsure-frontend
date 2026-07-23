@@ -1,4 +1,4 @@
-import { mdiPower, mdiPowerOff } from '~/lib/icons'
+import type { AppIconName } from '~/lib/icons'
 
 export const modalityStatuses = {
   active: 'Active',
@@ -17,7 +17,7 @@ type ModalityStatusAction = {
   targetStatus: ModalityStatus | null
   label: string
   shortLabel: string
-  icon: string
+  icon: AppIconName
   color: string
   successMessage: string
   disabled: boolean
@@ -32,19 +32,19 @@ const disabledModalityStatusAction: ModalityStatusAction = {
   targetStatus: null,
   label: 'Ação indisponível',
   shortLabel: 'Indisponível',
-  icon: mdiPowerOff,
+  icon: 'powerOff',
   color: 'secondary',
   successMessage: '',
   disabled: true,
 }
 
-// RN-036: preservação do catálogo — nunca exclui; alterna Ativa ↔ Inativa.
+// RN-039: preservação do catálogo — nunca exclui; alterna Ativa ↔ Inativa.
 const modalityStatusActions = {
   [modalityStatuses.active]: {
     targetStatus: modalityStatuses.inactive,
     label: 'Inativar Modalidade',
     shortLabel: 'Inativar',
-    icon: mdiPowerOff,
+    icon: 'powerOff',
     color: 'error',
     successMessage: 'Modalidade inativada.',
     disabled: false,
@@ -53,7 +53,7 @@ const modalityStatusActions = {
     targetStatus: modalityStatuses.active,
     label: 'Ativar Modalidade',
     shortLabel: 'Ativar',
-    icon: mdiPower,
+    icon: 'power',
     color: 'primary',
     successMessage: 'Modalidade ativada.',
     disabled: false,

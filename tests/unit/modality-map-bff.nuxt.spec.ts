@@ -6,7 +6,7 @@ afterEach(() => {
   vi.resetModules()
 })
 
-describe('RN-033 Mapa de Modalidades - BFF Nitro', () => {
+describe('RN-036 Mapa de Modalidades - BFF Nitro', () => {
   it('encaminha token ao backend ao carregar o mapa, sem o browser falar direto (ADR-008)', async () => {
     const backendFetchMock = vi.fn().mockResolvedValue({ modalities: [], pending: [] })
     const runtimeConfig = useRuntimeConfig() as { backendBaseUrl: string }
@@ -27,7 +27,7 @@ describe('RN-033 Mapa de Modalidades - BFF Nitro', () => {
   })
 })
 
-describe('RN-034 Fila de Revisão - BFF Nitro', () => {
+describe('RN-037 Fila de Revisão - BFF Nitro', () => {
   it('encaminha corpo, token e rota ao reatribuir a Modalidade Importada', async () => {
     const backendFetchMock = vi.fn().mockResolvedValue({ importedModalityId: 'i-1', modalityId: 'm-1', linkSource: 'Manual' })
     const body = { modalityId: 'm-1' }

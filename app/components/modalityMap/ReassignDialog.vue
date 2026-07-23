@@ -1,10 +1,10 @@
 <script setup lang="ts">
 /**
- * Dialog de Reatribuir (RN-034): escolhe uma Modalidade para definir manualmente o vínculo da
- * Modalidade Importada selecionada (override — preservado na reimportação, RN-032/ADR-061).
+ * Dialog de Reatribuir (RN-037): escolhe uma Modalidade para definir manualmente o vínculo da
+ * Modalidade Importada selecionada (override — preservado na reimportação, RN-035/ADR-061).
  * Apresentacional (ADR-018): valida a FORMA (obrigatório) e emite `confirm` com o id escolhido; a
  * decisão e a chamada ficam no servidor — nenhuma regra de negócio no cliente. As Modalidades vêm
- * do cadastro (RN-029).
+ * do cadastro (RN-032).
  */
 import type { ModalityListItem } from '~/composables/useModalities'
 import type { PendingImportedModality } from '~/composables/useModalityMap'

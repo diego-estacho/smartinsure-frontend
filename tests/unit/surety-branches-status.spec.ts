@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { getSuretyBranchView, suretyBranches } from '../../app/lib/status/suretyBranches'
 
-describe('RN-032/RN-033 Ramo (SuretyBranch) - mapa por nome estável', () => {
+describe('RN-035/RN-036 Ramo (SuretyBranch) - mapa por nome estável', () => {
   it('exibe rótulo pt-BR do glossário pelo nome estável, nunca por posição', () => {
     expect(getSuretyBranchView(suretyBranches.public)).toEqual({ label: 'Setor Público', color: 'info', known: true })
     expect(getSuretyBranchView(suretyBranches.private)).toEqual({ label: 'Setor Privado', color: 'secondary', known: true })

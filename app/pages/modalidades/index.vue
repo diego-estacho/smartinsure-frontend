@@ -1,13 +1,12 @@
 <script setup lang="ts">
 /**
- * Modalidades — cadastro (RN-029: catálogo importado e curado, escrita restrita ao Administrador;
- * não há Grupo de Modalidade no lado Smart — ADR-061; RN-036: nunca exclui, só alterna
+ * Modalidades — cadastro (RN-032: catálogo importado e curado, escrita restrita ao Administrador;
+ * não há Grupo de Modalidade no lado Smart — ADR-061; RN-039: nunca exclui, só alterna
  * Ativa/Inativa). Página orquestradora fina (ADR-018): mantém o estado de tela, chama os
  * composables de dados e compõe os componentes de domínio (filtro, tabela responsiva, dialog de
  * formulário, dialog de situação). Sem markup denso aqui.
  */
 import type { ModalityListItem } from '~/composables/useModalities'
-import { mdiPlus, mdiRefresh } from '~/lib/icons'
 import { getModalityStatusAction } from '~/lib/status/modalities'
 
 definePageMeta({ layout: 'shell' })
@@ -135,7 +134,7 @@ async function confirmStatusChange() {
 
       <div class="si-modalities__header-actions">
         <SiButton
-          :prepend-icon="mdiRefresh"
+          :prepend-icon="'refresh'"
           variant="tonal"
           :loading="loading"
           @click="refresh"
@@ -144,7 +143,7 @@ async function confirmStatusChange() {
         </SiButton>
 
         <SiButton
-          :prepend-icon="mdiPlus"
+          :prepend-icon="'plus'"
           @click="openCreateDialog"
         >
           Nova Modalidade

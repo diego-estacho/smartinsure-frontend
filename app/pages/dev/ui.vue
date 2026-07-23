@@ -4,7 +4,6 @@
  * de produção — ver nuxt.config.ts). Consumidor vivo que valida os wrappers `Si` e serve
  * de documentação/onboarding. Componente novo entra aqui.
  */
-import { mdiShieldCheckOutline, mdiMenu, mdiDotsVertical, mdiAccount } from '~/lib/icons'
 import { required, email, cpfCnpj } from '~/lib/rules'
 
 useHead({ title: 'SmartInsure · Vitrine UI' })
@@ -19,10 +18,20 @@ const tab = ref('cotacoes')
 const panel = ref<number>()
 const dialog = ref(false)
 const menu = ref(false)
+const snackbar = ref(false)
 const progress = ref(65)
 
 const tablePage = ref(1)
 const tablePerPage = ref(10)
+
+// Stepper (DS): etapas concluída/atual/futura. `current` clicável volta a etapas já alcançadas.
+const stepperStep = ref(1)
+const stepperSteps = [
+  { label: 'Dados', description: 'Tomador e vigência' },
+  { label: 'Coberturas', description: 'Limites e franquia' },
+  { label: 'Revisão', description: 'Confirmar proposta' },
+  { label: 'Emissão' },
+]
 
 const options = ['Cliente', 'Corretora', 'Seguradora']
 
@@ -80,21 +89,55 @@ const items = [
         </VCardText>
       </SiCard>
 
-      <!-- Ícone, Chip, Badge, Avatar -->
+      <!-- SiIconButton — botão-ícone discreto (ações de linha, ativador de menu) -->
       <SiCard class="mb-6">
-        <VCardTitle>SiIcon · SiChip · SiBadge · SiAvatar</VCardTitle>
+        <VCardTitle>SiIconButton</VCardTitle>
+        <VCardText class="d-flex flex-wrap align-center" style="gap: var(--si-space-2)">
+          <SiIconButton icon="eye" tone="view" aria-label="Ver" />
+          <SiIconButton icon="pencil" aria-label="Editar" />
+          <SiIconButton icon="dotsHorizontal" aria-label="Mais ações" />
+          <SiIconButton icon="trash" aria-label="Excluir" />
+        </VCardText>
+      </SiCard>
+
+      <!-- SiIcon -->
+      <SiCard class="mb-6">
+        <VCardTitle>SiIcon</VCardTitle>
         <VCardText class="d-flex flex-wrap align-center" style="gap: var(--si-space-4)">
-          <SiIcon :icon="mdiShieldCheckOutline" color="primary" size="large" />
-          <SiIcon :icon="mdiMenu" />
+          <SiIcon icon="shieldCheck" color="primary" size="large" />
+          <SiIcon icon="menu" />
+        </VCardText>
+      </SiCard>
+
+      <!-- SiChip -->
+      <SiCard class="mb-6">
+        <VCardTitle>SiChip</VCardTitle>
+        <VCardText class="d-flex flex-wrap align-center" style="gap: var(--si-space-4)">
           <SiChip>Padrão</SiChip>
           <SiChip color="success">Sucesso</SiChip>
           <SiChip color="warning">Aviso</SiChip>
           <SiChip color="error" variant="outlined">Erro</SiChip>
+        </VCardText>
+      </SiCard>
+
+      <!-- SiBadge -->
+      <SiCard class="mb-6">
+        <VCardTitle>SiBadge</VCardTitle>
+        <VCardText class="d-flex flex-wrap align-center" style="gap: var(--si-space-4)">
           <SiBadge :content="3" color="error">
-            <SiIcon :icon="mdiMenu" />
+            <SiIcon icon="menu" />
           </SiBadge>
-          <SiAvatar color="primary"><SiIcon :icon="mdiAccount" /></SiAvatar>
-          <SiAvatar color="secondary" size="small">DE</SiAvatar>
+        </VCardText>
+      </SiCard>
+
+      <!-- SiAvatar — foto/iniciais, tamanhos xs..xl, dot de status (DS Avatar) -->
+      <SiCard class="mb-6">
+        <VCardTitle>SiAvatar</VCardTitle>
+        <VCardText class="d-flex flex-wrap align-center" style="gap: var(--si-space-4)">
+          <SiAvatar size="xl" status="online">AS</SiAvatar>
+          <SiAvatar size="lg" status="away">BC</SiAvatar>
+          <SiAvatar size="md">CD</SiAvatar>
+          <SiAvatar size="sm" status="offline">DR</SiAvatar>
         </VCardText>
       </SiCard>
 
@@ -161,8 +204,9 @@ const items = [
 
       <!-- Abas + Expansão -->
       <SiCard class="mb-6">
+        <!-- Badge de contagem OPCIONAL: "Cotações" com count, "Propostas" sem. -->
         <SiTabs v-model="tab">
-          <SiTab value="cotacoes" text="Cotações" />
+          <SiTab value="cotacoes" text="Cotações" :count="12" />
           <SiTab value="propostas" text="Propostas" />
         </SiTabs>
         <VCardText>
@@ -174,6 +218,49 @@ const items = [
               <template #text>Prazos e coberturas.</template>
             </SiExpansionPanel>
           </SiExpansionPanels>
+        </VCardText>
+      </SiCard>
+
+      <!-- Stepper — trilha de etapas (DS Stepper): concluída/atual/futura + conectores -->
+      <SiCard class="mb-6">
+        <VCardTitle>SiStepper</VCardTitle>
+        <VCardText class="d-flex flex-column" style="gap: var(--si-space-6)">
+          <div class="d-flex align-center flex-wrap" style="gap: var(--si-space-3)">
+            <SiButton
+              variant="outlined"
+              size="small"
+              :disabled="stepperStep === 0"
+              @click="stepperStep = Math.max(0, stepperStep - 1)"
+            >
+              Anterior
+            </SiButton>
+            <SiButton
+              size="small"
+              :disabled="stepperStep === stepperSteps.length - 1"
+              @click="stepperStep = Math.min(stepperSteps.length - 1, stepperStep + 1)"
+            >
+              Próximo
+            </SiButton>
+            <span class="text-caption text-medium-emphasis">etapa {{ stepperStep + 1 }}/{{ stepperSteps.length }} (clique numa etapa concluída para voltar)</span>
+          </div>
+
+          <!-- Horizontal, clicável (v-model:current) -->
+          <SiStepper
+            v-model:current="stepperStep"
+            :steps="stepperSteps"
+            clickable
+          />
+
+          <SiDivider />
+
+          <!-- Vertical, estático (current fixo) -->
+          <div style="max-width: 320px">
+            <SiStepper
+              :current="2"
+              :steps="stepperSteps"
+              orientation="vertical"
+            />
+          </div>
         </VCardText>
       </SiCard>
 
@@ -208,7 +295,7 @@ const items = [
           <SiMenu v-model="menu">
             <template #activator="{ props }">
               <SiButton variant="outlined" v-bind="props">
-                <SiIcon :icon="mdiDotsVertical" /> Menu
+                <SiIcon icon="dotsVertical" /> Menu
               </SiButton>
             </template>
             <SiList>
@@ -242,12 +329,21 @@ const items = [
 
       <!-- Feedback -->
       <SiCard class="mb-6">
-        <VCardTitle>SiAlert</VCardTitle>
+        <VCardTitle>SiAlert · SiSnackbar</VCardTitle>
         <VCardText class="d-flex flex-column" style="gap: var(--si-space-3)">
           <SiAlert type="success" text="Cotação recebida com sucesso." />
           <SiAlert type="info" text="Aguardando retorno da seguradora." />
           <SiAlert type="warning" text="Vigência próxima do vencimento." />
           <SiAlert type="error" text="Falha ao processar a proposta." />
+          <div>
+            <SiButton variant="outlined" @click="snackbar = true">Mostrar snackbar</SiButton>
+          </div>
+          <SiSnackbar v-model="snackbar">
+            Apólice salva.
+            <template #actions>
+              <SiButton variant="text" @click="snackbar = false">Desfazer</SiButton>
+            </template>
+          </SiSnackbar>
         </VCardText>
       </SiCard>
     </VContainer>

@@ -12,10 +12,10 @@ export type GetModalityResponse = components['schemas']['GetModalityResponse']
 export type ChangeModalityStatusResponse = components['schemas']['ChangeModalityStatusResponse']
 
 /**
- * Modalidade (RN-029): catálogo importado e curado. Uma Modalidade nasce derivada da Modalidade
- * Global da OnPoint na importação (RN-032) ou é criada manualmente pelo Administrador; não há
+ * Modalidade (RN-032): catálogo importado e curado. Uma Modalidade nasce derivada da Modalidade
+ * Global da OnPoint na importação (RN-035) ou é criada manualmente pelo Administrador; não há
  * Grupo de Modalidade no lado Smart (ADR-061). Escrita restrita ao Administrador; CRUD sem
- * exclusão — a situação alterna entre Ativa e Inativa (RN-036). Acesso a dados só pelo BFF Nitro
+ * exclusão — a situação alterna entre Ativa e Inativa (RN-039). Acesso a dados só pelo BFF Nitro
  * (ADR-008); status por nome estável (ADR-004).
  */
 export function useModalities(api: typeof $fetch = useNuxtApp().$api as typeof $fetch) {
@@ -46,7 +46,7 @@ export function useModalities(api: typeof $fetch = useNuxtApp().$api as typeof $
   }): Promise<CreateModalityResponse> {
     return await api<CreateModalityResponse>('/api/modalities', {
       method: 'POST',
-      // RN-029: item curado nasce por decisão humana explícita e entra Ativo.
+      // RN-032: item curado nasce por decisão humana explícita e entra Ativo.
       body: { ...request, initialStatus: modalityStatuses.active },
     })
   }

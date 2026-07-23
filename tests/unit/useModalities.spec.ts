@@ -9,7 +9,7 @@ afterEach(() => {
   fetchMock.mockReset()
 })
 
-describe('RN-029 Modalidade - composable useModalities', () => {
+describe('RN-032 Modalidade - composable useModalities', () => {
   it('lista via BFF só ativas por padrão (includeInactive omitido)', async () => {
     fetchMock.mockResolvedValueOnce({ items: [], page: 1, pageSize: 100, totalCount: 0 })
     const { listModalities } = useModalities(api)
@@ -62,7 +62,7 @@ describe('RN-029 Modalidade - composable useModalities', () => {
     })
   })
 
-  it('RN-036: alterna a situação pelo nome estável (nunca exclui)', async () => {
+  it('RN-039: alterna a situação pelo nome estável (nunca exclui)', async () => {
     fetchMock.mockResolvedValueOnce({ id: 'm-1', status: modalityStatuses.inactive })
     const { changeModalityStatus } = useModalities(api)
 

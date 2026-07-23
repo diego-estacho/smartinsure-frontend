@@ -3,7 +3,7 @@
  * Dialog de confirmação de mudança de situação da Modalidade (ativar/inativar).
  * Apresentacional (ADR-018): recebe a modalidade selecionada, emite `confirm`; a decisão e a
  * chamada ao backend ficam na página/composable. A situação-alvo vem do mapa de status por
- * nome estável (ADR-004), nunca por posição ordinal. Sem opção de excluir (RN-036).
+ * nome estável (ADR-004), nunca por posição ordinal. Sem opção de excluir (RN-039).
  */
 import type { ModalityListItem } from '~/composables/useModalities'
 import { getModalityStatusAction } from '~/lib/status/modalities'

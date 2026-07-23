@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test'
 
-// RN-033 (Mapa de Modalidades: matriz Seguradoras × Modalidades, oferta/ramos derivados; o backend
+// RN-036 (Mapa de Modalidades: matriz Seguradoras × Modalidades, oferta/ramos derivados; o backend
 // já agrega uma badge por Seguradora com count/origins — ADR-061).
-// A Fila de Revisão (RN-034) está OCULTA por feature-flag (OPEN-14): a implementação permanece
+// A Fila de Revisão (RN-037) está OCULTA por feature-flag (OPEN-14): a implementação permanece
 // (composable/BFF/dialogs, cobertos por testes unitários), mas não é exibida por padrão. Quando o
 // cadastro manual / tratamento de exceções for decidido, reabilita-se a flag e voltam as jornadas
 // de ação da Fila (Reatribuir/Ignorar/Reativar) neste E2E.
@@ -46,7 +46,7 @@ const linkedEntry = {
   ],
 }
 
-test.describe('RN-033 Mapa de Modalidades — matriz (Fila oculta por flag OPEN-14)', () => {
+test.describe('RN-036 Mapa de Modalidades — matriz (Fila oculta por flag OPEN-14)', () => {
   test.beforeEach(async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.request.post('/api/auth/dev-login')
@@ -57,7 +57,7 @@ test.describe('RN-033 Mapa de Modalidades — matriz (Fila oculta por flag OPEN-
       }))
   })
 
-  test('mostra UMA badge por Seguradora com contagem agregada; Fila oculta por padrão (RN-033/OPEN-14)', async ({ page }) => {
+  test('mostra UMA badge por Seguradora com contagem agregada; Fila oculta por padrão (RN-036/OPEN-14)', async ({ page }) => {
     // Há pendência no payload, mas a Fila NÃO deve aparecer (feature-flag desligada por padrão).
     await page.route('**/api/modality-map**', route =>
       route.fulfill({

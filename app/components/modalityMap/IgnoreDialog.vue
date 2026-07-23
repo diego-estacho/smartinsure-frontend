@@ -1,9 +1,9 @@
 <script setup lang="ts">
 /**
- * Dialog de Ignorar (RN-034): confirma marcar a Modalidade Importada como Ignorada — não é
+ * Dialog de Ignorar (RN-037): confirma marcar a Modalidade Importada como Ignorada — não é
  * oferecida e não volta à Fila nas próximas importações, mas fica registrada (pode ser reavaliada
  * depois). Apresentacional (ADR-018): recebe a pendência, emite `confirm`; a decisão e a chamada
- * ao backend ficam na página/composable. Sem exclusão (RN-036).
+ * ao backend ficam na página/composable. Sem exclusão (RN-039).
  */
 import type { PendingImportedModality } from '~/composables/useModalityMap'
 

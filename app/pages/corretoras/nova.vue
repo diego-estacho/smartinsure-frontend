@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { CreateBrokerageResponse } from '~/composables/useBrokerages'
 import { formatCnpj } from '~/lib/documents'
-import { mdiArrowLeft, mdiEyeOutline, mdiMagnify } from '~/lib/icons'
 import { cnpj, required } from '~/lib/rules'
 import { getBrokerageStatusView } from '~/lib/status/brokerages'
 
@@ -85,7 +84,7 @@ function formatAddress(address: CreateBrokerageResponse['mainAddress']) {
         to="/corretoras"
         variant="outlined"
         color="secondary"
-        :prepend-icon="mdiArrowLeft"
+        :prepend-icon="'arrowLeft'"
       >
         Voltar
       </SiButton>
@@ -119,7 +118,7 @@ function formatAddress(address: CreateBrokerageResponse['mainAddress']) {
             <SiButton
               type="submit"
               :loading="submitting"
-              :prepend-icon="mdiMagnify"
+              :prepend-icon="'search'"
               size="small"
               class="si-brokerage-create__submit"
             >
@@ -195,7 +194,7 @@ function formatAddress(address: CreateBrokerageResponse['mainAddress']) {
         <div class="si-brokerage-create__result-actions">
           <SiButton
             :to="`/corretoras/${createdBrokerage.id}`"
-            :prepend-icon="mdiEyeOutline"
+            :prepend-icon="'eye'"
             color="info"
             size="small"
           >

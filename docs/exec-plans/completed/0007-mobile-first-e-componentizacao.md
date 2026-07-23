@@ -3,7 +3,7 @@
 > Front-only, atividade interna de fundação (sem `AB#`). Branch sugerida: `feat/mobile-first-componentizacao`.
 > Origem: feedback do dono (20/07) — três premissas: mobile-first, componentização e consistência de DS.
 
-Status: em andamento
+Status: concluído
 Contexto obrigatório (ler antes de executar): `AGENTS.md`, `docs/FRONTEND.md`, ADRs **006** (tokens),
 **010** (Vuetify), **013** (kit `Si`), **015** (css `si-*`), **017** (mobile-first, novo), **018**
 (página fina, novo).

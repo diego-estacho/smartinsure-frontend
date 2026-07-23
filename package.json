@@ -18,9 +18,9 @@
     "types:gen": "openapi-typescript ${OPENAPI_CONTRACT:-../smartinsure-backend/docs/generated/openapi.json} -o app/types/gen/api.ts"
   },
   "dependencies": {
-    "@mdi/js": "^7.4.47",
     "@unovis/ts": "^1.6.7",
     "@unovis/vue": "^1.6.7",
+    "lucide-vue-next": "^1.0.0",
     "maska": "^3.2.0",
     "nuxt": "^4.4.8",
     "pinia": "^4.0.0",

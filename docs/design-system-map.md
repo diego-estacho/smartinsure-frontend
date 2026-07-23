@@ -27,7 +27,7 @@ qualquer dev/IA usa para implementar telas e protótipos do DS **sem chutar**. D
    `check-harness` rejeita).
 3. **Troque elementos crus pelo kit `Si`** (ADR-013): `<button>`→`SiButton`, `<input>`→`SiTextField`,
    card→`SiCard`, etc. Página fina orquestra; cada bloco vira componente de domínio (ADR-018).
-4. **Troque ícones Lucide por `@mdi/js`** (tabela de ícones abaixo), re-exportando em `lib/icons.ts`.
+4. **Use os ícones Lucide** (`lucide-vue-next`, tabela abaixo), re-exportados em `lib/icons.ts` (ADR-021). Ícone do protótipo → mesma peça Lucide no projeto (traço 1.5); sem tradução para outro set.
 5. **Mobile-first** (ADR-017): grids densos (KPIs 4-col, split 2fr/1fr) empilham no mobile.
 6. **Gates + evidência:** `check-harness` + `lint` + `typecheck`; screenshot desktop **e** mobile.
 
@@ -62,37 +62,57 @@ qualquer dev/IA usa para implementar telas e protótipos do DS **sem chutar**. D
 
 Os valores são idênticos (conferido: `fs-h1` 40px, `radius-md` 10px, `space-4` 16px, sombras, motion).
 
-### Ícones (Lucide → `@mdi/js`, re-exportar em `lib/icons.ts`)
+### Ícones (Lucide — `lucide-vue-next`, re-exportar em `lib/icons.ts`) — ADR-021
 
-| Lucide (DS) | mdi (projeto) | | Lucide | mdi |
-|---|---|---|---|---|
-| `layout-dashboard` | `mdiViewDashboardOutline` | | `trending-up` | `mdiTrendingUp` |
-| `file-text` | `mdiFileDocumentOutline` | | `trending-down` | `mdiTrendingDown` |
-| `alert-triangle` | `mdiAlertOutline` | | `filter` | `mdiFilterVariant` |
-| `users` | `mdiAccountGroupOutline` | | `check` | `mdiCheck` |
-| `building-2` | `mdiOfficeBuildingOutline` | | `clock` | `mdiClockOutline` |
-| `receipt` | `mdiReceiptTextOutline` | | `repeat` | `mdiRepeatVariant` |
-| `bar-chart-3` | `mdiChartBar` | | `x` | `mdiClose` |
-| `settings` | `mdiCogOutline` | | `check-circle-2` | `mdiCheckCircleOutline` |
-| `search` | `mdiMagnify` | | `chevrons-up-down` | `mdiUnfoldMoreHorizontal` |
-| `bell` | `mdiBellOutline` | | `log-out` | `mdiLogout` |
-| `help-circle` | `mdiHelpCircleOutline` | | `chevrons-left` | `mdiChevronDoubleLeft` |
-| `plus` | `mdiPlus` | | `sparkles` | `mdiCreationOutline` |
+O ícone do protótipo é a **mesma peça Lucide** no app. `lib/icons.ts` mapeia um **nome estável em inglês**
+(chave do projeto) para o componente `lucide-vue-next`; o `SiIcon` e o set customizado do Vuetify resolvem
+por essa chave. Ícone novo entra no registry de `lib/icons.ts`.
 
-mdi tem cobertura ampla; se um Lucide não tiver par óbvio, escolha o mdi mais próximo em forma (linha,
-cantos arredondados) e registre aqui.
+| DS (Lucide) | Componente `lucide-vue-next` | Chave no projeto |
+|---|---|---|
+| `layout-dashboard` | `LayoutDashboard` | `dashboard` |
+| `file-text` | `FileText` | `fileText` |
+| `shield-check` | `ShieldCheck` | `shieldCheck` |
+| `building-2` | `Building2` | `building` |
+| `users` / `user` / `user-round` | `Users` / `User` / `UserRound` | `users` / `user` / `userRound` |
+| `user-plus` | `UserPlus` | `userPlus` |
+| `key-round` | `KeyRound` | `keyRound` |
+| `chart-column` (ex `bar-chart-3`, renomeado no Lucide 1.0) | `ChartColumn` | `barChart` |
+| `settings` | `Settings` | `settings` |
+| `search` | `Search` | `search` |
+| `filter` | `Filter` | `filter` |
+| `bell` | `Bell` | `bell` |
+| `help-circle` | `CircleHelp` | `helpCircle` |
+| `log-in` / `log-out` | `LogIn` / `LogOut` | `logIn` / `logOut` |
+| `trending-up` / `trending-down` | `TrendingUp` / `TrendingDown` | `trendingUp` / `trendingDown` |
+| `check` | `Check` | `check` |
+| `x` | `X` | `close` |
+| `chevron-down/left/right/up` | `ChevronDown/Left/Right/Up` | `chevronDown/Left/Right/Up` |
+| `chevrons-left/right` | `ChevronsLeft/Right` | `chevronsLeft/Right` |
+| `eye` / `eye-off` | `Eye` / `EyeOff` | `eye` / `eyeOff` |
+| `pencil` | `Pencil` | `pencil` |
+| `plus` | `Plus` | `plus` |
+| `trash-2` | `Trash2` | `trash` |
+| `calendar` | `CalendarDays` | `calendar` |
+| `info` / `circle-check` / `triangle-alert` / `circle-x` | `Info` / `CircleCheck` / `TriangleAlert` / `CircleX` | `info` / `circleCheck` / `alertTriangle` / `circleX` |
+
+Os `$`-internos do Vuetify (checkbox, radio, `dropdown`, `prev`/`next`, `sortAsc`, `clear`, `expand`…) são
+remapeados por `aliases` para chaves Lucide (ADR-021 §2). Peça Lucide sem par óbvio: escolha a mais próxima
+em forma e registre aqui.
 
 ## Elementos crus → kit `Si` (ADR-013)
 
 | Protótipo (HTML) | Componente `Si` |
 |---|---|
 | `<button class="pill-btn/btn">` | `SiButton` (`color`, `variant`, `size`, `:prepend-icon`) |
+| `<button class="iconbtn">` (ação de linha, ícone só) | `SiIconButton` (`:icon`, `tone="view"` = hover verde; ativador de SiMenu/SiTooltip via `v-bind="props"`) |
 | `<input>` | `SiTextField` (`:prepend-inner-icon`, `:rules`) |
 | card / `.panel` / `.kpi` | `SiCard` (`variant="outlined"` p/ hairline; `charcoal` p/ card escuro) |
 | status pill | `SiChip` (`color`, `size`) |
-| `<i data-lucide>` | `SiIcon :icon="mdi…"` |
+| `<i data-lucide>` | `SiIcon :icon="<chave-lucide>"` (ADR-021) |
 | `.toast` | `SiSnackbar` |
 | popover / menu | `SiMenu` |
+| trilha de etapas (`Stepper.jsx`) | `SiStepper` (`:steps`, `v-model:current`, `orientation`, `clickable`) — componente próprio (o Vuetify não tem primitivo equivalente ao dot-stepper do DS) |
 
 ## Voz (do README do DS)
 

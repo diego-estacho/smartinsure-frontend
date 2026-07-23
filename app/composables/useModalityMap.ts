@@ -9,7 +9,7 @@ export type IgnoreImportedModalityResponse = components['schemas']['IgnoreImport
 export type RestoreImportedModalityResponse = components['schemas']['RestoreImportedModalityResponse']
 
 /**
- * Mapa de Modalidades (RN-033) + Fila de Revisão (RN-034). A matriz Seguradoras × Modalidades e
+ * Mapa de Modalidades (RN-036) + Fila de Revisão (RN-037). A matriz Seguradoras × Modalidades e
  * o recorte de exceções (importadas sem Modalidade vinculada) vêm juntos do backend, que deriva
  * oferta e ramos e já agrega uma entrada por Seguradora (count/origins) — nenhuma regra de negócio
  * no cliente. Como o vínculo vem pronto da Modalidade Global (ADR-061), a Fila trata só de
@@ -24,8 +24,8 @@ export function useModalityMap(api: typeof $fetch = useNuxtApp().$api as typeof 
     })
   }
 
-  // RN-034: reatribuir define manualmente a Modalidade da Importada (override preservado na
-  // reimportação, RN-032).
+  // RN-037: reatribuir define manualmente a Modalidade da Importada (override preservado na
+  // reimportação, RN-035).
   async function reassignImportedModality(
     importedModalityId: string,
     modalityId: string,
@@ -36,7 +36,7 @@ export function useModalityMap(api: typeof $fetch = useNuxtApp().$api as typeof 
     })
   }
 
-  // RN-034: ignorar marca a Modalidade Importada como Ignorada — não é oferecida nem volta à Fila.
+  // RN-037: ignorar marca a Modalidade Importada como Ignorada — não é oferecida nem volta à Fila.
   async function ignoreImportedModality(
     importedModalityId: string,
   ): Promise<IgnoreImportedModalityResponse> {
@@ -45,7 +45,7 @@ export function useModalityMap(api: typeof $fetch = useNuxtApp().$api as typeof 
     })
   }
 
-  // RN-034: reativar desfaz o Ignorar — a Modalidade Importada volta a ser considerada.
+  // RN-037: reativar desfaz o Ignorar — a Modalidade Importada volta a ser considerada.
   async function restoreImportedModality(
     importedModalityId: string,
   ): Promise<RestoreImportedModalityResponse> {

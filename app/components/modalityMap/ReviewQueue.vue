@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Fila de Revisão (RN-034): o recorte de exceções e curadoria evidenciado dentro do Mapa de
+ * Fila de Revisão (RN-037): o recorte de exceções e curadoria evidenciado dentro do Mapa de
  * Modalidades — não é tela separada. Como o vínculo Importada→Modalidade vem pronto pela
  * Modalidade Global (ADR-061), a Fila trata só de curadoria: cada item é uma Modalidade Importada
  * sem Modalidade vinculada (exceção) e a equipe decide: Reatribuir (override manual para uma
@@ -9,7 +9,6 @@
  * Mobile-first (ADR-017): desktop = tabela densa; mobile = cards.
  */
 import type { PendingImportedModality } from '~/composables/useModalityMap'
-import { mdiEyeOffOutline, mdiEyeOutline, mdiRepeatVariant } from '~/lib/icons'
 import { getSuretyBranchView } from '~/lib/status/suretyBranches'
 
 defineProps<{
@@ -61,7 +60,7 @@ const headers = [
     <template #[`item.actions`]="{ item }">
       <div class="si-review-queue__actions">
         <SiButton
-          :prepend-icon="mdiRepeatVariant"
+          :prepend-icon="'repeat'"
           size="small"
           variant="tonal"
           color="primary"
@@ -72,7 +71,7 @@ const headers = [
         </SiButton>
 
         <SiButton
-          :prepend-icon="mdiEyeOffOutline"
+          :prepend-icon="'eyeOff'"
           size="small"
           variant="tonal"
           color="secondary"
@@ -83,7 +82,7 @@ const headers = [
         </SiButton>
 
         <SiButton
-          :prepend-icon="mdiEyeOutline"
+          :prepend-icon="'eye'"
           size="small"
           variant="tonal"
           color="info"
@@ -147,7 +146,7 @@ const headers = [
 
       <div class="si-review-queue-cards__actions">
         <SiButton
-          :prepend-icon="mdiRepeatVariant"
+          :prepend-icon="'repeat'"
           size="small"
           variant="tonal"
           color="primary"
@@ -158,7 +157,7 @@ const headers = [
         </SiButton>
 
         <SiButton
-          :prepend-icon="mdiEyeOffOutline"
+          :prepend-icon="'eyeOff'"
           size="small"
           variant="tonal"
           color="secondary"
@@ -169,7 +168,7 @@ const headers = [
         </SiButton>
 
         <SiButton
-          :prepend-icon="mdiEyeOutline"
+          :prepend-icon="'eye'"
           size="small"
           variant="tonal"
           color="info"

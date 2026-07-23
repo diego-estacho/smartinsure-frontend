@@ -6,7 +6,6 @@
  * O front valida forma; credenciais, situação do Usuário e validade da sessão são decisão
  * do servidor (SECURITY do produto). Cores/espacos por token (ADR-006); wrappers Si (ADR-013).
  */
-import { mdiAccountOutline, mdiLockOutline, mdiEyeOutline, mdiEyeOffOutline } from '~/lib/icons'
 import { required, email as emailRule } from '~/lib/rules'
 
 const { login } = useAuth()
@@ -111,7 +110,7 @@ async function submit() {
               v-model="email"
               type="email"
               density="default"
-              :prepend-inner-icon="mdiAccountOutline"
+              :prepend-inner-icon="'user'"
               :rules="[required(), emailRule()]"
               autofocus
             />
@@ -127,8 +126,8 @@ async function submit() {
               v-model="password"
               density="default"
               :type="passwordVisible ? 'text' : 'password'"
-              :prepend-inner-icon="mdiLockOutline"
-              :append-inner-icon="passwordVisible ? mdiEyeOffOutline : mdiEyeOutline"
+              :prepend-inner-icon="'lock'"
+              :append-inner-icon="passwordVisible ? 'eyeOff' : 'eye'"
               :rules="[required()]"
               @click:append-inner="passwordVisible = !passwordVisible"
             />

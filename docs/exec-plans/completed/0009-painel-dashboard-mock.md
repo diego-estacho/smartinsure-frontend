@@ -5,7 +5,7 @@
 > que o app reproduz o protótipo. Referência: `../design system/ui_kits/web/index.html` (card
 > "UI kit · partner dashboard"). Primeiro uso do de-para do design system (ADR-019 — vem no PR #16).
 
-Status: em andamento
+Status: concluído
 Contexto obrigatório (ler antes de executar): `AGENTS.md`, `docs/FRONTEND.md`, o de-para do design
 system (`docs/design-system-map`, ADR-019), ADRs **006** (tokens), **013** (kit `Si`), **015**
 (css `si-*`), **017** (mobile-first), **018** (página fina), **019** (DS/de-para).

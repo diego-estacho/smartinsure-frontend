@@ -1,9 +1,9 @@
 <script setup lang="ts">
 /**
- * Matriz Seguradoras × Modalidades (RN-033: a Modalidade é o eixo; duas ofertas só são "a mesma
+ * Matriz Seguradoras × Modalidades (RN-036: a Modalidade é o eixo; duas ofertas só são "a mesma
  * modalidade" quando as Modalidades Importadas compartilham a mesma Modalidade — garantido pelo id
  * da Modalidade Global, ADR-061). Apresentacional (ADR-018): recebe as entradas por prop, não
- * decide nada. `offered` (é ofertada) e `branches` (ramos) são derivados no servidor (RN-033) — o
+ * decide nada. `offered` (é ofertada) e `branches` (ramos) são derivados no servidor (RN-036) — o
  * cliente só renderiza, por nome estável (ADR-004). A coluna Seguradoras exibe UMA badge por
  * Seguradora distinta: o backend já agrega uma entrada por Seguradora (`count` de Modalidades
  * Importadas + `origins`) — o cliente renderiza direto, com a contagem na badge e os nomes de
@@ -86,7 +86,7 @@ const headers = [
     <template #[`item.insurers`]="{ item }">
       <div class="si-modality-map-matrix__chips">
         <template v-if="item.insurers.length">
-          <!-- Uma badge por Seguradora distinta (RN-033): o backend já agrega count/origins. -->
+          <!-- Uma badge por Seguradora distinta (RN-036): o backend já agrega count/origins. -->
           <SiTooltip
             v-for="insurer in item.insurers"
             :key="insurer.insurerId"
@@ -198,7 +198,7 @@ const headers = [
           v-if="!entry.insurers.length"
           class="si-modality-map-matrix__muted"
         >Nenhuma Seguradora</span>
-        <!-- Uma badge por Seguradora distinta (RN-033): o backend já agrega count/origins. -->
+        <!-- Uma badge por Seguradora distinta (RN-036): o backend já agrega count/origins. -->
         <SiTooltip
           v-for="insurer in entry.insurers"
           :key="insurer.insurerId"

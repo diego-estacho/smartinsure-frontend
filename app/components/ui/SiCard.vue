@@ -11,8 +11,8 @@ withDefaults(defineProps<{
   rounded?: boolean | string
   color?: string
 }>(), {
-  variant: 'elevated',
-  elevation: 1,
+  variant: 'flat',
+  elevation: 0,
   rounded: 'lg',
   color: undefined,
 })

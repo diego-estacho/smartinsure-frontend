@@ -1,10 +1,10 @@
 <script setup lang="ts">
 /**
- * Mapa de Modalidades (RN-033) + Fila de Revisão (RN-034) na MESMA tela: a matriz Seguradoras ×
+ * Mapa de Modalidades (RN-036) + Fila de Revisão (RN-037) na MESMA tela: a matriz Seguradoras ×
  * Modalidades e o recorte de exceções/curadoria (pendências) convivem, não são páginas separadas.
  * Página orquestradora fina (ADR-018): mantém o estado de tela, chama os composables e compõe os
  * componentes de domínio (matriz, fila, dialogs). Nenhuma regra de negócio aqui — oferta e ramos
- * são derivados no servidor (RN-033). Como o vínculo vem pronto pela Modalidade Global (ADR-061),
+ * são derivados no servidor (RN-036). Como o vínculo vem pronto pela Modalidade Global (ADR-061),
  * a Fila só faz curadoria.
  *
  * Ações da Fila: Reatribuir (define manualmente a Modalidade da Importada → /reassign), Ignorar
@@ -12,7 +12,6 @@
  */
 import type { ModalityListItem } from '~/composables/useModalities'
 import type { ModalityMapEntry, PendingImportedModality } from '~/composables/useModalityMap'
-import { mdiRefresh, mdiSitemapOutline } from '~/lib/icons'
 
 definePageMeta({ layout: 'shell' })
 
@@ -122,7 +121,7 @@ async function confirmIgnore() {
   }
 }
 
-// Reativar (RN-034): desfaz o Ignorar direto, sem dialog de confirmação.
+// Reativar (RN-037): desfaz o Ignorar direto, sem dialog de confirmação.
 async function restore(item: PendingImportedModality) {
   saving.value = true
   error.value = null
@@ -150,7 +149,7 @@ async function restore(item: PendingImportedModality) {
       </h1>
 
       <SiButton
-        :prepend-icon="mdiRefresh"
+        :prepend-icon="'refresh'"
         variant="tonal"
         :loading="loading"
         @click="refresh"
@@ -173,7 +172,7 @@ async function restore(item: PendingImportedModality) {
       :text="success"
     />
 
-    <!-- Fila de Revisão (RN-034) na MESMA tela. Oculta por feature-flag (OPEN-14); implementação intacta. -->
+    <!-- Fila de Revisão (RN-037) na MESMA tela. Oculta por feature-flag (OPEN-14); implementação intacta. -->
     <SiCard
       v-if="reviewQueueVisible"
       class="si-modality-map__card si-modality-map__card--queue"
@@ -181,7 +180,7 @@ async function restore(item: PendingImportedModality) {
     >
       <div class="si-modality-map__section">
         <div class="si-modality-map__section-title">
-          <SiIcon :icon="mdiSitemapOutline" />
+          <SiIcon icon="sitemap" />
           <h2 class="text-h6">
             Fila de Revisão
           </h2>

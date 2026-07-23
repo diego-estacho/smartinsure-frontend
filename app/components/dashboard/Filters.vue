@@ -3,7 +3,6 @@
  * Filtros de período do painel (ADR-018) — chips pill: ativo em superfície carvão,
  * inativos com hairline. Só tokens (ADR-006). O botão "Filtros" é ilustrativo (mock).
  */
-import { mdiFilterVariant } from '~/lib/icons'
 
 const period = defineModel<string>({ default: 'month' })
 
@@ -32,7 +31,7 @@ const periods = [
       class="si-dash-filter si-dash-filter--icon"
     >
       <SiIcon
-        :icon="mdiFilterVariant"
+        :icon="'filter'"
         size="x-small"
       />
       Filtros
