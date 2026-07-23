@@ -4,7 +4,7 @@
 > de 16/07 — identificadores pt-BR (`enviando`, `entrar`, `drawerAberto`) apareceram em código.
 > Cross-repo parcial: o backend recebeu a regra análoga no próprio harness (ADR-058 lá já existia).
 
-Status: em andamento
+Status: concluído
 Contexto obrigatório: `AGENTS.md`, `docs/FRONTEND.md`, ADR-058 do produto (artefatos em inglês,
 docs/UI em pt-BR).
 

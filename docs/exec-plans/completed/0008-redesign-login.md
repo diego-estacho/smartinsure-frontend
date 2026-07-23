@@ -5,7 +5,7 @@
 > Referência de aparência: repo de conhecimento `SmartInsure-Knowledge/InsurePoint-Front` (mesmos
 > tokens de tipografia/raio) + prints do dono.
 
-Status: em andamento
+Status: concluído
 Contexto obrigatório (ler antes de executar): `AGENTS.md`, `docs/FRONTEND.md`, ADRs **006** (tokens
 whitelabel), **013** (composição `ui/`), **015** (css `si-*`), **017** (mobile-first); camada de
 produto: `SECURITY.md` (o front valida forma, não decisão) e RN-005 (fluxo de login).

@@ -4,7 +4,7 @@
 > `feat/painel-dashboard-mock` / PR #17). Origem: pedido do dono — usar uma lib de gráficos pronta
 > em vez do SVG à mão, deixando-a disponível para o dashboard real.
 
-Status: em andamento
+Status: concluído
 Contexto obrigatório: `AGENTS.md`, ADR-006 (tokens/whitelabel), ADR-008 (BFF/SSR), ADR-013 (kit),
 ADR-019 (DS/de-para), **ADR-020** (a escolha da lib), exec-plan 0009 (o painel).
 
