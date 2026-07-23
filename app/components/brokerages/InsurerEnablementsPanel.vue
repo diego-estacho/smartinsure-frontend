@@ -272,8 +272,8 @@ async function confirmStatusChange() {
       >
       <template #[`item.insurerCorporateName`]="{ item }">
         <div class="si-enablements__insurer">
-          <VAvatar
-            size="32"
+          <SiAvatar
+            size="sm"
             color="surface"
             class="si-enablements__insurer-logo"
           >
@@ -287,7 +287,7 @@ async function confirmStatusChange() {
               v-else
               class="si-enablements__insurer-initials"
             >{{ insurerInitials(item.insurerCorporateName) }}</span>
-          </VAvatar>
+          </SiAvatar>
           <span>{{ item.insurerCorporateName }}</span>
         </div>
       </template>

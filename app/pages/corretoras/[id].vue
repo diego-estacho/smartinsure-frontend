@@ -162,7 +162,7 @@ function formatAddress(address: GetBrokerageResponse['mainAddress']) {
               Habilitar seguradora
             </SiButton>
 
-            <VMenu>
+            <SiMenu location="bottom end">
               <template #activator="{ props: menuProps }">
                 <SiButton
                   v-bind="menuProps"
@@ -175,15 +175,17 @@ function formatAddress(address: GetBrokerageResponse['mainAddress']) {
                 </SiButton>
               </template>
 
-              <VList density="compact">
-                <VListItem
+              <SiList
+                density="compact"
+                class="si-rowmenu"
+              >
+                <SiListItem
+                  :title="statusAction?.label"
                   :disabled="statusAction?.disabled"
                   @click="openStatusDialog"
-                >
-                  <VListItemTitle>{{ statusAction?.label }}</VListItemTitle>
-                </VListItem>
-              </VList>
-            </VMenu>
+                />
+              </SiList>
+            </SiMenu>
           </div>
         </div>
 
