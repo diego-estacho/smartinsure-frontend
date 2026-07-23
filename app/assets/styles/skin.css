@@ -18,6 +18,9 @@
   font-weight: var(--si-font-weight-semibold);
   letter-spacing: normal;
   text-transform: none;
+  /* DS (components-buttons): radius 10px. `rounded="md"` não é token do Vuetify (só
+   * sm/lg/xl), então fixamos aqui pelo token. */
+  border-radius: var(--si-radius-md);
   transition:
     transform var(--si-dur-fast) var(--si-ease-out),
     box-shadow var(--si-dur-base) var(--si-ease-out),
@@ -33,60 +36,149 @@
   box-shadow: var(--si-shadow-glow);
 }
 
-/* ─── Tab (.si-tab na raiz do VTab) ──────────────────────────────────────────
- * Navegação não é rótulo utilitário — fora a caixa-alta do Vuetify (DS voice). */
+/* Anel de foco verde por teclado (DS §1.3: todo focável; nunca o azul do navegador). */
+.si-button.v-btn:focus-visible {
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary), 0.2);
+}
+
+/* Variantes DS secondary/danger — sutis, não preenchidas (DS components-buttons). O primário
+ * (verde sólido) é o único preenchido. O `!important` é necessário: o utilitário `.bg-*` de
+ * cor do Vuetify também é `!important` e não há como vencê-lo só por especificidade. */
+.si-button--secondary.v-btn {
+  background: rgb(var(--v-theme-surface)) !important;
+  color: rgb(var(--v-theme-on-surface)) !important;
+  border: 1px solid var(--si-cinza-claro);
+}
+.si-button--secondary.v-btn:not(.v-btn--disabled):hover {
+  background: var(--si-cinza-suave) !important;
+  border-color: var(--si-border-strong);
+  box-shadow: none;
+}
+
+.si-button--danger.v-btn {
+  background: rgb(var(--v-theme-surface)) !important;
+  color: var(--si-danger-strong) !important;
+  border: 1px solid var(--si-danger-border);
+}
+.si-button--danger.v-btn:not(.v-btn--disabled):hover {
+  background: var(--si-danger-tint) !important;
+  box-shadow: none;
+}
+
+/* ─── Tabs / Tab (.si-tabs no VTabs, .si-tab no VTab) ─────────────────────────
+ * DS (components/Tabs.jsx, variante underline): navegação em sentence case (fora a
+ * caixa-alta do Vuetify), label ativo em verde escuro (verde-800) e sublinhado 2.5px verde
+ * — o "momento verde" sancionado da tela. Inativas em cinza. */
 .si-tab.v-tab {
   font-weight: var(--si-font-weight-semibold);
   letter-spacing: normal;
   text-transform: none;
 }
 
-/* ─── Tabela (.si-table na raiz do VDataTable) ───────────────────────────────
- * O DS não define tabela; referência é o InsurePoint, tokenizado. DS README:
- * headers ALL-CAPS de utilidade, cinza, com letter-spacing; densidade; tabular. */
-.si-table th {
+.si-tab.v-tab--selected {
+  color: var(--si-verde-800);
+}
+
+.si-tabs .v-tab__slider {
+  block-size: 2.5px;
+}
+
+/* Badge de contagem opcional da aba (DS Tabs.jsx): pill 20px, tabular; inativo cinza sobre o
+ * fundo da página, ativo em tint verde (verde-100 / verde-800). Só aparece quando há `count`. */
+.si-tab__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 20px;
+  block-size: 20px;
+  margin-inline-start: var(--si-space-2);
+  padding-inline: var(--si-space-2);
+  border-radius: var(--si-radius-pill);
+  background: rgb(var(--v-theme-background));
+  color: var(--si-cinza);
   font-size: var(--si-fs-caption);
   font-weight: var(--si-font-weight-semibold);
-  letter-spacing: var(--si-ls-eyebrow);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.si-tab.v-tab--selected .si-tab__count {
+  background: var(--si-verde-100);
+  color: var(--si-verde-800);
+}
+
+/* ─── Tabela (.si-table na raiz do VDataTable) ───────────────────────────────
+ * DS (components/Table.jsx, medido no Table.card.html): header CAIXA-ALTA 12px em cinza,
+ * letter-spacing 0.08em, sobre o fundo da página com sublinhado hairline; corpo 14px; padding
+ * 12/16 nas células (é isso que dá o respiro das linhas); divisórias bem leves (--divider),
+ * última linha sem divisória; numéricos à direita tabulares. Um acento concentrado.
+ *
+ * IMPORTANTE (especificidade): os seletores de célula do Vuetify — `.v-table .v-table__wrapper
+ * > table > … > td/th` — têm peso alto e FIXAM font-size e padding. Por isso font-size e padding
+ * PRECISAM ser escritos com a mesma estrutura (`.si-table.v-table …`) para vencer; senão o
+ * Vuetify zera o padding (linhas esmagadas) e força 14px no header. Como isto vive no skin
+ * global (ADR-014), vale para TODAS as tabelas do kit — listas e painéis. */
+.si-table.v-table .v-table__wrapper > table > thead > tr > th {
+  padding: var(--si-space-3) var(--si-space-4);
+  background: rgb(var(--v-theme-background));
+  border-bottom: thin solid var(--si-cinza-claro);
+  font-size: var(--si-fs-caption);
+  font-weight: var(--si-font-weight-semibold);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--si-cinza);
 }
 
-/* Faixa cinza atrás do header (validado no InsurePoint — header com fundo cinza). */
-.si-table thead th {
-  background: var(--si-cinza-suave);
-}
-
-/* Linhas com mais respiro (densidade validada). */
-.si-table tbody td {
-  padding-block: var(--si-space-3);
-}
-
-.si-table .v-data-table-header__content {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--si-space-2);
-}
-
-.si-table td {
+.si-table.v-table .v-table__wrapper > table > tbody > tr > td {
+  padding: var(--si-space-3) var(--si-space-4);
   font-size: var(--si-fs-small);
+  /* DS: corpo em carvão cheio (--fg), não o cinza translúcido (0.87) do Vuetify. */
+  color: rgb(var(--v-theme-on-surface));
 }
 
-/* Padding de borda validado (24px = space-6). */
-.si-table table > thead > tr > :first-child,
-.si-table table > tbody > tr > :first-child {
-  padding-inline-start: var(--si-space-6);
+/* Coluna prioritária em negrito (DS Table: uma coluna-chave forte, ex.: o nome). */
+.si-cell-strong {
+  font-weight: var(--si-font-weight-semibold);
 }
 
-.si-table table > thead > tr > :last-child,
-.si-table table > tbody > tr > :last-child {
-  padding-inline-end: var(--si-space-6);
+/* Divisória bem leve (DS --divider) trocando a cor do border do Vuetify (on-surface com
+ * opacity, mais escuro); o Vuetify já omite a divisória da última linha, como o DS. */
+.si-table.v-table .v-table__wrapper > table > tbody > tr:not(:last-child) > td {
+  border-bottom-color: var(--si-divider);
 }
 
-/* Numéricos à direita com fonte tabular (DS README). */
+/* Numéricos à direita com fonte tabular (DS). */
 .si-table td.text-end,
 .si-table th.text-end {
   font-variant-numeric: tabular-nums;
+}
+
+/* ─── SiIconButton (.si-icon-button — icon-button discreto do DS) ─────────────
+ * DS (components/Table.card.html .iconbtn): botão-ícone quadrado arredondado, transparente,
+ * cinza (fg-muted); hover com faixa clara e texto carvão; o "ver" (tone="view") fica verde no
+ * hover. Encapsulado no wrapper SiIconButton (ADR-013); usado nas colunas de ações das listas e
+ * como ativador de SiMenu/SiTooltip. */
+.si-icon-button.v-btn {
+  /* Neutro por padrão (DS: ícones de linha em cinza, NÃO verde). `!important` vence o default
+   * global `VBtn: { color: 'primary' }` do nuxt.config, que pintaria o ícone de verde. */
+  color: var(--si-cinza) !important;
+  border-radius: var(--si-radius-sm);
+}
+
+.si-icon-button.v-btn:hover {
+  background: var(--si-cinza-suave);
+  color: rgb(var(--v-theme-on-surface)) !important;
+}
+
+/* Só o "ver" (tone="view") fica verde no hover (DS Table.card: .iconbtn:hover.view). */
+.si-icon-button--view.v-btn:hover {
+  color: var(--si-verde-800) !important;
+}
+
+/* Menu de ações de linha (.si-rowmenu no VList do SiMenu): itens na escala do corpo (14px),
+ * não no 16px padrão do VList — o 16px destoava (ficava maior que o texto da tabela). */
+.si-rowmenu .v-list-item-title {
+  font-size: var(--si-fs-small);
 }
 
 /* ─── Card (.si-card na raiz do VCard) ───────────────────────────────────────
@@ -105,13 +197,181 @@
 }
 
 /* ─── Campos (.si-field na raiz de cada wrapper de campo) ─────────────────────
- * DS (components-fields): foco = borda de marca + ring 3px; erro = danger + ring. */
+ * DS (components/TextField.jsx, Select.jsx): raio ~8px (usamos --si-radius-md, dentro da
+ * banda 8–10 do HANDOFF §1.3); foco = borda de marca + ring 3px; erro = danger + ring. */
+.si-field .v-field {
+  border-radius: var(--si-radius-md);
+}
+
 .si-field .v-field--focused {
   box-shadow: 0 0 0 3px rgba(var(--v-theme-primary), 0.2);
 }
 
 .si-field .v-field--error {
   box-shadow: 0 0 0 3px rgba(var(--v-theme-error), 0.18);
+}
+
+/* ─── Calendário do SiDateField (.si-datepicker no overlay do VDateInput) ─────
+ * DS (DateField.jsx): dias em cor de TEXTO (carvão), não verde; dia selecionado = verde
+ * preenchido + branco; hoje = anel verde. O default global `VBtn { color: primary }` pinta
+ * TODOS os dias de verde (utilitário `.text-primary`, que é `!important`) → revertido aqui,
+ * também com `!important`. Escopo `.si-datepicker` chega ao overlay teleportado via
+ * `menu-props.contentClass` (ADR-015: seletor sob `.si-*`). */
+
+/* dias em carvão (revert do text-primary global) */
+.si-datepicker .v-date-picker-month__day-btn {
+  color: rgb(var(--v-theme-on-surface)) !important;
+}
+
+/* hoje: anel verde (variante outlined do Vuetify), texto carvão */
+.si-datepicker .v-date-picker-month__day-btn.v-btn--variant-outlined {
+  border-color: rgb(var(--v-theme-primary)) !important;
+}
+
+/* dia selecionado: verde preenchido + branco (DS: filled green) */
+.si-datepicker .v-date-picker-month__day--selected .v-date-picker-month__day-btn {
+  background-color: rgb(var(--v-theme-primary)) !important;
+  color: rgb(var(--v-theme-on-primary)) !important;
+}
+
+/* cabeçalho (mês/ano + setas): texto carvão, não verde (DS: título fg, setas neutras) */
+.si-datepicker .v-date-picker-controls .v-btn {
+  color: rgb(var(--v-theme-on-surface)) !important;
+}
+
+/* ─── Controles de seleção (.si-checkbox / .si-radio / .si-switch) ────────────
+ * DS (Checkbox/RadioGroup.jsx): a caixa/anel são DESENHADOS (quadrado verde preenchido com
+ * check branco; anel neutro com dot verde), não os glifos de traço do Vuetify. O Vuetify
+ * troca o glifo por estado (--dirty quando marcado, aria-checked="mixed" quando
+ * indeterminado); aqui desenhamos a caixa no CSS e, no checkbox, reaproveitamos o glifo só
+ * como MARCA (check/traço) em branco. Traduzir o protótipo, não reconstruir (ADR-013/014). */
+
+/* Switch mantém o anel de foco no alvo (pílula do trilho). */
+.si-switch .v-selection-control__input:has(input:focus-visible) {
+  border-radius: var(--si-radius-pill);
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary), 0.2);
+}
+
+/* Rótulo do controle (DS: 14px, peso 500, cor de texto cheia). */
+.si-checkbox .v-label,
+.si-radio .v-label {
+  font-size: var(--si-fs-small);
+  font-weight: var(--si-font-weight-medium);
+  color: rgb(var(--v-theme-on-surface));
+  opacity: 1;
+}
+
+/* ── Checkbox: quadrado 18×18 arredondado (DS Checkbox.jsx) ──
+ * Caixa via ::before, centrada no alvo de toque; o glifo Lucide vira a marca branca (check
+ * quando marcado, traço quando indeterminado), escondida quando vazio. */
+.si-checkbox .v-selection-control__input::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  inline-size: 18px;
+  block-size: 18px;
+  box-sizing: border-box;
+  border-radius: var(--si-radius-sm);
+  background: rgb(var(--v-theme-surface));
+  border: 1.5px solid var(--si-border-strong);
+  /* o ::before do Vuetify é a "state layer" com opacity:0 — reaproveitado como a caixa,
+   * então precisa voltar a opacity:1 (a marca de foco vira o box-shadow abaixo). */
+  opacity: 1;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  pointer-events: none;
+}
+
+.si-checkbox .v-selection-control__input .v-icon {
+  position: relative;
+  z-index: 1;
+  color: rgb(var(--v-theme-on-primary));
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none; /* a marca não intercepta o clique (o input embaixo é o alvo) */
+}
+
+.si-checkbox .v-selection-control__input .v-icon svg {
+  stroke-width: 3;
+}
+
+/* Ativo (marcado OU indeterminado): caixa verde preenchida + marca visível. */
+.si-checkbox .v-selection-control--dirty .v-selection-control__input::before,
+.si-checkbox .v-selection-control__input:has(input[aria-checked="mixed"])::before {
+  background: rgb(var(--v-theme-primary));
+  border-color: rgb(var(--v-theme-primary));
+}
+
+.si-checkbox .v-selection-control--dirty .v-icon,
+.si-checkbox .v-selection-control__input:has(input[aria-checked="mixed"]) .v-icon {
+  opacity: 1;
+}
+
+/* Anel de foco por teclado abraça a caixa de 18px. */
+.si-checkbox .v-selection-control__input:has(input:focus-visible)::before {
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary), 0.2);
+}
+
+/* ── Radio: anel 18×18 + dot verde de 8px (DS RadioGroup.jsx) ──
+ * Glifo do Vuetify escondido; anel via ::before, dot via ::after (escala 0 → 1). */
+.si-radio .v-selection-control__input .v-icon {
+  opacity: 0;
+  pointer-events: none; /* glifo escondido não bloqueia o clique no input */
+}
+
+.si-radio .v-selection-control__input::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  inline-size: 18px;
+  block-size: 18px;
+  box-sizing: border-box;
+  border-radius: var(--si-radius-pill);
+  background: rgb(var(--v-theme-surface));
+  border: 1.5px solid var(--si-border-strong);
+  opacity: 1; /* idem checkbox: reusa o ::before (state layer) do Vuetify como o anel */
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  pointer-events: none;
+}
+
+.si-radio .v-selection-control__input::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  z-index: 1;
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: var(--si-radius-pill);
+  background: rgb(var(--v-theme-primary));
+  transform: scale(0);
+  transition: transform 0.15s ease;
+  pointer-events: none;
+}
+
+/* VRadio aplica .si-radio no PRÓPRIO .v-selection-control (não há wrapper .v-input como no
+ * checkbox) → o estado "selecionado" é seletor composto, não descendente. */
+.si-radio.v-selection-control--dirty .v-selection-control__input::before {
+  border-color: rgb(var(--v-theme-primary));
+}
+
+.si-radio.v-selection-control--dirty .v-selection-control__input::after {
+  transform: scale(1);
+}
+
+.si-radio .v-selection-control__input:has(input:focus-visible)::before {
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary), 0.2);
+}
+
+/* O ::before do Vuetify sobe a opacidade no hover/foco (state layer). Como agora ele É a
+ * caixa/anel, seguramos opacity:1 nesses estados (o feedback de foco é o box-shadow acima).
+ * Especificidade (0,3,1) vence as regras de hover/focus-visible do Vuetify (0,2,1). */
+.si-checkbox .v-selection-control__input:hover::before,
+.si-checkbox .v-selection-control--focus-visible .v-selection-control__input::before,
+.si-radio .v-selection-control__input:hover::before,
+.si-radio.v-selection-control--focus-visible .v-selection-control__input::before {
+  opacity: 1;
 }
 
 /* ─── Chip / status pill (.si-chip na raiz do VChip) ─────────────────────────
@@ -121,4 +381,126 @@
   font-weight: var(--si-font-weight-semibold);
   font-size: var(--si-fs-caption);
   border-radius: var(--si-radius-pill);
+}
+
+/* ─── Alert (.si-alert / .si-alert--<tipo> na raiz do VAlert) ─────────────────
+ * DS (components/Alert.jsx): banner de tint suave, raio 10px, ícone na cor viva da variante
+ * e texto num tom escuro legível. Traduz o `variant="tonal"` do Vuetify: a camada de tint
+ * (`__underlay`) recebe o tint do DS e o conteúdo, o texto escuro; o ícone (prepend) segue a
+ * cor viva semântica do Vuetify. `rounded="md"` não é token do Vuetify → raio pelo token. */
+.si-alert.v-alert {
+  border-radius: var(--si-radius-md);
+}
+
+.si-alert--info .v-alert__underlay {
+  background: var(--si-info-tint);
+  opacity: 1;
+}
+.si-alert--info .v-alert__content {
+  color: var(--si-info-fg);
+}
+
+.si-alert--success .v-alert__underlay {
+  background: var(--si-verde-100);
+  opacity: 1;
+}
+.si-alert--success .v-alert__content {
+  color: var(--si-verde-800);
+}
+
+.si-alert--warning .v-alert__underlay {
+  background: var(--si-warning-tint);
+  opacity: 1;
+}
+.si-alert--warning .v-alert__content {
+  color: var(--si-warning-fg);
+}
+
+.si-alert--error .v-alert__underlay {
+  background: var(--si-danger-tint);
+  opacity: 1;
+}
+.si-alert--error .v-alert__content {
+  color: var(--si-danger-fg);
+}
+
+/* ─── Snackbar (.si-snackbar na raiz do VSnackbar) ───────────────────────────
+ * DS (components/Snackbar.jsx): superfície carvão elevado, texto branco, raio 10px,
+ * shadow-3; ação em verde. Toast transitório (use SiAlert para persistente). */
+.si-snackbar .v-snackbar__wrapper {
+  background: var(--si-carvao-800);
+  color: rgb(var(--v-theme-on-charcoal));
+  border-radius: var(--si-radius-md);
+  box-shadow: var(--si-shadow-3);
+}
+
+.si-snackbar .v-snackbar__actions .v-btn {
+  color: rgb(var(--v-theme-primary));
+  font-weight: var(--si-font-weight-semibold);
+}
+
+/* ─── Avatar (.si-avatar--initials na raiz do VAvatar sem color) ──────────────
+ * DS (components/Avatar.jsx): iniciais em tint verde suave (verde-100) + texto verde-800,
+ * peso 600. Só o padrão (sem color explícita); com color, o Vuetify pinta normalmente. */
+.si-avatar--initials.v-avatar {
+  background: var(--si-verde-100);
+  color: var(--si-verde-800);
+  font-weight: var(--si-font-weight-semibold);
+}
+
+/* Dot de status (DS Avatar.jsx): wrapper posiciona o dot FORA do clip do VAvatar; dot no
+ * canto inferior direito com borda branca (surface). Cores semânticas do tema (não hex cru):
+ * online=primary, away=warning, offline=cinza, busy=error. Tamanho vem inline (28% do avatar). */
+.si-avatar-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.si-avatar__status {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-end: 0;
+  border-radius: var(--si-radius-pill);
+  border: 2px solid rgb(var(--v-theme-surface));
+  box-sizing: border-box;
+}
+
+.si-avatar__status--online {
+  background: rgb(var(--v-theme-primary));
+}
+.si-avatar__status--away {
+  background: rgb(var(--v-theme-warning));
+}
+.si-avatar__status--offline {
+  background: var(--si-cinza);
+}
+.si-avatar__status--busy {
+  background: rgb(var(--v-theme-error));
+}
+
+/* ─── ExpansionPanels (.si-expansion-panels / .si-expansion-panel) ────────────
+ * DS (components/ExpansionPanel.jsx): um container de raio 14 + borda hairline; itens sem
+ * elevação, divisória fina entre eles; header título 14/600, conteúdo 14 em cinza. O chevron
+ * é o `$expand` (Lucide chevron-down via alias), girado nativamente pelo Vuetify. */
+.si-expansion-panels {
+  border: thin solid var(--si-cinza-claro);
+  border-radius: var(--si-radius-lg);
+  overflow: hidden;
+}
+.si-expansion-panels .v-expansion-panel {
+  background: rgb(var(--v-theme-surface));
+}
+.si-expansion-panels .v-expansion-panel__shadow {
+  display: none;
+}
+.si-expansion-panels .v-expansion-panel:not(:first-child) {
+  border-top: thin solid var(--si-divider);
+}
+.si-expansion-panel .v-expansion-panel-title {
+  font-weight: var(--si-font-weight-semibold);
+  font-size: var(--si-fs-small);
+}
+.si-expansion-panel .v-expansion-panel-text {
+  font-size: var(--si-fs-small);
+  color: var(--si-cinza);
 }

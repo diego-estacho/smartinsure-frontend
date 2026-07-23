@@ -9,7 +9,7 @@ const model = defineModel<unknown>()
 </script>
 
 <template>
-  <VExpansionPanels v-bind="$attrs" v-model="model">
+  <VExpansionPanels v-bind="$attrs" v-model="model" class="si-expansion-panels">
     <template v-for="(_, name) in $slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps ?? {}" />
     </template>

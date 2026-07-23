@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { CreatePolicyHolderResponse } from '~/composables/usePolicyHolders'
 import { formatCnpj } from '~/lib/documents'
-import { mdiArrowLeft, mdiEyeOutline, mdiMagnify } from '~/lib/icons'
 import { cnpj, required } from '~/lib/rules'
 
 definePageMeta({ layout: 'shell' })
@@ -84,7 +83,7 @@ function formatAddress(address: CreatePolicyHolderResponse['mainAddress']) {
         to="/tomadores"
         variant="outlined"
         color="secondary"
-        :prepend-icon="mdiArrowLeft"
+        :prepend-icon="'arrowLeft'"
       >
         Voltar
       </SiButton>
@@ -118,7 +117,7 @@ function formatAddress(address: CreatePolicyHolderResponse['mainAddress']) {
             <SiButton
               type="submit"
               :loading="submitting"
-              :prepend-icon="mdiMagnify"
+              :prepend-icon="'search'"
               size="small"
               class="si-policy-holder-create__submit"
             >
@@ -187,7 +186,7 @@ function formatAddress(address: CreatePolicyHolderResponse['mainAddress']) {
         <div class="si-policy-holder-create__result-actions">
           <SiButton
             :to="`/tomadores/${createdPolicyHolder.id}`"
-            :prepend-icon="mdiEyeOutline"
+            :prepend-icon="'eye'"
             color="info"
             size="small"
           >

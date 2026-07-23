@@ -4,7 +4,6 @@
  * hairline no claro, um card de destaque em superfície carvão. Só tokens (ADR-006).
  */
 import type { KpiCard } from '~/composables/useDashboardMock'
-import { mdiTrendingUp, mdiTrendingDown } from '~/lib/icons'
 
 defineProps<{ items: KpiCard[] }>()
 </script>
@@ -30,7 +29,7 @@ defineProps<{ items: KpiCard[] }>()
       >
         <SiIcon
           v-if="kpi.trend"
-          :icon="kpi.trend === 'up' ? mdiTrendingUp : mdiTrendingDown"
+          :icon="kpi.trend === 'up' ? 'trendingUp' : 'trendingDown'"
           size="x-small"
         />
         {{ kpi.hint }}

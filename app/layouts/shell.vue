@@ -18,11 +18,7 @@
  * `width`/`rail-width` são dimensões ESTRUTURAIS do layout (o Vuetify usa o número para o
  * offset do VMain), não valores visuais tokenizáveis (ADR-006 rege cor/fonte/espaço/raio/sombra).
  */
-import {
-  mdiFileDocumentOutline, mdiAccount, mdiLogout,
-  mdiChevronDoubleLeft, mdiChevronDoubleRight, mdiOfficeBuildingOutline, mdiMenu,
-  mdiDomain, mdiCreditCardOutline, mdiViewDashboardOutline,
-} from '~/lib/icons'
+import type { AppIconName } from '~/lib/icons'
 
 const { logout } = useAuth()
 const { mobile } = useDisplay()
@@ -30,12 +26,12 @@ const { mobile } = useDisplay()
 const drawerOpen = ref(true)
 const rail = ref(false)
 
-const nav = [
-  { title: 'Painel', to: '/', icon: mdiViewDashboardOutline },
-  { title: 'Corretoras', to: '/corretoras', icon: mdiOfficeBuildingOutline },
-  { title: 'Tomadores', to: '/tomadores', icon: mdiDomain },
-  { title: 'Consulta de Crédito', to: '/consulta-credito', icon: mdiCreditCardOutline },
-  { title: 'Página B', to: '/demo/b', icon: mdiFileDocumentOutline },
+const nav: { title: string, to: string, icon: AppIconName }[] = [
+  { title: 'Painel', to: '/', icon: 'dashboard' },
+  { title: 'Corretoras', to: '/corretoras', icon: 'building' },
+  { title: 'Tomadores', to: '/tomadores', icon: 'domain' },
+  { title: 'Consulta de Crédito', to: '/consulta-credito', icon: 'creditCard' },
+  { title: 'Página B', to: '/demo/b', icon: 'fileText' },
 ]
 
 watch(mobile, (isMobile) => {
@@ -71,7 +67,7 @@ async function onLogout() {
         :aria-label="drawerOpen ? 'Fechar menu' : 'Abrir menu'"
         @click="toggleDrawer"
       >
-        <SiIcon :icon="mdiMenu" />
+        <SiIcon icon="menu" />
       </button>
 
       <div class="si-shell-topbar-brand">
@@ -157,7 +153,7 @@ async function onLogout() {
             :class="{ 'si-shell-action--rail': rail }"
             @click="rail = !rail"
           >
-            <SiIcon :icon="rail ? mdiChevronDoubleRight : mdiChevronDoubleLeft" />
+            <SiIcon :icon="rail ? 'chevronsRight' : 'chevronsLeft'" />
             <span v-if="!rail">Recolher menu</span>
           </button>
 
@@ -175,7 +171,7 @@ async function onLogout() {
                   color="primary"
                   size="36"
                 >
-                  <SiIcon :icon="mdiAccount" />
+                  <SiIcon icon="user" />
                 </SiAvatar>
                 <span
                   v-if="!rail"
@@ -189,7 +185,7 @@ async function onLogout() {
 
             <SiList>
               <SiListItem
-                :prepend-icon="mdiLogout"
+                prepend-icon="logOut"
                 title="Sair"
                 @click="onLogout"
               />

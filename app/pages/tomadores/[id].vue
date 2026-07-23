@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { GetPolicyHolderResponse } from '~/composables/usePolicyHolders'
 import { formatCnpj } from '~/lib/documents'
-import { mdiPlus } from '~/lib/icons'
 
 definePageMeta({ layout: 'shell' })
 
@@ -93,7 +92,7 @@ function openAppointmentDialog() {
 
           <div class="si-policy-holder-detail__hero-actions">
             <SiButton
-              :prepend-icon="mdiPlus"
+              :prepend-icon="'plus'"
               @click="openAppointmentDialog"
             >
               Nova nomeação
@@ -176,7 +175,7 @@ function openAppointmentDialog() {
         <VTabsWindowItem value="enderecos">
           <div class="si-policy-holder-detail__tab-actions">
             <SiButton
-              :prepend-icon="mdiPlus"
+              :prepend-icon="'plus'"
               @click="addressesPanelRef?.openCreateDialog()"
             >
               Novo endereço

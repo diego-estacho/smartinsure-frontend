@@ -10,7 +10,6 @@
  * ainda; a busca e "Nova apólice" são ilustrativas. Quando o contrato existir, troca-se o mock
  * por consumo do BFF (ADR-008) e removem-se os no-ops. Exec-plan 0009.
  */
-import { mdiMagnify, mdiBellOutline, mdiHelpCircleOutline, mdiPlus } from '~/lib/icons'
 
 definePageMeta({ layout: 'shell' })
 useHead({ title: 'Painel — SmartInsure' })
@@ -29,7 +28,7 @@ const search = ref('')
         placeholder="Buscar apólice, segurado ou CPF…"
         density="compact"
         hide-details
-        :prepend-inner-icon="mdiMagnify"
+        :prepend-inner-icon="'search'"
       />
 
       <div class="si-painel__actions">
@@ -38,16 +37,16 @@ const search = ref('')
           icon
           aria-label="Notificações"
         >
-          <SiIcon :icon="mdiBellOutline" />
+          <SiIcon :icon="'bell'" />
         </SiButton>
         <SiButton
           variant="text"
           icon
           aria-label="Ajuda"
         >
-          <SiIcon :icon="mdiHelpCircleOutline" />
+          <SiIcon :icon="'helpCircle'" />
         </SiButton>
-        <SiButton :prepend-icon="mdiPlus">
+        <SiButton :prepend-icon="'plus'">
           Nova apólice
         </SiButton>
       </div>

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { EnablementListItemResponse, CalculationEngineListItemResponse } from '~/composables/useInsurerEnablements'
 import type { InsurerListItemResponse } from '~/composables/useInsurers'
-import { mdiPencilOutline, mdiPlus } from '~/lib/icons'
 import { maxLength, required, url } from '~/lib/rules'
 import { getEnablementStatusAction, getEnablementStatusView } from '~/lib/status/insurer-enablements'
 
@@ -227,7 +226,7 @@ async function confirmStatusChange() {
       class="si-enablements__toolbar"
     >
       <SiButton
-        :prepend-icon="mdiPlus"
+        :prepend-icon="'plus'"
         @click="openCreateDialog"
       >
         Habilitar seguradora
@@ -273,8 +272,8 @@ async function confirmStatusChange() {
       >
       <template #[`item.insurerCorporateName`]="{ item }">
         <div class="si-enablements__insurer">
-          <VAvatar
-            size="32"
+          <SiAvatar
+            size="sm"
             color="surface"
             class="si-enablements__insurer-logo"
           >
@@ -288,7 +287,7 @@ async function confirmStatusChange() {
               v-else
               class="si-enablements__insurer-initials"
             >{{ insurerInitials(item.insurerCorporateName) }}</span>
-          </VAvatar>
+          </SiAvatar>
           <span>{{ item.insurerCorporateName }}</span>
         </div>
       </template>
@@ -307,7 +306,7 @@ async function confirmStatusChange() {
           <SiButton
             variant="text"
             size="small"
-            :prepend-icon="mdiPencilOutline"
+            :prepend-icon="'pencil'"
             @click="openEditDialog(item)"
           >
             Editar

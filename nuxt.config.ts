@@ -60,7 +60,8 @@ export default defineNuxtConfig({
   },
 
   // Vuetify 3 (ADR-010) com o tema dirigido pelos design tokens (tokens.ts).
-  // Ícones em mdi-svg (tree-shakeable) — centralizados em app/lib/icons.ts (ADR-003).
+  // Ícones em Lucide (ADR-021) — set customizado ligado em app/plugins/vuetify-icons.ts;
+  // registry central em app/lib/icons.ts (ADR-003).
   vuetify: {
     vuetifyOptions: {
       theme: {
@@ -89,7 +90,8 @@ export default defineNuxtConfig({
         VProgressLinear: { height: 6, rounded: true, roundedBar: true },
         VNavigationDrawer: { touchless: true },
       },
-      icons: { defaultSet: 'mdi-svg' },
+      // 'custom' faz o módulo delegar os ícones ao nosso plugin (vuetify-icons.ts, ADR-021).
+      icons: { defaultSet: 'custom' },
       // UI em pt-BR (ADR-012) com as mensagens nativas do Vuetify. O locale também rege
       // o parse de data digitada no VDateInput.
       locale: { locale: 'pt', fallback: 'en', messages: { pt } },

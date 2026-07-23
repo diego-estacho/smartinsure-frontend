@@ -7,7 +7,6 @@ import { getBrokerageStatusView } from '~/lib/status/brokerages'
 import { getCreditInquiryInsurerStatusView } from '~/lib/status/creditInquiries'
 import { toBrDateTime } from '~/lib/dates'
 import { formatCurrencyBRL } from '~/lib/currency'
-import { mdiCreditCardOutline, mdiRefresh } from '~/lib/icons'
 
 definePageMeta({ layout: 'shell' })
 
@@ -213,7 +212,7 @@ function getLimitGroupData(result: CreditInquiryResultResponse, groupName: strin
         />
 
         <SiButton
-          :prepend-icon="mdiCreditCardOutline"
+          :prepend-icon="'creditCard'"
           :loading="loading"
           :disabled="!brokerageId || !policyHolderCnpj"
           @click="executeInquiry"
@@ -304,7 +303,7 @@ function getLimitGroupData(result: CreditInquiryResultResponse, groupName: strin
         <div class="si-credit-inquiries__table-header">
           <h3 class="text-subtitle-1">Quadro consolidado de limites</h3>
           <SiButton
-            :prepend-icon="mdiRefresh"
+            :prepend-icon="'refresh'"
             variant="tonal"
             size="small"
             :loading="loading"
