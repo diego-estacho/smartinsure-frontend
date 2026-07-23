@@ -101,6 +101,7 @@ em forma e registre aqui.
 | Protótipo (HTML) | Componente `Si` |
 |---|---|
 | `<button class="pill-btn/btn">` | `SiButton` (`color`, `variant`, `size`, `:prepend-icon`) |
+| `<button class="iconbtn">` (ação de linha, ícone só) | `SiIconButton` (`:icon`, `tone="view"` = hover verde; ativador de SiMenu/SiTooltip via `v-bind="props"`) |
 | `<input>` | `SiTextField` (`:prepend-inner-icon`, `:rules`) |
 | card / `.panel` / `.kpi` | `SiCard` (`variant="outlined"` p/ hairline; `charcoal` p/ card escuro) |
 | status pill | `SiChip` (`color`, `size`) |

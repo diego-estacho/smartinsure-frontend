@@ -86,7 +86,7 @@ no plugin (`vuetify-icons.ts`).
 **Leva de fidelidade DS (revisão de-para do dono):** revisitados os componentes contra o
 `components/<Nome>.card.html` medindo os valores computados (Playwright) antes/depois:
 - **Table:** ícones de ação passam a **cor neutra** (`--si-cinza`, era `primary` por causa do default
-  global `VBtn: color primary` — vencido com `!important` em `.si-rowaction`); **uma coluna prioritária
+  global `VBtn: color primary` — vencido com `!important` no skin do `SiIconButton`); **uma coluna prioritária
   em negrito** (`.si-cell-strong` + slot `#item.name` — "Razão social" nas listas de corretoras/tomadores,
   como o DS negrita "Cliente"); **texto do corpo carvão cheio** (`rgb(--v-theme-on-surface)`, era
   `rgba(...,0.87)` acinzentado). Especificidade estrutural (`.si-table.v-table .v-table__wrapper > table
@@ -132,6 +132,15 @@ no plugin (`vuetify-icons.ts`).
 
 **Todos os 7 itens da revisão de-para do dono concluídos** (Table, Tabs, Checkbox, Radio, inputs/label,
 Stepper, calendário) — cada um medido no `/dev/ui` e com os gates verdes.
+
+**Varredura DS-first das telas (ADR-022, 1ª aplicação):** auditadas 11 páginas + 10 componentes de
+domínio + 2 layouts atrás de Vuetify cru onde há wrapper `Si`. Corrigido: `corretoras/[id].vue`
+(VMenu/VList/VListItem → SiMenu/SiList/SiListItem) e `InsurerEnablementsPanel` (VAvatar → SiAvatar).
+Promovido a componente do kit o icon-button de linha, antes `<VBtn class="si-rowaction">` cru repetido
+em 2 tabelas: novo **`SiIconButton`** (wrapper de VBtn text, cinza neutro, `tone="view"` = hover verde;
+ativador de SiMenu/SiTooltip) — skin renomeado `.si-rowaction` → `.si-icon-button`, entradas na vitrine
+e no de-para, +4 testes. Botões-chrome do shell (bespoke, tokenizados) mantidos. Verificado logado
+(lista de corretoras: ações neutras, menu ⋯ abre) — total 94 testes.
 
 **Aberto (sob demanda):** Tabs `segmented` — variante do DS via VBtnToggle; sem consumidor hoje, fica
 para quando surgir a necessidade.

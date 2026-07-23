@@ -73,13 +73,11 @@ const headers = [
       <div class="si-brokerages-table__actions">
         <SiTooltip text="Detalhes">
           <template #activator="{ props }">
-            <VBtn
+            <SiIconButton
               v-bind="props"
               :to="`/corretoras/${item.id}`"
               icon="eye"
-              variant="text"
-              size="small"
-              class="si-rowaction si-rowaction--view"
+              tone="view"
               aria-label="Detalhes"
             />
           </template>
@@ -87,12 +85,9 @@ const headers = [
 
         <SiMenu location="bottom end">
           <template #activator="{ props }">
-            <VBtn
+            <SiIconButton
               v-bind="props"
               icon="dotsHorizontal"
-              variant="text"
-              size="small"
-              class="si-rowaction"
               aria-label="Mais ações"
             />
           </template>

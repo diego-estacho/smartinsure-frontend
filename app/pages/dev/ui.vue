@@ -89,6 +89,17 @@ const items = [
         </VCardText>
       </SiCard>
 
+      <!-- SiIconButton — botão-ícone discreto (ações de linha, ativador de menu) -->
+      <SiCard class="mb-6">
+        <VCardTitle>SiIconButton</VCardTitle>
+        <VCardText class="d-flex flex-wrap align-center" style="gap: var(--si-space-2)">
+          <SiIconButton icon="eye" tone="view" aria-label="Ver" />
+          <SiIconButton icon="pencil" aria-label="Editar" />
+          <SiIconButton icon="dotsHorizontal" aria-label="Mais ações" />
+          <SiIconButton icon="trash" aria-label="Excluir" />
+        </VCardText>
+      </SiCard>
+
       <!-- SiIcon -->
       <SiCard class="mb-6">
         <VCardTitle>SiIcon</VCardTitle>

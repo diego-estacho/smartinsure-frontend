@@ -153,24 +153,25 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ─── Ação de linha em tabela (.si-rowaction — icon-button discreto do DS) ────
+/* ─── SiIconButton (.si-icon-button — icon-button discreto do DS) ─────────────
  * DS (components/Table.card.html .iconbtn): botão-ícone quadrado arredondado, transparente,
- * cinza (fg-muted); hover com faixa clara e texto carvão; o "ver" fica verde no hover. Padrão
- * reutilizável nas colunas de ações das listas (corretoras, tomadores…). */
-.si-rowaction.v-btn {
+ * cinza (fg-muted); hover com faixa clara e texto carvão; o "ver" (tone="view") fica verde no
+ * hover. Encapsulado no wrapper SiIconButton (ADR-013); usado nas colunas de ações das listas e
+ * como ativador de SiMenu/SiTooltip. */
+.si-icon-button.v-btn {
   /* Neutro por padrão (DS: ícones de linha em cinza, NÃO verde). `!important` vence o default
    * global `VBtn: { color: 'primary' }` do nuxt.config, que pintaria o ícone de verde. */
   color: var(--si-cinza) !important;
   border-radius: var(--si-radius-sm);
 }
 
-.si-rowaction.v-btn:hover {
+.si-icon-button.v-btn:hover {
   background: var(--si-cinza-suave);
   color: rgb(var(--v-theme-on-surface)) !important;
 }
 
-/* Só o "ver" (olho) fica verde no hover (DS Table.card: .iconbtn:hover.view). */
-.si-rowaction--view.v-btn:hover {
+/* Só o "ver" (tone="view") fica verde no hover (DS Table.card: .iconbtn:hover.view). */
+.si-icon-button--view.v-btn:hover {
   color: var(--si-verde-800) !important;
 }
 

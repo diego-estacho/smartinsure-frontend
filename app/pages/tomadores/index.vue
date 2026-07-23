@@ -141,13 +141,11 @@ function changePageSize(size: number) {
           <div class="si-policy-holders__actions">
             <SiTooltip text="Detalhes">
               <template #activator="{ props }">
-                <VBtn
+                <SiIconButton
                   v-bind="props"
                   :to="`/tomadores/${item.id}`"
                   icon="eye"
-                  variant="text"
-                  size="small"
-                  class="si-rowaction si-rowaction--view"
+                  tone="view"
                   aria-label="Detalhes"
                 />
               </template>

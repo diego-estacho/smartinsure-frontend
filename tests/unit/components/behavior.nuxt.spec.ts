@@ -10,6 +10,7 @@ import SiCurrencyField from '~/components/ui/SiCurrencyField.vue'
 import SiForm from '~/components/ui/SiForm.vue'
 import SiPagination from '~/components/ui/SiPagination.vue'
 import SiStepper from '~/components/ui/SiStepper.vue'
+import SiIconButton from '~/components/ui/SiIconButton.vue'
 
 describe('SiButton — curado + passthrough (ADR-013)', () => {
   it('aplica defaults do DS: primary, rounded-md, variante flat', async () => {
@@ -146,5 +147,29 @@ describe('SiStepper — estados e navegação (DS Stepper)', () => {
   it('orientação vertical aplica o modificador', async () => {
     const w = await mountSuspended(SiStepper, { props: { steps, current: 0, orientation: 'vertical' } })
     expect(w.find('.si-stepper').classes()).toContain('si-stepper--vertical')
+  })
+})
+
+describe('SiIconButton — botão-ícone discreto (DS .iconbtn)', () => {
+  it('renderiza um VBtn text com a classe do skin e o ícone', async () => {
+    const w = await mountSuspended(SiIconButton, { props: { icon: 'eye' }, attrs: { 'aria-label': 'Ver' } })
+    const btn = w.find('.v-btn')
+    expect(btn.exists()).toBe(true)
+    expect(btn.classes()).toContain('si-icon-button')
+    expect(btn.classes()).toContain('v-btn--variant-text')
+    expect(w.find('.v-icon').exists()).toBe(true)
+  })
+
+  it('tone="view" adiciona o modificador de hover verde; neutro (default) não', async () => {
+    const view = await mountSuspended(SiIconButton, { props: { icon: 'eye', tone: 'view' }, attrs: { 'aria-label': 'Ver' } })
+    expect(view.find('.v-btn').classes()).toContain('si-icon-button--view')
+
+    const neutral = await mountSuspended(SiIconButton, { props: { icon: 'pencil' }, attrs: { 'aria-label': 'Editar' } })
+    expect(neutral.find('.v-btn').classes()).not.toContain('si-icon-button--view')
+  })
+
+  it('passthrough: repassa atributos de ativador/eventos ao VBtn (aria-label)', async () => {
+    const w = await mountSuspended(SiIconButton, { props: { icon: 'dotsHorizontal' }, attrs: { 'aria-label': 'Mais ações' } })
+    expect(w.find('.v-btn').attributes('aria-label')).toBe('Mais ações')
   })
 })
