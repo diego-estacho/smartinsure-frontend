@@ -52,10 +52,12 @@ const primaryNav: NavItem[] = [
   { key: 'tomadores', title: 'Tomadores', icon: 'users', to: '/tomadores' },
   { key: 'consultaCredito', title: 'Consulta de Crédito', icon: 'creditCard', to: '/consulta-credito' },
   { key: 'corretoras', title: 'Corretoras', icon: 'building', to: '/corretoras' },
-  { key: 'usuarios', title: 'Usuários', icon: 'userRound' },
-  { key: 'perfis', title: 'Perfis de acesso', icon: 'keyRound' },
 ]
 const secondaryNav: NavItem[] = [
+  { key: 'modalidades', title: 'Modalidades', icon: 'tag', to: '/modalidades' },
+  { key: 'mapaModalidades', title: 'Mapa de Modalidades', icon: 'sitemap', to: '/mapa-de-modalidades' },
+  { key: 'usuarios', title: 'Usuários', icon: 'userRound' },
+  { key: 'perfis', title: 'Perfis de acesso', icon: 'keyRound' },
   { key: 'relatorios', title: 'Relatórios', icon: 'barChart' },
   { key: 'config', title: 'Configurações', icon: 'settings' },
 ]
