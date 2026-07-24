@@ -4,6 +4,230 @@
  */
 
 export interface paths {
+    "/api/v1/additional-coverage-imports/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdditionalCoverageImportSummaryResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/additional-coverages/map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdditionalCoverageMapResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/additional-coverages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AdditionalCoverageNameBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CreateAdditionalCoverageResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/additional-coverages/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AdditionalCoverageNameBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UpdateAdditionalCoverageResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/additional-coverages/{id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ActivateAdditionalCoverageResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/additional-coverages/{id}/inactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["InactivateAdditionalCoverageResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -445,6 +669,158 @@ export interface paths {
         get: operations["GetCreditInquiry"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/imported-additional-coverages/{id}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["LinkImportedAdditionalCoverageBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LinkImportedAdditionalCoverageResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/imported-additional-coverages/{id}/unlink": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UnlinkImportedAdditionalCoverageResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/imported-additional-coverages/{id}/ignore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["IgnoreImportedAdditionalCoverageResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/imported-additional-coverages/{id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RestoreImportedAdditionalCoverageResponse"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -1398,10 +1774,31 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ActivateAdditionalCoverageResponse: {
+            /** Format: uuid */
+            id: string;
+            status: string;
+        };
         ActivateUserResponse: {
             /** Format: uuid */
             id: string;
             status: string;
+        };
+        AdditionalCoverageImportSummaryResponse: {
+            /** Format: int32 */
+            modalitiesProcessed: number | string;
+            /** Format: int32 */
+            modalitiesSucceeded: number | string;
+            /** Format: int32 */
+            modalitiesFailed: number | string;
+            failures: string[];
+        };
+        AdditionalCoverageMapResponse: {
+            coverages: components["schemas"]["CanonicalCoverageItem"][];
+            pending: components["schemas"]["PendingCoverageItem"][];
+        };
+        AdditionalCoverageNameBody: {
+            name: string;
         };
         AddPolicyHolderAddressBody: {
             zipCode: null | string;
@@ -1455,6 +1852,13 @@ export interface components {
         CalculationEngineListItemResponse: {
             name: string;
         };
+        CanonicalCoverageItem: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            status: string;
+            linked: components["schemas"]["LinkedCoverageItem"][];
+        };
         ChangeBrokerageInsurerEnablementStatusBody: {
             status: string;
         };
@@ -1485,6 +1889,12 @@ export interface components {
         ChangeModalityStatusResponse: {
             /** Format: uuid */
             id: string;
+            status: string;
+        };
+        CreateAdditionalCoverageResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
             status: string;
         };
         CreateBrokerageInsurerEnablementRequest: {
@@ -1715,6 +2125,11 @@ export interface components {
             addresses: components["schemas"]["PolicyHolderAddressResponse"][];
             appointments: components["schemas"]["PolicyHolderAppointmentResponse"][];
         };
+        IgnoreImportedAdditionalCoverageResponse: {
+            /** Format: uuid */
+            importedCoverageId: string;
+            ignored: boolean;
+        };
         IgnoreImportedModalityResponse: {
             /** Format: uuid */
             importedModalityId: string;
@@ -1738,6 +2153,11 @@ export interface components {
             city: null | string;
             state: null | string;
         };
+        InactivateAdditionalCoverageResponse: {
+            /** Format: uuid */
+            id: string;
+            status: string;
+        };
         InsurerListItemResponse: {
             /** Format: uuid */
             id: string;
@@ -1746,6 +2166,23 @@ export interface components {
             tradeName: null | string;
             logoUrl: null | string;
             status: string;
+        };
+        LinkedCoverageItem: {
+            /** Format: uuid */
+            importedCoverageId: string;
+            insurerName: string;
+            modalityName: string;
+            coverageName: string;
+        };
+        LinkImportedAdditionalCoverageBody: {
+            /** Format: uuid */
+            additionalCoverageId: string;
+        };
+        LinkImportedAdditionalCoverageResponse: {
+            /** Format: uuid */
+            importedCoverageId: string;
+            /** Format: uuid */
+            additionalCoverageId: string;
         };
         MapInsurerResponse: {
             /** Format: uuid */
@@ -1850,6 +2287,15 @@ export interface components {
             /** Format: int64 */
             totalPages?: number | string;
         };
+        PendingCoverageItem: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            importedModalityId: string;
+            insurerName: string;
+            modalityName: string;
+            coverageName: string;
+        };
         PendingImportedModalityResponse: {
             /** Format: uuid */
             importedModalityId: string;
@@ -1930,6 +2376,11 @@ export interface components {
             modalityId: string;
             linkSource: string;
         };
+        RestoreImportedAdditionalCoverageResponse: {
+            /** Format: uuid */
+            importedCoverageId: string;
+            ignored: boolean;
+        };
         RestoreImportedModalityResponse: {
             /** Format: uuid */
             importedModalityId: string;
@@ -1946,6 +2397,16 @@ export interface components {
             /** Format: uuid */
             id: string;
             profile: null | string;
+        };
+        UnlinkImportedAdditionalCoverageResponse: {
+            /** Format: uuid */
+            importedCoverageId: string;
+        };
+        UpdateAdditionalCoverageResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            status: string;
         };
         UpdateBrokerageInsurerEnablementBody: {
             calculationEngine: string;
