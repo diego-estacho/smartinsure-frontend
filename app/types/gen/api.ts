@@ -1655,6 +1655,86 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/quotation-groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateQuotationGroupRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CreateQuotationGroupResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotation-groups/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateQuotationGroupBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UpdateQuotationGroupResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users": {
         parameters: {
             query?: never;
@@ -1995,6 +2075,45 @@ export interface components {
             legalNatureDescription: null | string;
             isPrivateSector: null | boolean;
             mainAddress: null | components["schemas"]["ImportedPolicyHolderAddressResponse"];
+        };
+        CreateQuotationGroupRequest: {
+            /** Format: uuid */
+            policyHolderId: string;
+            /** Format: uuid */
+            insuredId: string;
+            /** Format: uuid */
+            modalityId: string;
+            /** Format: double */
+            insuredAmount: number | string;
+            /** Format: date */
+            coverageStartDate: string;
+            /** Format: date */
+            coverageEndDate: string;
+            scopeMode: string;
+            insurerIds: string[];
+            includesPenaltyCoverage: boolean;
+            includesLaborCoverage: boolean;
+        };
+        CreateQuotationGroupResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            policyHolderId: string;
+            /** Format: uuid */
+            insuredId: string;
+            /** Format: uuid */
+            modalityId: string;
+            /** Format: double */
+            insuredAmount: number | string;
+            /** Format: date */
+            coverageStartDate: string;
+            /** Format: date */
+            coverageEndDate: string;
+            scopeMode: string;
+            insurerIds: string[];
+            includesPenaltyCoverage: boolean;
+            includesLaborCoverage: boolean;
+            status: string;
         };
         CreateUserRequest: {
             name: string;
@@ -2459,6 +2578,45 @@ export interface components {
             neighborhood: null | string;
             city: null | string;
             state: null | string;
+        };
+        UpdateQuotationGroupBody: {
+            /** Format: uuid */
+            policyHolderId: string;
+            /** Format: uuid */
+            insuredId: string;
+            /** Format: uuid */
+            modalityId: string;
+            /** Format: double */
+            insuredAmount: number | string;
+            /** Format: date */
+            coverageStartDate: string;
+            /** Format: date */
+            coverageEndDate: string;
+            scopeMode: string;
+            insurerIds: string[];
+            includesPenaltyCoverage: boolean;
+            includesLaborCoverage: boolean;
+        };
+        UpdateQuotationGroupResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            policyHolderId: string;
+            /** Format: uuid */
+            insuredId: string;
+            /** Format: uuid */
+            modalityId: string;
+            /** Format: double */
+            insuredAmount: number | string;
+            /** Format: date */
+            coverageStartDate: string;
+            /** Format: date */
+            coverageEndDate: string;
+            scopeMode: string;
+            insurerIds: string[];
+            includesPenaltyCoverage: boolean;
+            includesLaborCoverage: boolean;
+            status: string;
         };
     };
     responses: never;
