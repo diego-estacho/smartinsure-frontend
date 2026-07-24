@@ -56,6 +56,7 @@ const primaryNav: NavItem[] = [
 const secondaryNav: NavItem[] = [
   { key: 'modalidades', title: 'Modalidades', icon: 'tag', to: '/modalidades' },
   { key: 'mapaModalidades', title: 'Mapa de Modalidades', icon: 'sitemap', to: '/mapa-de-modalidades' },
+  { key: 'coberturasAdicionais', title: 'Coberturas Adicionais', icon: 'shieldCheck', to: '/coberturas-adicionais' },
   { key: 'usuarios', title: 'Usuários', icon: 'userRound' },
   { key: 'perfis', title: 'Perfis de acesso', icon: 'keyRound' },
   { key: 'relatorios', title: 'Relatórios', icon: 'barChart' },
