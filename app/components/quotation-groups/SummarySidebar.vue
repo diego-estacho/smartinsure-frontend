@@ -2,8 +2,9 @@
 /**
  * QuotationGroupsSummarySidebar — "Resumo da oferta": consolida o que já foi preenchido, mostrando
  * apenas campos presentes (nunca rótulos vazios). Desktop: coluna carvão à esquerda do card (no
- * lugar do menu). Mobile (`collapsible`): bloco colapsável no topo. Enquanto nada foi preenchido,
- * mostra o texto-guia; as etapas 1–6 alimentam as linhas (exec-plan 0015).
+ * lugar do menu). Mobile (`collapsible`): bloco colapsável no topo. Fidelidade ao protótipo: rótulo
+ * eyebrow VERDE maiúsculo + valor BRANCO em tamanho body; tomador/segurado desmembrados em
+ * CNPJ + razão social (+ endereço do segurado). Etapas 1–6 alimentam as linhas (exec-plan 0015).
  */
 import { formatCnpj } from '~/lib/documents'
 import { fromIsoDate, toBrDate } from '~/lib/dates'
@@ -21,17 +22,21 @@ function formatDate(iso: string): string {
   return parsed ? toBrDate(parsed) : iso
 }
 
-// Linhas preenchidas conforme as etapas avançam (tomador na etapa 1; risco na etapa 3).
+// Linhas preenchidas conforme as etapas avançam. Ordem/rótulos fiéis ao protótipo.
 const rows = computed(() => {
   const list: { key: string, label: string, value: string }[] = []
   const holder = wizard.policyHolder
   if (holder) {
-    list.push({ key: 'holder-name', label: 'Tomador', value: holder.name })
     list.push({ key: 'holder-doc', label: 'CNPJ do tomador', value: formatCnpj(holder.documentNumber) })
+    list.push({ key: 'holder-name', label: 'Razão social do tomador', value: holder.name })
   }
   const insured = wizard.insured
   if (insured) {
-    list.push({ key: 'insured-name', label: 'Segurado', value: insured.name })
+    list.push({ key: 'insured-doc', label: 'CNPJ do segurado', value: formatCnpj(insured.documentNumber) })
+    list.push({ key: 'insured-name', label: 'Razão social do segurado', value: insured.name })
+    if (insured.mainAddress) {
+      list.push({ key: 'insured-address', label: 'Endereço do segurado', value: insured.mainAddress })
+    }
   }
   const risk = wizard.risk
   if (risk.modalityName) {
@@ -110,8 +115,8 @@ const rows = computed(() => {
 
 <style scoped>
 .si-qg-summary__title {
-  margin: 0 0 var(--si-space-2);
-  font-size: var(--si-fs-body);
+  margin: 0 0 var(--si-space-5);
+  font-size: var(--si-fs-h4, 1.125rem);
   font-weight: var(--si-font-weight-semibold);
   color: rgb(var(--v-theme-on-charcoal));
 }
@@ -130,26 +135,34 @@ const rows = computed(() => {
 
 .si-qg-summary__list {
   display: grid;
-  gap: var(--si-space-3);
+  gap: var(--si-space-4);
   margin: 0;
 }
 
 .si-qg-summary__list div {
   display: grid;
-  gap: 2px;
+  gap: var(--si-space-1);
 }
 
+/* Rótulo eyebrow verde maiúsculo (protótipo). */
 .si-qg-summary__list dt {
-  font-size: var(--si-fs-caption);
-  color: rgba(var(--v-theme-on-charcoal), 0.6);
+  font-size: var(--si-fs-caption, 0.75rem);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: var(--si-font-weight-semibold);
+  color: rgb(var(--v-theme-primary));
 }
 
-.si-qg-summary--collapsible .si-qg-summary__list dt {
-  color: rgba(var(--v-theme-on-surface), 0.6);
-}
-
+/* Valor branco em tamanho body (protótipo). */
 .si-qg-summary__list dd {
   margin: 0;
-  font-weight: var(--si-font-weight-semibold);
+  font-size: var(--si-fs-body);
+  font-weight: var(--si-font-weight-medium, 500);
+  line-height: var(--si-lh-small, 1.4);
+  color: rgb(var(--v-theme-on-charcoal));
+}
+
+.si-qg-summary--collapsible .si-qg-summary__list dd {
+  color: rgb(var(--v-theme-on-surface));
 }
 </style>
