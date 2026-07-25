@@ -69,7 +69,7 @@ async function exitAndCancel(): Promise<void> {
   align-items: center;
   justify-content: space-between;
   gap: var(--si-space-3);
-  padding: var(--si-space-4) var(--si-space-5);
+  padding: var(--si-space-5) var(--si-space-8);
   border-bottom: 1px solid var(--si-cinza-claro);
 }
 

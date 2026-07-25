@@ -153,10 +153,10 @@ const rows = computed(() => {
   color: rgb(var(--v-theme-primary));
 }
 
-/* Valor branco em tamanho body (protótipo). */
+/* Valor branco menor (fs-small ~14px) — pedido do dono, melhora a leitura. */
 .si-qg-summary__list dd {
   margin: 0;
-  font-size: var(--si-fs-body);
+  font-size: var(--si-fs-small);
   font-weight: var(--si-font-weight-medium, 500);
   line-height: var(--si-lh-small, 1.4);
   color: rgb(var(--v-theme-on-charcoal));

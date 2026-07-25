@@ -72,9 +72,17 @@ async function onPrimary(): Promise<void> {
   wizard.goNext()
 }
 
-// Trocar de etapa limpa o erro de validação do rodapé.
-watch(() => wizard.currentStep, () => {
+/** Ao trocar de etapa/fase, leva o usuário suavemente ao topo (perfumaria pedida pelo dono). */
+function scrollToTop(): void {
+  if (import.meta.client) {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+// Trocar de etapa/fase limpa o erro do rodapé e sobe suavemente para o topo.
+watch([() => wizard.currentStep, () => wizard.phase], () => {
   stepError.value = null
+  scrollToTop()
 })
 </script>
 
@@ -142,16 +150,26 @@ watch(() => wizard.currentStep, () => {
             />
 
             <section class="si-qg__step">
-              <QuotationGroupsStep1PolicyHolder v-if="wizard.currentStep === 0" />
-              <QuotationGroupsStep2Insured v-else-if="wizard.currentStep === 1" />
-              <QuotationGroupsStep3Risk v-else-if="wizard.currentStep === 2" />
-              <QuotationGroupsStep4Quotations v-else-if="wizard.currentStep === 3" />
-              <QuotationGroupsStep5Issuance v-else-if="wizard.currentStep === 4" />
-              <QuotationGroupsStepPlaceholder
-                v-else
-                :step-number="wizard.currentStep + 1"
-                :title="currentLabel"
-              />
+              <Transition
+                name="si-qg-fade"
+                mode="out-in"
+              >
+                <div
+                  :key="wizard.currentStep"
+                  class="si-qg__step-panel"
+                >
+                  <QuotationGroupsStep1PolicyHolder v-if="wizard.currentStep === 0" />
+                  <QuotationGroupsStep2Insured v-else-if="wizard.currentStep === 1" />
+                  <QuotationGroupsStep3Risk v-else-if="wizard.currentStep === 2" />
+                  <QuotationGroupsStep4Quotations v-else-if="wizard.currentStep === 3" />
+                  <QuotationGroupsStep5Issuance v-else-if="wizard.currentStep === 4" />
+                  <QuotationGroupsStepPlaceholder
+                    v-else
+                    :step-number="wizard.currentStep + 1"
+                    :title="currentLabel"
+                  />
+                </div>
+              </Transition>
             </section>
 
             <SiAlert
@@ -214,12 +232,28 @@ watch(() => wizard.currentStep, () => {
 .si-qg__summary {
   background: rgb(var(--v-theme-charcoal));
   color: rgb(var(--v-theme-on-charcoal));
-  padding: var(--si-space-5);
+  padding: var(--si-space-6);
 }
 
 .si-qg__content {
   min-width: 0;
-  padding: var(--si-space-6);
+  padding: var(--si-space-8);
+}
+
+/* Transição leve entre as etapas (perfumaria pedida pelo dono). */
+.si-qg-fade-enter-active,
+.si-qg-fade-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.si-qg-fade-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.si-qg-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 
 .si-qg__title-main {
@@ -276,7 +310,7 @@ watch(() => wizard.currentStep, () => {
   }
 
   .si-qg__content {
-    padding: var(--si-space-5);
+    padding: var(--si-space-6);
   }
 
   .si-qg__title-main {
