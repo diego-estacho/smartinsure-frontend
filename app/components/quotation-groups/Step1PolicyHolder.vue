@@ -1,13 +1,13 @@
 <script setup lang="ts">
 /**
- * Etapa 1 — Dados do tomador (exec-plan 0015, incremento 2). Busca por CNPJ/razão social
- * integrada de verdade (`usePolicyHolders`); ao selecionar um resultado, carrega o detalhe e
- * mostra o card do tomador (razão social, CNPJ, endereço principal), guardando-o na store para o
- * resumo e para a assinatura de recálculo.
+ * Etapa 1 — Dados do tomador (exec-plan 0015). Busca por CNPJ/razão social integrada de verdade
+ * (`usePolicyHolders`); ao selecionar um resultado, carrega o detalhe e mostra o card do tomador
+ * (TOMADOR ENCONTRADO + razão social + CNPJ + endereço), guardando-o na store para o resumo e a
+ * assinatura de recálculo. A busca fica SEMPRE visível — trocar o tomador é só buscar de novo
+ * (sem botão "Trocar"), fiel ao protótipo.
  *
- * "Ver limites e taxas" abre um modal placeholder (tela à parte, fora de escopo). "Adicionar
- * filial" abre um modal com o CNPJ da filial — a criação real depende de contrato (Branch) que
- * ainda não existe: TODO(backend) ligar quando o endpoint existir.
+ * "Ver limites e taxas" abre um modal placeholder (tela à parte). "Adicionar filial" abre um modal
+ * com o CNPJ da filial — criação real depende de contrato (Branch) inexistente: TODO(backend).
  */
 import type { PolicyHolderAddress, PolicyHolderListItem } from '~/composables/usePolicyHolders'
 import type { SelectedPolicyHolder } from '~/stores/quotationGroupWizard'
@@ -75,6 +75,7 @@ async function select(id: string): Promise<void> {
       mainAddress: main ? formatAddress(main) : null,
     }
     wizard.setPolicyHolder(chosen)
+    branchNotice.value = null
     results.value = []
   }
   catch {
@@ -83,13 +84,6 @@ async function select(id: string): Promise<void> {
   finally {
     loadingDetail.value = false
   }
-}
-
-function clearSelection(): void {
-  wizard.setPolicyHolder(null)
-  branchNotice.value = null
-  searched.value = false
-  query.value = ''
 }
 
 function addBranch(): void {
@@ -102,86 +96,73 @@ function addBranch(): void {
 
 <template>
   <div class="si-qg-step1">
-    <template v-if="!selected">
-      <SiForm @submit.prevent="search">
-        <div class="si-qg-step1__search">
-          <SiTextField
-            v-model="query"
-            label="CNPJ ou razão social"
-            placeholder="00.000.000/0000-00"
-            density="comfortable"
-            clearable
-            hide-details
-          />
-          <SiButton
-            type="submit"
-            :loading="searching"
-            :prepend-icon="'search'"
-            class="si-qg-step1__search-btn"
-          >
-            Buscar
-          </SiButton>
-        </div>
-      </SiForm>
-
-      <SiAlert
-        v-if="error"
-        type="error"
-        class="mt-2 mb-0"
-        :text="error"
-      />
-
-      <SiList
-        v-if="results.length"
-        class="si-qg-step1__results"
-      >
-        <SiListItem
-          v-for="item in results"
-          :key="item.id"
-          :title="item.name"
-          :subtitle="`CNPJ ${formatCnpj(item.documentNumber)}`"
-          prepend-icon="building"
-          :disabled="loadingDetail"
-          @click="select(item.id)"
+    <SiForm @submit.prevent="search">
+      <div class="si-qg-step1__search">
+        <SiTextField
+          v-model="query"
+          label="CNPJ ou razão social"
+          placeholder="00.000.000/0000-00"
+          density="comfortable"
+          clearable
+          hide-details
         />
-      </SiList>
+        <SiButton
+          type="submit"
+          :loading="searching"
+          :prepend-icon="'search'"
+          class="si-qg-step1__search-btn"
+        >
+          Buscar
+        </SiButton>
+      </div>
+    </SiForm>
 
-      <p
-        v-else-if="searched && !searching && !error"
-        class="si-qg-step1__empty"
-      >
-        Nenhum tomador encontrado para "{{ query }}".
-      </p>
-    </template>
+    <SiAlert
+      v-if="error"
+      type="error"
+      class="mt-2 mb-0"
+      :text="error"
+    />
+
+    <SiList
+      v-if="results.length"
+      class="si-qg-step1__results"
+    >
+      <SiListItem
+        v-for="item in results"
+        :key="item.id"
+        :title="item.name"
+        :subtitle="`CNPJ ${formatCnpj(item.documentNumber)}`"
+        prepend-icon="building"
+        :disabled="loadingDetail"
+        @click="select(item.id)"
+      />
+    </SiList>
+
+    <p
+      v-else-if="searched && !searching && !error && !selected"
+      class="si-qg-step1__empty"
+    >
+      Nenhum tomador encontrado para "{{ query }}".
+    </p>
 
     <SiCard
-      v-else
+      v-if="selected"
       variant="outlined"
       class="si-qg-step1__card"
     >
       <div class="si-qg-step1__card-head">
-        <SiAvatar
-          color="primary"
-          :size="40"
-        >
+        <span class="si-qg-step1__card-avatar">
           <SiIcon
             icon="building"
             :size="20"
           />
-        </SiAvatar>
+        </span>
         <div class="si-qg-step1__card-id">
+          <span class="si-qg-step1__card-eyebrow">Tomador encontrado</span>
           <span class="si-qg-step1__card-name">{{ selected.name }}</span>
           <span class="si-qg-step1__card-doc">CNPJ {{ formatCnpj(selected.documentNumber) }}</span>
         </div>
-        <SiButton
-          variant="text"
-          color="secondary"
-          size="small"
-          :prepend-icon="'search'"
-          @click="clearSelection"
-        >
-          Trocar
-        </SiButton>
       </div>
 
       <p
@@ -196,6 +177,7 @@ function addBranch(): void {
           variant="outlined"
           color="secondary"
           size="small"
+          :prepend-icon="'barChart'"
           @click="limitsModalOpen = true"
         >
           Ver limites e taxas
@@ -283,7 +265,6 @@ function addBranch(): void {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--si-space-3);
-  /* Alinha o botão pela base do input (o campo tem label acima); com hide-details a base é o input. */
   align-items: end;
 }
 
@@ -300,40 +281,62 @@ function addBranch(): void {
 
 .si-qg-step1__empty {
   margin: var(--si-space-3) 0 0;
-  color: rgba(var(--v-theme-on-surface), 0.6);
+  color: var(--si-cinza);
   font-size: var(--si-fs-small);
 }
 
 .si-qg-step1__card {
-  padding: var(--si-space-4);
+  margin-top: var(--si-space-4);
+  padding: var(--si-space-5);
 }
 
 .si-qg-step1__card-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--si-space-3);
+}
+
+.si-qg-step1__card-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--si-radius-md);
+  background: rgba(var(--v-theme-primary), 0.12);
+  color: rgb(var(--v-theme-primary));
+  flex: 0 0 auto;
 }
 
 .si-qg-step1__card-id {
   display: flex;
   flex-direction: column;
+  gap: 2px;
   min-width: 0;
-  flex: 1 1 auto;
+}
+
+.si-qg-step1__card-eyebrow {
+  font-size: var(--si-fs-caption, 0.75rem);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: var(--si-font-weight-semibold);
+  color: var(--si-cinza);
 }
 
 .si-qg-step1__card-name {
-  font-size: var(--si-fs-body);
+  font-size: var(--si-fs-h4, 1.125rem);
   font-weight: var(--si-font-weight-semibold);
+  line-height: 1.3;
 }
 
 .si-qg-step1__card-doc {
-  font-size: var(--si-fs-caption);
-  color: rgba(var(--v-theme-on-surface), 0.6);
+  font-size: var(--si-fs-small);
+  color: var(--si-cinza);
   font-variant-numeric: tabular-nums;
 }
 
 .si-qg-step1__card-address {
-  margin: var(--si-space-3) 0 0;
+  margin: var(--si-space-4) 0 0;
   font-size: var(--si-fs-small);
   color: rgba(var(--v-theme-on-surface), 0.8);
   line-height: var(--si-lh-body);
@@ -342,8 +345,8 @@ function addBranch(): void {
 .si-qg-step1__card-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--si-space-2);
-  margin-top: var(--si-space-4);
+  gap: var(--si-space-3);
+  margin-top: var(--si-space-5);
 }
 
 .si-qg-step1__modal {

@@ -1,15 +1,16 @@
 <script setup lang="ts">
 /**
- * Etapa 3 — Dados de risco (exec-plan 0015, incremento 3). Modalidade (catálogo real via
- * `useModalities`), importância segurada (IS), vigência (início/fim) com prazo derivado, e
- * coberturas adicionais. Os dados ficam na store para o resumo e para a assinatura de recálculo.
+ * Etapa 3 — Dados de risco (exec-plan 0015). Modalidade (catálogo real via `useModalities`),
+ * importância segurada (IS), vigência (início/fim) e prazo em dias, coberturas adicionais e
+ * modalidade complementar. Fidelidade ao protótipo: IS/início/fim/prazo numa linha só; coberturas
+ * horizontais; modalidade complementar opcional.
  *
- * O "salvar" do QuotationGroup no avanço do passo (POST/PUT) depende de contrato inexistente
- * (backend-primeiro / PR-0) — por ora a etapa só coleta os dados; a persistência entra quando o
- * endpoint existir. Coberturas usam os rótulos do handoff enquanto `GET coberturas` (ab-0003) não
- * é publicado. TODO(backend): trocar por contrato quando disponível.
+ * Prazo é BIDIRECIONAL com a vigência: início+fim => prazo (dias entre as datas); início+prazo
+ * (prazo editado) => fim = início + prazo. Modalidade complementar é UI-only por ora (o contrato
+ * ainda não a persiste — TODO backend).
  */
 import type { ModalityListItem } from '~/composables/useModalities'
+import { fromIsoDate, toIsoDate } from '~/lib/dates'
 
 const wizard = useQuotationGroupWizardStore()
 const { listModalities } = useModalities()
@@ -26,17 +27,41 @@ const modalityId = computed<string | null>({
   },
 })
 
-const prazoDias = computed<number | null>(() => {
-  const { startDate, endDate } = wizard.risk
-  if (!startDate || !endDate) return null
-  const start = new Date(startDate).getTime()
-  const end = new Date(endDate).getTime()
-  if (Number.isNaN(start) || Number.isNaN(end)) return null
-  const days = Math.round((end - start) / 86_400_000)
-  return days > 0 ? days : null
-})
+const prazo = ref<number | null>(null)
 
-const prazoDisplay = computed(() => (prazoDias.value == null ? '' : `${prazoDias.value} dias`))
+function diffDays(startIso: string, endIso: string): number | null {
+  const start = fromIsoDate(startIso)
+  const end = fromIsoDate(endIso)
+  if (!start || !end) return null
+  return Math.round((end.getTime() - start.getTime()) / 86_400_000)
+}
+
+function addDaysIso(startIso: string, days: number): string | null {
+  const start = fromIsoDate(startIso)
+  if (!start) return null
+  return toIsoDate(new Date(start.getTime() + days * 86_400_000))
+}
+
+// Vigência (início + fim) => prazo.
+watch(
+  [() => wizard.risk.startDate, () => wizard.risk.endDate],
+  ([start, end]) => {
+    if (start && end) {
+      const days = diffDays(start, end)
+      prazo.value = days != null && days > 0 ? days : null
+    }
+  },
+  { immediate: true },
+)
+
+// Prazo editado (+ início preenchido) => fim de vigência.
+function onPrazoInput(value: string | number | null | undefined): void {
+  const days = typeof value === 'number' ? value : Number(value)
+  prazo.value = Number.isFinite(days) && days > 0 ? Math.trunc(days) : null
+  if (prazo.value && wizard.risk.startDate) {
+    wizard.risk.endDate = addDaysIso(wizard.risk.startDate, prazo.value)
+  }
+}
 
 onMounted(async () => {
   loadingModalities.value = true
@@ -59,43 +84,47 @@ onMounted(async () => {
       Modalidade, importância segurada e vigência definem a cotação.
     </p>
 
-    <div class="si-qg-step3__grid">
-      <SiSelect
-        v-model="modalityId"
-        label="Modalidade"
-        required
-        :items="modalities"
-        item-title="name"
-        item-value="id"
-        :loading="loadingModalities"
-        placeholder="Selecione a modalidade"
-        class="si-qg-step3__full"
-      />
+    <SiSelect
+      v-model="modalityId"
+      label="Modalidade"
+      required
+      :items="modalities"
+      item-title="name"
+      item-value="id"
+      :loading="loadingModalities"
+      placeholder="Selecione a modalidade"
+    />
 
+    <div class="si-qg-step3__row">
       <SiCurrencyField
         v-model="wizard.risk.insuredAmount"
-        label="Importância segurada"
+        label="Importância segurada (IS)"
         required
-        class="si-qg-step3__full"
       />
-
       <SiDateField
         v-model="wizard.risk.startDate"
-        label="Início da vigência"
+        label="Início de vigência"
         required
+        prepend-icon=""
+        prepend-inner-icon="$calendar"
       />
-
       <SiDateField
         v-model="wizard.risk.endDate"
-        label="Fim da vigência"
+        label="Fim de vigência"
         required
+        prepend-icon=""
+        prepend-inner-icon="$calendar"
       />
-
       <SiTextField
-        :model-value="prazoDisplay"
-        label="Prazo"
-        readonly
-        placeholder="—"
+        :model-value="prazo"
+        label="Prazo em dias"
+        required
+        type="number"
+        min="0"
+        placeholder="0"
+        hint="Calculado pela vigência"
+        persistent-hint
+        @update:model-value="onPrazoInput"
       />
     </div>
 
@@ -110,35 +139,47 @@ onMounted(async () => {
       <legend class="si-qg-step3__coverages-legend">
         Coberturas adicionais
       </legend>
-      <SiCheckbox
-        v-model="wizard.risk.coverageMulta"
-        label="Multa"
-        hide-details
-      />
-      <SiCheckbox
-        v-model="wizard.risk.coverageLabor"
-        label="Trabalhista e previdenciária"
-        hide-details
-      />
+      <div class="si-qg-step3__coverages-row">
+        <SiCheckbox
+          v-model="wizard.risk.coverageMulta"
+          label="Multa"
+          hide-details
+        />
+        <SiCheckbox
+          v-model="wizard.risk.coverageLabor"
+          label="Trabalhista e previdenciária"
+          hide-details
+        />
+      </div>
     </fieldset>
+
+    <SiSelect
+      v-model="wizard.risk.complementaryModalityId"
+      label="Modalidade complementar (opcional)"
+      :items="modalities"
+      item-title="name"
+      item-value="id"
+      :loading="loadingModalities"
+      placeholder="Nenhuma"
+      clearable
+      class="si-qg-step3__complementary"
+    />
   </div>
 </template>
 
 <style scoped>
 .si-qg-step3__hint {
-  margin: var(--si-space-4) 0 var(--si-space-4);
-  color: rgba(var(--v-theme-on-surface), 0.6);
+  margin: var(--si-space-2) 0 var(--si-space-5);
+  color: var(--si-cinza);
   font-size: var(--si-fs-small);
 }
 
-.si-qg-step3__grid {
+.si-qg-step3__row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--si-space-3) var(--si-space-4);
-}
-
-.si-qg-step3__full {
-  grid-column: 1 / -1;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--si-space-4);
+  margin-top: var(--si-space-4);
+  align-items: start;
 }
 
 .si-qg-step3__coverages {
@@ -149,13 +190,30 @@ onMounted(async () => {
 
 .si-qg-step3__coverages-legend {
   padding: 0;
-  margin-bottom: var(--si-space-2);
-  font-size: var(--si-fs-small);
+  margin-bottom: var(--si-space-3);
+  font-size: var(--si-fs-body);
   font-weight: var(--si-font-weight-semibold);
 }
 
+.si-qg-step3__coverages-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--si-space-6);
+}
+
+.si-qg-step3__complementary {
+  margin-top: var(--si-space-5);
+  max-width: 520px;
+}
+
+@media (max-width: 1023.98px) {
+  .si-qg-step3__row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 599.98px) {
-  .si-qg-step3__grid {
+  .si-qg-step3__row {
     grid-template-columns: 1fr;
   }
 }

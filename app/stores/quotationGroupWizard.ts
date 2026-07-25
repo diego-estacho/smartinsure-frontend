@@ -48,6 +48,8 @@ export interface RiskData {
   endDate: string | null
   coverageMulta: boolean
   coverageLabor: boolean
+  /** Modalidade complementar (opcional) — UI-only por ora (contrato ainda não a persiste). */
+  complementaryModalityId: string | null
 }
 
 function emptyRisk(): RiskData {
@@ -59,6 +61,7 @@ function emptyRisk(): RiskData {
     endDate: null,
     coverageMulta: false,
     coverageLabor: false,
+    complementaryModalityId: null,
   }
 }
 
@@ -178,6 +181,7 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
       r.endDate,
       r.coverageMulta,
       r.coverageLabor,
+      r.complementaryModalityId,
     ])
   }
 
