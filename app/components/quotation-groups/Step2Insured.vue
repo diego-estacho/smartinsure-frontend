@@ -88,6 +88,7 @@ function clearSelection(): void {
             placeholder="00.000.000/0000-00"
             density="comfortable"
             clearable
+            hide-details
           />
           <SiButton
             type="submit"
@@ -184,11 +185,12 @@ function clearSelection(): void {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--si-space-3);
-  align-items: start;
+  /* Alinha o botão pela base do input (o campo tem label acima); com hide-details a base é o input. */
+  align-items: end;
 }
 
 .si-qg-step2__search-btn {
-  min-height: 40px;
+  height: 48px;
 }
 
 .si-qg-step2__results {

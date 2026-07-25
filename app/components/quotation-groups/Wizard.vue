@@ -181,23 +181,24 @@ watch(() => wizard.currentStep, () => {
 </template>
 
 <style scoped>
+/* Tela cheia (pedido do dono): ocupa toda a largura e altura da viewport, sem card centralizado. */
 .si-qg {
-  max-width: var(--si-container-wide);
-  margin-inline: auto;
-  padding: var(--si-space-5) var(--si-space-4);
+  min-height: 100dvh;
+  background: rgb(var(--v-theme-surface));
 }
 
 .si-qg__card {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
   background: rgb(var(--v-theme-surface));
-  border: 1px solid var(--si-cinza-claro);
-  border-radius: var(--si-radius-lg);
-  box-shadow: var(--si-shadow-1);
   overflow: hidden;
 }
 
 .si-qg__body {
+  flex: 1 1 auto;
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
+  grid-template-columns: 320px minmax(0, 1fr);
   align-items: stretch;
 }
 
@@ -262,10 +263,6 @@ watch(() => wizard.currentStep, () => {
 
 /* Mobile-first (ADR-017): abaixo do breakpoint do shell (1024) empilha em coluna única. */
 @media (max-width: 1023.98px) {
-  .si-qg {
-    padding: var(--si-space-3);
-  }
-
   .si-qg__body {
     grid-template-columns: 1fr;
   }
