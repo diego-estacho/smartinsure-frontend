@@ -1,12 +1,12 @@
 <script setup lang="ts">
 /**
  * Etapa 2 — Dados do segurado (exec-plan 0015). Busca por CNPJ/razão social (papel `Insured`) +
- * nome fantasia opcional; ao selecionar, mostra o segurado (razão social + CNPJ) e a lista de
- * endereços com seleção (rádio), badge "Principal" e exclusão, além de "Adicionar novo endereço".
+ * nome fantasia opcional; ao selecionar, mostra o segurado e a lista de endereços (rádio, badge
+ * "Principal", excluir) + formulário inline "Novo endereço" com busca por CEP (ViaCEP via BFF).
  * A busca fica SEMPRE visível — trocar é só buscar de novo.
  *
- * Gerenciar endereços (adicionar/selecionar/excluir) é UI-only por ora — não há endpoint de endereço
- * de Pessoa no contrato. O endereço selecionado alimenta o resumo. TODO(backend): endpoints de endereço.
+ * Gerenciar endereços é UI-only por ora — não há endpoint de endereço de Pessoa (segurado) no
+ * contrato. O endereço selecionado alimenta o resumo. TODO(backend): endpoints de endereço de Pessoa.
  */
 import type { PersonAddress, PersonSearchItem } from '~/composables/usePersons'
 import type { SelectedInsured } from '~/stores/quotationGroupWizard'
@@ -17,6 +17,11 @@ interface InsuredAddress {
   label: string
   isMain: boolean
 }
+
+const UFS = [
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG',
+  'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
+]
 
 const wizard = useQuotationGroupWizardStore()
 const { searchPersons } = usePersons()
@@ -33,9 +38,12 @@ const addresses = ref<InsuredAddress[]>([])
 const selectedAddressId = ref<string | null>(null)
 let addressSeq = 0
 
-const addressModalOpen = ref(false)
+const addingAddress = ref(false)
+const cepLoading = ref(false)
+const cepError = ref<string | null>(null)
+const formError = ref<string | null>(null)
 const newAddress = reactive({
-  zipCode: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '',
+  zipCode: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '', additionalInfo: '',
 })
 
 const selected = computed(() => wizard.insured)
@@ -100,6 +108,7 @@ function select(item: PersonSearchItem): void {
     : []
   selectedAddressId.value = addresses.value[0]?.id ?? null
   results.value = []
+  closeAddressForm()
 }
 
 function selectAddress(id: string): void {
@@ -115,20 +124,61 @@ function removeAddress(id: string): void {
   }
 }
 
+// Busca de endereço por CEP (ViaCEP via BFF) — dispara ao completar 8 dígitos.
+async function lookupCep(): Promise<void> {
+  const digits = newAddress.zipCode.replace(/\D/g, '')
+  if (digits.length !== 8) return
+  cepLoading.value = true
+  cepError.value = null
+  try {
+    const data = await $fetch<{ street?: string, neighborhood?: string, city?: string, state?: string, error?: string }>(
+      `/api/cep/${digits}`,
+    )
+    if (data.error) {
+      cepError.value = data.error
+      return
+    }
+    newAddress.street = data.street || newAddress.street
+    newAddress.neighborhood = data.neighborhood || newAddress.neighborhood
+    newAddress.city = data.city || newAddress.city
+    newAddress.state = data.state || newAddress.state
+  }
+  catch {
+    cepError.value = 'Não foi possível consultar o CEP.'
+  }
+  finally {
+    cepLoading.value = false
+  }
+}
+
+watch(() => newAddress.zipCode, (value) => {
+  if (value.replace(/\D/g, '').length === 8) lookupCep()
+})
+
+function closeAddressForm(): void {
+  addingAddress.value = false
+  formError.value = null
+  cepError.value = null
+  Object.assign(newAddress, {
+    zipCode: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '', additionalInfo: '',
+  })
+}
+
 function addAddress(): void {
-  const label = formatAddress(newAddress)
-  if (!label) {
-    addressModalOpen.value = false
+  formError.value = null
+  const requiredFilled = [
+    newAddress.zipCode, newAddress.street, newAddress.number,
+    newAddress.neighborhood, newAddress.city, newAddress.state,
+  ].every(value => value.trim())
+  if (!requiredFilled) {
+    formError.value = 'Preencha os campos obrigatórios do endereço.'
     return
   }
   const id = `a${addressSeq++}`
-  addresses.value.push({ id, label, isMain: addresses.value.length === 0 })
+  addresses.value.push({ id, label: formatAddress(newAddress), isMain: addresses.value.length === 0 })
   selectedAddressId.value = id
   syncSelectedAddress()
-  addressModalOpen.value = false
-  Object.assign(newAddress, {
-    zipCode: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '',
-  })
+  closeAddressForm()
 }
 </script>
 
@@ -257,81 +307,108 @@ function addAddress(): void {
           Nenhum endereço cadastrado para este segurado.
         </p>
 
-        <SiButton
-          variant="outlined"
-          color="secondary"
-          :prepend-icon="'plus'"
-          class="si-qg-step2__add-address"
-          @click="addressModalOpen = true"
+        <!-- Formulário inline "Novo endereço" (UI-only por ora). -->
+        <div
+          v-if="addingAddress"
+          class="si-qg-step2__new-address"
         >
-          Adicionar novo endereço
-        </SiButton>
-      </div>
-    </div>
-
-    <!-- Modal: adicionar novo endereço (UI-only por ora). -->
-    <SiDialog
-      v-model="addressModalOpen"
-      :max-width="640"
-    >
-      <SiCard class="si-qg-step2__modal">
-        <h3 class="text-subtitle-1 si-qg-step2__modal-title">
-          Adicionar novo endereço
-        </h3>
-        <SiForm @submit.prevent="addAddress">
-          <div class="si-qg-step2__modal-grid">
+          <span class="si-qg-step2__new-address-title">Novo endereço</span>
+          <div class="si-qg-step2__address-grid">
             <SiTextField
               v-model="newAddress.zipCode"
               label="CEP"
+              required
+              placeholder="00000-000"
+              density="comfortable"
+              :loading="cepLoading"
+              @blur="lookupCep"
+            />
+            <SiTextField
+              v-model="newAddress.city"
+              label="Cidade"
+              required
+              density="comfortable"
+            />
+            <SiSelect
+              v-model="newAddress.state"
+              label="Estado"
+              required
+              :items="UFS"
+              placeholder="UF"
               density="comfortable"
             />
             <SiTextField
               v-model="newAddress.street"
-              label="Logradouro"
+              label="Endereço"
+              required
               density="comfortable"
-              class="si-qg-step2__modal-span2"
             />
             <SiTextField
               v-model="newAddress.number"
               label="Número"
-              density="comfortable"
-            />
-            <SiTextField
-              v-model="newAddress.complement"
-              label="Complemento"
+              required
               density="comfortable"
             />
             <SiTextField
               v-model="newAddress.neighborhood"
               label="Bairro"
+              required
               density="comfortable"
             />
             <SiTextField
-              v-model="newAddress.city"
-              label="Cidade"
+              v-model="newAddress.complement"
+              label="Complemento"
+              placeholder="Opcional"
               density="comfortable"
             />
             <SiTextField
-              v-model="newAddress.state"
-              label="UF"
+              v-model="newAddress.additionalInfo"
+              label="Informações adicionais"
+              placeholder="Opcional"
               density="comfortable"
+              class="si-qg-step2__address-span2"
             />
           </div>
-        </SiForm>
-        <div class="si-qg-step2__modal-actions">
-          <SiButton
-            variant="text"
-            color="secondary"
-            @click="addressModalOpen = false"
-          >
-            Cancelar
-          </SiButton>
-          <SiButton @click="addAddress">
-            Adicionar endereço
-          </SiButton>
+
+          <SiAlert
+            v-if="cepError"
+            type="warning"
+            class="mt-2 mb-0"
+            :text="cepError"
+          />
+          <SiAlert
+            v-if="formError"
+            type="error"
+            class="mt-2 mb-0"
+            :text="formError"
+          />
+
+          <div class="si-qg-step2__new-address-actions">
+            <SiButton @click="addAddress">
+              Salvar endereço
+            </SiButton>
+            <SiButton
+              variant="text"
+              color="secondary"
+              @click="closeAddressForm"
+            >
+              Cancelar
+            </SiButton>
+          </div>
         </div>
-      </SiCard>
-    </SiDialog>
+
+        <SiButton
+          v-else
+          variant="outlined"
+          color="secondary"
+          :prepend-icon="'plus'"
+          class="si-qg-step2__add-address"
+          @click="addingAddress = true"
+        >
+          Adicionar novo endereço
+        </SiButton>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -437,38 +514,44 @@ function addAddress(): void {
   margin-top: var(--si-space-1);
 }
 
-.si-qg-step2__modal {
-  padding: var(--si-space-5);
+.si-qg-step2__new-address {
+  margin-top: var(--si-space-2);
+  padding: var(--si-space-4);
+  border: 1px solid var(--si-cinza-claro);
+  border-radius: var(--si-radius-md);
 }
 
-.si-qg-step2__modal-title {
-  margin: 0 0 var(--si-space-4);
+.si-qg-step2__new-address-title {
+  display: block;
+  font-size: var(--si-fs-body);
+  font-weight: var(--si-font-weight-semibold);
+  margin-bottom: var(--si-space-3);
 }
 
-.si-qg-step2__modal-grid {
+.si-qg-step2__address-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--si-space-3);
 }
 
-.si-qg-step2__modal-span2 {
+.si-qg-step2__address-span2 {
   grid-column: span 2;
 }
 
-.si-qg-step2__modal-actions {
+.si-qg-step2__new-address-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: var(--si-space-2);
-  margin-top: var(--si-space-5);
+  align-items: center;
+  gap: var(--si-space-3);
+  margin-top: var(--si-space-4);
 }
 
 @media (max-width: 599.98px) {
   .si-qg-step2__search-grid,
-  .si-qg-step2__modal-grid {
+  .si-qg-step2__address-grid {
     grid-template-columns: 1fr;
   }
 
-  .si-qg-step2__modal-span2 {
+  .si-qg-step2__address-span2 {
     grid-column: auto;
   }
 
