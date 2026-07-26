@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { required, email, minLength, maxLength, cpfCnpjFormat, cpf, cnpj, cpfCnpj } from '../../app/lib/rules'
+import { required, email, minLength, maxLength, integer, minValue, cpfCnpjFormat, cpf, cnpj, cpfCnpj } from '../../app/lib/rules'
 
 // ADR-013 §6 — regras de validação (mensagens em pt-BR). true = válido; string = erro.
 describe('regras de validação (ADR-013 §6)', () => {
@@ -22,6 +22,18 @@ describe('regras de validação (ADR-013 §6)', () => {
     expect(minLength(3)('abc')).toBe(true)
     expect(maxLength(2)('abc')).toBe('Máximo de 2 caracteres')
     expect(maxLength(2)('ab')).toBe(true)
+  })
+
+  it('integer/minValue: validam a forma de campos numéricos (ex.: Ordem de exibição)', () => {
+    expect(integer()('3')).toBe(true)
+    expect(integer()(5)).toBe(true)
+    expect(integer()('3.5')).toBe('Informe um número inteiro')
+    expect(integer()('abc')).toBe('Informe um número inteiro')
+    expect(integer()('')).toBe(true)
+    expect(minValue(0)('-1')).toBe('Valor mínimo é 0')
+    expect(minValue(0)('0')).toBe(true)
+    expect(minValue(1, 'Mínimo 1')('0')).toBe('Mínimo 1')
+    expect(minValue(0)('')).toBe(true)
   })
 
   it('cpfCnpjFormat: valida só o formato (comprimento 11/14)', () => {

@@ -35,6 +35,14 @@ export const url = (message = 'Endereço inválido'): Rule =>
     }
   }
 
+/** Número inteiro (validação de forma; sem casas decimais). */
+export const integer = (message = 'Informe um número inteiro'): Rule =>
+  v => (isEmpty(v) || Number.isInteger(Number(v)) ? true : message)
+
+/** Valor numérico mínimo (validação de forma). */
+export const minValue = (min: number, message?: string): Rule =>
+  v => (isEmpty(v) || Number(v) >= min ? true : message ?? `Valor mínimo é ${min}`)
+
 /**
  * Comprimento do documento: 11 = CPF, 14 = CNPJ. Checagem de FORMATO apenas (não valida
  * dígito verificador). Prefira `cpf`/`cnpj`/`cpfCnpj` para rejeitar documentos inválidos

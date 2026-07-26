@@ -1,0 +1,57 @@
+// @vitest-environment nuxt
+import { afterEach, describe, expect, it, vi } from 'vitest'
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.resetModules()
+})
+
+describe('RN-032 Modalidade - BFF Nitro', () => {
+  it('encaminha corpo e token ao criar no backend, sem o browser falar direto (ADR-008)', async () => {
+    const backendFetchMock = vi.fn().mockResolvedValue({ id: 'm-1', status: 'Active' })
+    // ADR-061: sem Grupo de Modalidade — só nome, descrição e initialStatus.
+    const body = { name: 'Fiança locatícia', description: null, initialStatus: 'Active' }
+    const runtimeConfig = useRuntimeConfig() as { backendBaseUrl: string }
+    runtimeConfig.backendBaseUrl = 'https://backend.test'
+
+    vi.stubGlobal('defineEventHandler', (handler: unknown) => handler)
+    vi.stubGlobal('getCookie', () => 'session-token')
+    vi.stubGlobal('readBody', vi.fn().mockResolvedValue(body))
+    vi.stubGlobal('$fetch', backendFetchMock)
+
+    const { default: handler } = await import('../../server/api/modalities.post')
+    await (handler as (event: unknown) => Promise<unknown>)({})
+
+    expect(backendFetchMock).toHaveBeenCalledWith('/api/v1/modalities', {
+      baseURL: 'https://backend.test',
+      method: 'POST',
+      body,
+      headers: { Authorization: 'Bearer session-token' },
+    })
+  })
+})
+
+describe('RN-039 Modalidade - BFF Nitro', () => {
+  it('encaminha corpo, token e rota de status ao backend', async () => {
+    const backendFetchMock = vi.fn().mockResolvedValue({ id: 'm-1', status: 'Inactive' })
+    const body = { status: 'Inactive' }
+    const runtimeConfig = useRuntimeConfig() as { backendBaseUrl: string }
+    runtimeConfig.backendBaseUrl = 'https://backend.test'
+
+    vi.stubGlobal('defineEventHandler', (handler: unknown) => handler)
+    vi.stubGlobal('getCookie', () => 'session-token')
+    vi.stubGlobal('getRouterParam', () => 'm-1')
+    vi.stubGlobal('readBody', vi.fn().mockResolvedValue(body))
+    vi.stubGlobal('$fetch', backendFetchMock)
+
+    const { default: handler } = await import('../../server/api/modalities/[id]/status.patch')
+    await (handler as (event: unknown) => Promise<unknown>)({})
+
+    expect(backendFetchMock).toHaveBeenCalledWith('/api/v1/modalities/m-1/status', {
+      baseURL: 'https://backend.test',
+      method: 'PATCH',
+      body,
+      headers: { Authorization: 'Bearer session-token' },
+    })
+  })
+})

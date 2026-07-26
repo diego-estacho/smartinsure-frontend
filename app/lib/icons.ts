@@ -76,6 +76,8 @@ import ChartColumn from 'lucide-vue-next/dist/esm/icons/chart-column'
 import CreditCard from 'lucide-vue-next/dist/esm/icons/credit-card'
 import SlidersHorizontal from 'lucide-vue-next/dist/esm/icons/sliders-horizontal'
 import Shield from 'lucide-vue-next/dist/esm/icons/shield'
+import Network from 'lucide-vue-next/dist/esm/icons/network'
+import Tag from 'lucide-vue-next/dist/esm/icons/tag'
 
 /**
  * Registry: chave estável (inglês) → componente Lucide. Fonte única consumida pelo `SiIcon`
@@ -124,6 +126,8 @@ export const appIcons = {
   creditCard: CreditCard,
   sliders: SlidersHorizontal,
   shield: Shield,
+  sitemap: Network,
+  tag: Tag,
 
   // ── Alvos de aliases internos do Vuetify + primitivos de forma ────────
   check: Check,

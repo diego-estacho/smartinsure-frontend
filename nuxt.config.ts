@@ -56,7 +56,12 @@ export default defineNuxtConfig({
   runtimeConfig: {
     backendBaseUrl: '',
     devAuthEnabled: '',
-    public: {},
+    public: {
+      // Feature-flag (OPEN-14): exibição da Fila de Revisão no Mapa de Modalidades. Default oculta —
+      // a implementação permanece; reexibir (NUXT_PUBLIC_MODALITY_REVIEW_QUEUE=true) se o cadastro
+      // manual de Modalidades / tratamento de exceções for decidido.
+      modalityReviewQueue: false,
+    },
   },
 
   // Vuetify 3 (ADR-010) com o tema dirigido pelos design tokens (tokens.ts).
