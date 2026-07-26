@@ -57,6 +57,11 @@ const summary = computed(() => {
     engines: distinctEngines.length ? distinctEngines.join(', ') : '—',
   }
 })
+// RN-022 / README §5: no cadastro só aparecem Seguradoras ainda não habilitadas. Na edição, a
+// lista completa (o select fica desabilitado mostrando a atual).
+const availableInsurers = computed(() =>
+  insurers.value.filter(insurer => !enablements.value.some(item => item.insurerId === insurer.id)))
+const insurerOptions = computed(() => (isEditing.value ? insurers.value : availableInsurers.value))
 const isPlugV2 = computed(() => form.calculationEngine === 'PlugV2')
 const formTitle = computed(() => (isEditing.value ? 'Editar habilitação' : 'Habilitar seguradora'))
 
@@ -96,7 +101,9 @@ async function refresh() {
 function openCreateDialog() {
   editingId.value = null
   form.insurerId = null
-  form.calculationEngine = engines.value.length === 1 ? (engines.value[0]?.name ?? null) : null
+  // Default do motor = PlugV2 (glossário: único motor desta fase), robusto a corrida de carga
+  // dos engines. Garante que Base URL + Key apareçam já na abertura (RN-022, todos obrigatórios).
+  form.calculationEngine = engines.value[0]?.name ?? 'PlugV2'
   form.plugV2BaseUrl = ''
   form.plugV2Key = ''
   success.value = null
@@ -341,7 +348,7 @@ async function confirmStatusChange() {
           <SiSelect
             v-model="form.insurerId"
             label="Seguradora"
-            :items="insurers"
+            :items="insurerOptions"
             item-title="corporateName"
             item-value="id"
             :rules="[required('Selecione a seguradora')]"

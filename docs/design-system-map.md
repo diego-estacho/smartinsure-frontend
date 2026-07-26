@@ -113,6 +113,8 @@ em forma e registre aqui.
 | `.toast` | `SiSnackbar` |
 | popover / menu | `SiMenu` |
 | trilha de etapas (`Stepper.jsx`) | `SiStepper` (`:steps`, `v-model:current`, `orientation`, `clickable`) — componente próprio (o Vuetify não tem primitivo equivalente ao dot-stepper do DS) |
+| indicador / KPI (rótulo + valor tabular) | `SiMetric` (`label`, `value`, `hint`; `empty` = traço "—" honesto quando ainda não há fonte de dado) |
+| "voltar" da tela de detalhe (seta + breadcrumb) | `SiPageBack` (`to`, `parent-label`, `current`) — a seta volta no histórico, o breadcrumb leva à rota-pai; padrão reutilizável (ADR-022) |
 
 ## Voz (do README do DS)
 

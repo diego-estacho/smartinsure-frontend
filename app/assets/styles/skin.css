@@ -536,6 +536,34 @@
   color: var(--si-cinza);
 }
 
+/* ─── Acessibilidade: foco por teclado e alvo de toque (DS §1.3, WCAG 2.4.7 / 2.5.5) ──
+ * Anel de foco verde do DS em todo focável que ainda não tinha o seu (tab, ícone-botão,
+ * chip, voltar). Campo, botão, switch, checkbox e radio já têm o deles acima. Nunca o
+ * azul do navegador. Escopo sob raiz `.si-*` (ADR-015). */
+.si-tab.v-tab:focus-visible,
+.si-icon-button.v-btn:focus-visible,
+.si-chip.v-chip:focus-visible,
+.si-page-back .si-page-back__parent:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary), 0.2);
+  border-radius: var(--si-radius-sm);
+}
+
+/* Alvo de toque ≥ 44px no mobile (WCAG 2.5.5). Ícone-botão, tab e item de menu crescem
+ * para o mínimo tátil sem mexer no desktop. */
+@media (max-width: 1023px) {
+  .si-icon-button.v-btn {
+    min-inline-size: 44px;
+    min-block-size: 44px;
+  }
+  .si-tab.v-tab {
+    min-block-size: 44px;
+  }
+  .si-rowmenu .v-list-item {
+    min-block-size: 44px;
+  }
+}
+
 .si-shell-ws-overlay .si-shell-ws-item {
   display: flex;
   align-items: center;

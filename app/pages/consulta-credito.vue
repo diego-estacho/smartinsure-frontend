@@ -87,7 +87,7 @@ const headers = computed(() => {
 onMounted(async () => {
   brokeragesLoading.value = true
   try {
-    const response = await listBrokerages({ pageSize: 100, status: 'Active' })
+    const response = await listBrokerages({ pageSize: 100, situation: 'Active' })
     brokerages.value = response.items
   }
   catch {

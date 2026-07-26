@@ -346,6 +346,26 @@ const items = [
           </SiSnackbar>
         </VCardText>
       </SiCard>
+
+      <!-- SiMetric — card de indicador (eyebrow + valor tabular + hint); `empty` = estado honesto -->
+      <SiCard class="mb-6">
+        <VCardTitle>SiMetric</VCardTitle>
+        <VCardText>
+          <VRow>
+            <VCol cols="12" md="4"><SiMetric label="Seguradoras" :value="8" hint="habilitadas" /></VCol>
+            <VCol cols="12" md="4"><SiMetric label="Prêmio emitido" empty hint="sem dados ainda" /></VCol>
+            <VCol cols="12" md="4"><SiMetric label="Cotações (30d)" :value="124" /></VCol>
+          </VRow>
+        </VCardText>
+      </SiCard>
+
+      <!-- SiPageBack — voltar das telas de detalhe: seta (histórico) + breadcrumb (rota-pai) -->
+      <SiCard class="mb-6">
+        <VCardTitle>SiPageBack</VCardTitle>
+        <VCardText>
+          <SiPageBack to="/dev/ui" parent-label="Vitrine" current="Detalhe do item" />
+        </VCardText>
+      </SiCard>
     </VContainer>
   </VMain>
 </template>
