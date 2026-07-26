@@ -85,6 +85,9 @@ const rangeLabel = computed(() => {
   return `Mostrando ${start}–${end} de ${totalCount.value} resultados`
 })
 
+// Ação de ativar/inativar derivada da situação do alvo (RN-021) — resolvida uma vez.
+const inactivateAction = computed(() => getBrokerageSituationAction(inactivateTarget.value?.situation))
+
 await loadInsurers()
 await refresh()
 
@@ -412,10 +415,10 @@ function formatDate(value: string) {
     >
       <SiCard class="pa-5">
         <h2 class="text-h6 mb-3">
-          {{ getBrokerageSituationAction(inactivateTarget?.situation).confirmTitle }}
+          {{ inactivateAction.confirmTitle }}
         </h2>
         <p class="mb-5">
-          {{ getBrokerageSituationAction(inactivateTarget?.situation).confirmText }}
+          {{ inactivateAction.confirmText }}
         </p>
         <div class="si-brokerages__dialog-actions">
           <SiButton
@@ -425,11 +428,11 @@ function formatDate(value: string) {
             Cancelar
           </SiButton>
           <SiButton
-            :color="getBrokerageSituationAction(inactivateTarget?.situation).color"
+            :color="inactivateAction.color"
             :loading="busy"
             @click="confirmInactivate"
           >
-            {{ getBrokerageSituationAction(inactivateTarget?.situation).label.split(' ')[0] }}
+            {{ inactivateAction.label.split(' ')[0] }}
           </SiButton>
         </div>
       </SiCard>

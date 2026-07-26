@@ -6,6 +6,7 @@
  */
 import type { BrokeragePreview } from '~/composables/useBrokerages'
 import { formatCnpj } from '~/lib/documents'
+import { formatAddress } from '~/lib/format'
 import { cnpj as cnpjRule, required } from '~/lib/rules'
 
 const open = defineModel<boolean>({ default: false })
@@ -131,16 +132,6 @@ function consultAnother() {
 function sectorLabel(value: boolean | null | undefined) {
   if (value === null || value === undefined) return '—'
   return value ? 'Privado' : 'Público'
-}
-
-function formatAddress(address: BrokeragePreview['mainAddress'] | undefined) {
-  if (!address) return '—'
-  return [
-    [address.street, address.number].filter(Boolean).join(', '),
-    address.neighborhood,
-    [address.city, address.state].filter(Boolean).join(' - '),
-    address.zipCode,
-  ].filter(Boolean).join(' · ') || '—'
 }
 
 function getErrorMessage(err: unknown, fallback: string): string {

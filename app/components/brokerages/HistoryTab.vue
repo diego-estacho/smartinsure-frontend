@@ -29,7 +29,7 @@ const eventMeta: Record<string, { tone: 'created' | 'enable' | 'edit', label: (s
   'created': { tone: 'created', label: () => 'Corretora criada' },
   'insurer-enabled': { tone: 'enable', label: subject => `${subject ?? 'Seguradora'} habilitada` },
   'insurer-enablement-updated': { tone: 'enable', label: subject => `Habilitação de ${subject ?? 'seguradora'} atualizada` },
-  'data-updated': { tone: 'edit', label: () => 'Dados cadastrais atualizados' },
+  'updated': { tone: 'edit', label: () => 'Cadastro atualizado' },
 }
 
 function titleOf(event: BrokerageHistoryEvent) {

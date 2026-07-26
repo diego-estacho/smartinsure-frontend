@@ -5,6 +5,7 @@
  */
 import type { BrokerageListItem } from '~/composables/useBrokerages'
 import { formatCnpj } from '~/lib/documents'
+import { initials } from '~/lib/format'
 import { getBrokerageSituationView } from '~/lib/status/brokerages'
 
 defineProps<{
@@ -30,17 +31,6 @@ const headers = [
   { title: 'Situação', key: 'situation', sortable: false },
   { title: '', key: 'actions', sortable: false, align: 'end' },
 ] as const
-
-function initials(item: BrokerageListItem) {
-  const source = item.socialName || item.name || ''
-  return source
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(word => word[0])
-    .join('')
-    .toUpperCase()
-}
 
 function insurersSummary(item: BrokerageListItem) {
   const names = item.enabledInsurerNames ?? []
@@ -79,28 +69,31 @@ function onRowClick(_event: unknown, ctx: { item: BrokerageListItem }) {
           :key="item.id"
           class="si-brokerage-cards__item"
         >
-          <button
-            type="button"
+          <SiListItem
             class="si-brokerage-cards__main"
             @click="emit('open', item)"
           >
-            <SiAvatar
-              size="sm"
-              rounded="lg"
-            >
-              {{ initials(item) }}
-            </SiAvatar>
-            <span class="si-brokerage-cards__identity">
+            <template #prepend>
+              <SiAvatar
+                size="sm"
+                rounded="lg"
+              >
+                {{ initials(item.socialName || item.name) }}
+              </SiAvatar>
+            </template>
+            <div class="si-brokerage-cards__identity">
               <span class="si-cell-strong">{{ item.socialName || item.name }}</span>
               <span class="si-brokerage-list__meta">{{ formatCnpj(item.documentNumber) }}</span>
-            </span>
-            <SiChip
-              :color="getBrokerageSituationView(item.situation).color"
-              size="small"
-            >
-              {{ getBrokerageSituationView(item.situation).label }}
-            </SiChip>
-          </button>
+            </div>
+            <template #append>
+              <SiChip
+                :color="getBrokerageSituationView(item.situation).color"
+                size="small"
+              >
+                {{ getBrokerageSituationView(item.situation).label }}
+              </SiChip>
+            </template>
+          </SiListItem>
           <div class="si-brokerage-cards__facts">
             <span>{{ item.enabledInsurerCount }} seguradora{{ item.enabledInsurerCount === 1 ? '' : 's' }} · {{ insurersSummary(item) }}</span>
             <span>{{ engineLabel(item) }} · {{ formatDate(item.registeredAt) }}</span>
@@ -161,7 +154,7 @@ function onRowClick(_event: unknown, ctx: { item: BrokerageListItem }) {
             size="sm"
             rounded="lg"
           >
-            {{ initials(item) }}
+            {{ initials(item.socialName || item.name) }}
           </SiAvatar>
           <div class="si-brokerage-list__identity-text">
             <span class="si-cell-strong">{{ item.socialName || item.name }}</span>
@@ -313,24 +306,17 @@ function onRowClick(_event: unknown, ctx: { item: BrokerageListItem }) {
   gap: var(--si-space-2);
 }
 
-.si-brokerage-cards__main {
-  display: flex;
-  align-items: center;
-  gap: var(--si-space-3);
-  width: 100%;
-  min-height: 44px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  text-align: start;
-  cursor: pointer;
+/* O card usa a primitiva do kit SiListItem (clicável = interativa/a11y nativa do Vuetify).
+ * Zera o recuo horizontal para alinhar com o card e garante o alvo de toque mínimo. */
+.si-brokerage-cards__item :deep(.si-brokerage-cards__main) {
+  padding-inline: 0;
+  min-block-size: 44px;
 }
 
 .si-brokerage-cards__identity {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  flex: 1;
 }
 
 .si-brokerage-cards__facts {

@@ -6,6 +6,7 @@
  */
 import type { GetBrokerageResponse } from '~/composables/useBrokerages'
 import { formatCnpj } from '~/lib/documents'
+import { formatAddress, initials } from '~/lib/format'
 import { getBrokerageSituationAction, getBrokerageSituationView } from '~/lib/status/brokerages'
 
 definePageMeta({ layout: 'shell' })
@@ -57,11 +58,6 @@ async function refresh() {
   }
 }
 
-function initials() {
-  const source = brokerage.value?.name ?? ''
-  return source.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
-}
-
 function openHabilitar() {
   tab.value = 'habilitacoes'
   nextTick(() => enablementsPanel.value?.openCreateDialog())
@@ -102,17 +98,6 @@ function sectorLabel(value: boolean | null) {
 function dash(value: string | null | undefined) {
   return value || '—'
 }
-
-function formatAddress(address: GetBrokerageResponse['mainAddress']) {
-  if (!address) return '—'
-  return [
-    [address.street, address.number].filter(Boolean).join(', '),
-    address.complement,
-    address.neighborhood,
-    [address.city, address.state].filter(Boolean).join(' - '),
-    address.zipCode,
-  ].filter(Boolean).join(' · ') || '—'
-}
 </script>
 
 <template>
@@ -134,7 +119,7 @@ function formatAddress(address: GetBrokerageResponse['mainAddress']) {
               color="charcoal"
               class="si-detail__avatar"
             >
-              {{ initials() }}
+              {{ initials(brokerage?.name) }}
             </SiAvatar>
             <div>
               <div class="si-detail__title">
