@@ -23,13 +23,16 @@ const emit = defineEmits<{
   inactivate: [item: BrokerageListItem]
 }>()
 
+// Larguras curadas para aproximar o protótipo (Corretoras.dc): a coluna Corretora deixa de
+// dominar e as demais cabem sem scroll lateral exagerado. `table-layout: fixed` (skin abaixo)
+// faz as larguras serem respeitadas e o conteúdo longo truncar com elipse.
 const headers = [
-  { title: 'Corretora', key: 'name' },
-  { title: 'Seguradoras', key: 'insurers', sortable: false },
-  { title: 'Motor', key: 'engine', sortable: false },
-  { title: 'Cadastro', key: 'registeredAt' },
-  { title: 'Situação', key: 'situation', sortable: false },
-  { title: '', key: 'actions', sortable: false, align: 'end' },
+  { title: 'Corretora', key: 'name', width: '30%' },
+  { title: 'Seguradoras', key: 'insurers', sortable: false, width: '24%' },
+  { title: 'Motor', key: 'engine', sortable: false, width: '11%' },
+  { title: 'Cadastro', key: 'registeredAt', width: '12%' },
+  { title: 'Situação', key: 'situation', sortable: false, width: '13%' },
+  { title: '', key: 'actions', sortable: false, align: 'end', width: '10%' },
 ] as const
 
 function insurersSummary(item: BrokerageListItem) {
@@ -244,11 +247,31 @@ function onRowClick(_event: unknown, ctx: { item: BrokerageListItem }) {
 </template>
 
 <style scoped>
+/* Larguras por coluna (headers `width`) só são respeitadas com layout fixo; sem isso a
+ * coluna Corretora crescia com a razão social e estourava a largura da tabela. */
+.si-brokerage-list__table :deep(table) {
+  table-layout: fixed;
+  width: 100%;
+}
+
+/* Célula não expande além da largura da coluna — o conteúdo longo trunca (regras abaixo). */
+.si-brokerage-list__table :deep(td),
+.si-brokerage-list__table :deep(th) {
+  overflow: hidden;
+}
+
 .si-brokerage-list__identity {
   display: flex;
   align-items: center;
   gap: var(--si-space-3);
   min-width: 0;
+}
+
+/* Nome (linha forte) trunca como a razão social (.si-brokerage-list__meta já trunca). */
+.si-brokerage-list__identity-text .si-cell-strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .si-brokerage-list__identity-text,
@@ -298,6 +321,7 @@ function onRowClick(_event: unknown, ctx: { item: BrokerageListItem }) {
 }
 
 .si-brokerage-cards__item {
+  background: rgb(var(--v-theme-surface));
   border: 1px solid var(--si-cinza-claro);
   border-radius: var(--si-radius-lg);
   padding: var(--si-space-3) var(--si-space-4);

@@ -261,19 +261,20 @@ function formatDate(value: string) {
       </SiTabs>
 
       <div class="si-brokerages__search-row">
-        <SiTextField
-          v-model="query"
-          placeholder="Buscar por CNPJ, razão social ou nome fantasia"
-          :prepend-inner-icon="'search'"
-          density="compact"
-          clearable
-          hide-details
-          class="si-brokerages__search"
-        />
+        <div class="si-brokerages__search">
+          <SiTextField
+            v-model="query"
+            placeholder="Buscar por CNPJ, razão social ou nome fantasia"
+            :prepend-inner-icon="'search'"
+            clearable
+            hide-details
+          />
+        </div>
         <SiButton
           variant="outlined"
           color="secondary"
           :prepend-icon="'sliders'"
+          class="si-brokerages__filters-btn"
           @click="filtersOpen = true"
         >
           Filtros avançados
@@ -495,9 +496,25 @@ function formatDate(value: string) {
   flex-wrap: wrap;
 }
 
+/* Wrapper é o item flex: estica a busca e empurra "Filtros avançados" para a direita
+ * (o flex:1 precisa ficar aqui, não no VTextField interno — o SiFieldShell é o filho flex). */
 .si-brokerages__search {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 280px;
+}
+
+/* Busca e "Filtros avançados" com a MESMA altura (protótipo): alinhamento pelo topo e
+ * altura de controle unificada nos dois. */
+.si-brokerages__search-row {
+  align-items: flex-start;
+}
+
+.si-brokerages__search :deep(.v-field) {
+  min-height: 48px;
+}
+
+.si-brokerages__filters-btn.v-btn {
+  --v-btn-height: 48px;
 }
 
 .si-brokerages__chips {

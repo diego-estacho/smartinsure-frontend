@@ -43,7 +43,7 @@ const productionMetrics = [
   { label: 'Taxa de conversão' },
   { label: 'Prêmio médio' },
   { label: 'Tempo médio' },
-  { label: 'Sinistros abertos' },
+  { label: 'Cotações abertas' },
 ]
 
 await refresh()
@@ -259,7 +259,7 @@ function dash(value: string | null | undefined) {
           </div>
 
           <div class="si-detail__cards">
-            <SiCard variant="outlined">
+            <SiCard variant="flat">
               <div class="si-detail__card-header">
                 Dados cadastrais
               </div>
@@ -291,7 +291,7 @@ function dash(value: string | null | undefined) {
               </dl>
             </SiCard>
 
-            <SiCard variant="outlined">
+            <SiCard variant="flat">
               <div class="si-detail__card-header">
                 Contato e responsável
               </div>
@@ -333,7 +333,7 @@ function dash(value: string | null | undefined) {
             />
           </div>
           <SiCard
-            variant="outlined"
+            variant="flat"
             class="si-detail__empty-production"
           >
             <div class="si-detail__empty-icon">
@@ -352,7 +352,7 @@ function dash(value: string | null | undefined) {
         <!-- Histórico: real (RN-055) -->
         <VTabsWindowItem value="historico">
           <SiCard
-            variant="outlined"
+            variant="flat"
             class="pa-5"
           >
             <BrokeragesHistoryTab :brokerage-id="brokerage.id" />

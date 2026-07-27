@@ -46,17 +46,6 @@ const form = reactive({
 
 const isEditing = computed(() => editingId.value !== null)
 
-/** Resumo com dados reais da listagem (direção C aprovada). */
-const summary = computed(() => {
-  const active = enablements.value.filter(item => item.status === 'Active').length
-  const distinctEngines = [...new Set(enablements.value.map(item => item.calculationEngine))]
-
-  return {
-    total: enablements.value.length,
-    active,
-    engines: distinctEngines.length ? distinctEngines.join(', ') : '—',
-  }
-})
 // RN-022 / README §5: no cadastro só aparecem Seguradoras ainda não habilitadas. Na edição, a
 // lista completa (o select fica desabilitado mostrando a atual).
 const availableInsurers = computed(() =>
@@ -238,23 +227,6 @@ async function confirmStatusChange() {
       >
         Habilitar seguradora
       </SiButton>
-    </div>
-
-    <div class="si-enablements__summary">
-      <SiCard class="si-enablements__summary-card pa-4">
-        <span class="si-enablements__summary-label">Seguradoras habilitadas</span>
-        <strong class="si-enablements__summary-value">{{ summary.total }}</strong>
-      </SiCard>
-
-      <SiCard class="si-enablements__summary-card pa-4">
-        <span class="si-enablements__summary-label">Habilitações ativas</span>
-        <strong class="si-enablements__summary-value">{{ summary.active }}</strong>
-      </SiCard>
-
-      <SiCard class="si-enablements__summary-card pa-4">
-        <span class="si-enablements__summary-label">Motor de cálculo</span>
-        <strong class="si-enablements__summary-value">{{ summary.engines }}</strong>
-      </SiCard>
     </div>
 
     <SiAlert
@@ -464,29 +436,6 @@ async function confirmStatusChange() {
   font-size: var(--si-fs-caption);
   font-weight: var(--si-font-weight-semibold);
   color: var(--si-cinza);
-}
-
-.si-enablements__summary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: var(--si-space-3);
-  margin-bottom: var(--si-space-4);
-}
-
-.si-enablements__summary-card {
-  display: grid;
-  gap: var(--si-space-1);
-}
-
-.si-enablements__summary-label {
-  color: var(--si-cinza);
-  font-size: var(--si-fs-caption);
-}
-
-.si-enablements__summary-value {
-  font-size: var(--si-fs-h3);
-  font-weight: var(--si-font-weight-bold);
-  line-height: 1.2;
 }
 
 /* Mobile: tabela rola horizontal dentro do próprio painel. */

@@ -57,9 +57,16 @@ async function save() {
     :max-width="560"
   >
     <SiCard class="pa-5">
-      <h2 class="text-h6 mb-1">
-        Editar dados cadastrais
-      </h2>
+      <div class="si-edit__header">
+        <h2 class="text-h6">
+          Editar dados cadastrais
+        </h2>
+        <SiIconButton
+          icon="close"
+          aria-label="Fechar"
+          @click="open = false"
+        />
+      </div>
       <p class="si-edit__sub">
         Dados complementares da corretora. Os dados da Receita não são editáveis.
       </p>
@@ -115,6 +122,19 @@ async function save() {
 </template>
 
 <style scoped>
+/* Cabeçalho do modal: título à esquerda, botão fechar (X) no canto superior direito. */
+.si-edit__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--si-space-3);
+  margin-bottom: var(--si-space-1);
+}
+
+.si-edit__header h2 {
+  margin: 0;
+}
+
 .si-edit__sub {
   margin: 0 0 var(--si-space-4);
   color: var(--si-cinza);
