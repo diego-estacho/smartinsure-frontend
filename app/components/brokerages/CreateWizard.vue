@@ -1,8 +1,9 @@
 <script setup lang="ts">
 /**
- * Novo cadastro de Corretora em modal por etapas (RN-052/RN-019). Regra central: a consulta ao
- * CNPJ é somente leitura (nada é gravado) e a Corretora só é criada na confirmação. Cancelar na
- * revisão pede confirmação de descarte e não deixa registro.
+ * Novo cadastro de Corretora em modal por etapas (RN-052/RN-019). A consulta guarda os dados do
+ * CNPJ na base (cache reutilizável, para evitar custo de nova consulta ao Birô), mas a Corretora
+ * só é criada — e passa a aparecer na listagem — na confirmação. Cancelar na revisão não cria a
+ * corretora.
  */
 import type { BrokeragePreview } from '~/composables/useBrokerages'
 import { formatCnpj } from '~/lib/documents'
@@ -36,18 +37,19 @@ const form = ref({
   activateOnSave: true,
 })
 
+// Duas etapas: buscar o CNPJ e revisar/salvar. A confirmação é a própria ação "Salvar
+// corretora" na revisão (RN-019) — não há um 3º passo dedicado.
 const steps = [
   { label: 'Buscar CNPJ' },
   { label: 'Revisar dados' },
-  { label: 'Confirmar' },
 ]
 
 const currentStep = computed(() => (stage.value === 'review' ? 1 : 0))
 
 const footerNote = computed(() =>
   stage.value === 'review'
-    ? 'Rascunho local · nada foi gravado ainda'
-    : 'Etapa 1 de 3 · nenhum dado gravado')
+    ? 'Confirme para criar a corretora'
+    : 'Etapa 1 de 2')
 
 // Reinicia o fluxo a cada abertura.
 watch(open, (isOpen) => {
@@ -179,7 +181,7 @@ function getErrorMessage(err: unknown, fallback: string): string {
                 tipo="cnpj"
                 label="CNPJ da corretora"
                 placeholder="00.000.000/0000-00"
-                hint="Consultamos a Receita Federal. Nada é salvo nesta etapa."
+                hint="Consultamos a Receita Federal. A corretora só é criada quando você confirmar."
                 persistent-hint
                 :rules="[required(), cnpjRule()]"
                 validate-on="submit"
@@ -204,8 +206,8 @@ function getErrorMessage(err: unknown, fallback: string): string {
           />
 
           <div class="si-create__notice">
-            A corretora só é criada quando você confirmar na última etapa. Você pode revisar,
-            corrigir os dados complementares ou cancelar sem deixar registro na base.
+            A corretora só é criada quando você confirmar. Você pode revisar, corrigir os dados
+            complementares ou cancelar — cancelar não cria a corretora.
           </div>
         </template>
 
@@ -254,7 +256,7 @@ function getErrorMessage(err: unknown, fallback: string): string {
         <!-- Etapa 2: revisar dados -->
         <template v-else>
           <div class="si-create__success">
-            Dados encontrados na Receita Federal. Rascunho não salvo.
+            Dados encontrados na Receita Federal.
           </div>
 
           <section class="si-create__block">
@@ -366,7 +368,7 @@ function getErrorMessage(err: unknown, fallback: string): string {
           Descartar cadastro?
         </h3>
         <p class="mb-5 si-create__discard-text">
-          Os dados consultados não foram salvos. Se descartar agora, nenhuma corretora será criada.
+          Nenhuma corretora será criada. Você pode consultar este CNPJ de novo quando quiser.
         </p>
         <div class="si-create__discard-actions">
           <SiButton
