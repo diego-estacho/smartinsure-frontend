@@ -194,9 +194,31 @@ async function confirmInactivate() {
   finally { busy.value = false }
 }
 
-function exportList() {
-  // TODO(AB#): endpoint de exportação ainda não existe no backend (RN a definir).
-  toast.value = 'Exportação disponível em breve.'
+// Exporta a lista para Excel (RN-018): baixa o .xlsx do BFF repassando os filtros atuais.
+async function exportList() {
+  try {
+    const blob = await $fetch<Blob>('/api/brokerages/export', {
+      responseType: 'blob',
+      query: {
+        ...(query.value ? { q: query.value } : {}),
+        ...(situation.value ? { situation: situation.value } : {}),
+        ...(filters.value.insurerId ? { insurerId: filters.value.insurerId } : {}),
+        ...(filters.value.calculationEngine ? { calculationEngine: filters.value.calculationEngine } : {}),
+        ...(filters.value.sector ? { sector: filters.value.sector } : {}),
+        ...(filters.value.registeredFrom ? { registeredFrom: filters.value.registeredFrom } : {}),
+        ...(filters.value.registeredTo ? { registeredTo: filters.value.registeredTo } : {}),
+      },
+    })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = 'corretoras.xlsx'
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
+  catch {
+    toast.value = 'Não foi possível exportar a lista.'
+  }
 }
 
 function onBrokerageCreated(payload: { id: string, incomplete: boolean }) {
@@ -244,7 +266,7 @@ function formatDate(value: string) {
     </div>
 
     <SiCard
-      variant="outlined"
+      variant="flat"
       class="si-brokerages__filters"
     >
       <SiTabs
@@ -313,7 +335,7 @@ function formatDate(value: string) {
     </SiCard>
 
     <SiCard
-      variant="outlined"
+      variant="flat"
       class="si-brokerages__table-card"
     >
       <!-- Erro -->
