@@ -1,26 +1,27 @@
 <script setup lang="ts">
 /**
- * Etapa 1 — Dados do tomador (exec-plan 0015). Busca por CNPJ/razão social integrada de verdade
- * (`usePolicyHolders`); ao selecionar um resultado, carrega o detalhe e mostra o card do tomador
- * (TOMADOR ENCONTRADO + razão social + CNPJ + endereço), guardando-o na store para o resumo e a
- * assinatura de recálculo. A busca fica SEMPRE visível — trocar o tomador é só buscar de novo
- * (sem botão "Trocar"), fiel ao protótipo.
+ * Etapa 1 — Dados do tomador (exec-plan 0015). Busca por CNPJ/razão social no endpoint de Pessoas
+ * (`usePersons` com o papel `PolicyHolder`), igual à etapa 2 (Segurado): cada item da busca já traz
+ * o `mainAddress`, sem endpoint de detalhe. O backend aplica o filtro de matriz (RN-016) para o
+ * papel PolicyHolder e resolve filial→matriz. Ao selecionar, mostra o card do tomador (TOMADOR
+ * ENCONTRADO + razão social + CNPJ + endereço) e guarda na store para o resumo e a assinatura de
+ * recálculo. A busca fica SEMPRE visível — trocar o tomador é só buscar de novo (sem botão "Trocar").
  *
  * "Ver limites e taxas" abre um modal placeholder (tela à parte). "Adicionar filial" abre um modal
  * com o CNPJ da filial — criação real depende de contrato (Branch) inexistente: TODO(backend).
  */
-import type { PolicyHolderAddress, PolicyHolderListItem } from '~/composables/usePolicyHolders'
+import type { PersonAddress, PersonSearchItem } from '~/composables/usePersons'
 import type { SelectedPolicyHolder } from '~/stores/quotationGroupWizard'
 import { formatCnpj } from '~/lib/documents'
 
 const wizard = useQuotationGroupWizardStore()
-const { listPolicyHolders, getPolicyHolder } = usePolicyHolders()
+const { searchPersons } = usePersons()
 
 const query = ref('')
 const searching = ref(false)
-const loadingDetail = ref(false)
 const error = ref<string | null>(null)
-const results = ref<PolicyHolderListItem[]>([])
+const notice = ref<string | null>(null)
+const results = ref<PersonSearchItem[]>([])
 const searched = ref(false)
 
 const limitsModalOpen = ref(false)
@@ -30,19 +31,25 @@ const branchNotice = ref<string | null>(null)
 
 const selected = computed(() => wizard.policyHolder)
 
-function formatAddress(address: PolicyHolderAddress): string {
+function formatCep(zip: string): string {
+  const digits = zip.replace(/\D/g, '')
+  return digits.length === 8 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : zip
+}
+
+function formatAddress(address: PersonAddress): string {
   return [
     [address.street, address.number].filter(Boolean).join(', '),
     address.complement,
     address.neighborhood,
     [address.city, address.state].filter(Boolean).join(' - '),
-    address.zipCode,
+    address.zipCode ? `CEP ${formatCep(address.zipCode)}` : '',
   ].filter(Boolean).join(' · ')
 }
 
 async function search(): Promise<void> {
   const term = query.value.trim()
   error.value = null
+  notice.value = null
   if (!term) {
     error.value = 'Digite um CNPJ ou razão social para buscar.'
     return
@@ -50,8 +57,9 @@ async function search(): Promise<void> {
   searching.value = true
   searched.value = true
   try {
-    const response = await listPolicyHolders({ search: term, pageSize: 8 })
+    const response = await searchPersons({ term, role: 'PolicyHolder' })
     results.value = response.items
+    notice.value = response.notice ?? null
   }
   catch {
     error.value = 'Não foi possível buscar o tomador.'
@@ -62,28 +70,18 @@ async function search(): Promise<void> {
   }
 }
 
-async function select(id: string): Promise<void> {
-  error.value = null
-  loadingDetail.value = true
-  try {
-    const detail = await getPolicyHolder(id)
-    const main = detail.addresses.find(address => address.isMain) ?? detail.addresses[0] ?? null
-    const chosen: SelectedPolicyHolder = {
-      id: detail.id,
-      name: detail.name,
-      documentNumber: detail.documentNumber,
-      mainAddress: main ? formatAddress(main) : null,
-    }
-    wizard.setPolicyHolder(chosen)
-    branchNotice.value = null
-    results.value = []
+// Cada item da busca de Pessoas já traz o endereço principal — não há endpoint de detalhe (igual à
+// etapa 2). Monta o tomador direto do item selecionado.
+function select(item: PersonSearchItem): void {
+  const chosen: SelectedPolicyHolder = {
+    id: item.id,
+    name: item.name,
+    documentNumber: item.documentNumber,
+    mainAddress: item.mainAddress ? formatAddress(item.mainAddress) : null,
   }
-  catch {
-    error.value = 'Não foi possível carregar os dados do tomador.'
-  }
-  finally {
-    loadingDetail.value = false
-  }
+  wizard.setPolicyHolder(chosen)
+  branchNotice.value = null
+  results.value = []
 }
 
 function addBranch(): void {
@@ -123,6 +121,12 @@ function addBranch(): void {
       class="mt-2 mb-0"
       :text="error"
     />
+    <SiAlert
+      v-else-if="notice"
+      type="info"
+      class="mt-2 mb-0"
+      :text="notice"
+    />
 
     <SiList
       v-if="results.length"
@@ -134,8 +138,7 @@ function addBranch(): void {
         :title="item.name"
         :subtitle="`CNPJ ${formatCnpj(item.documentNumber)}`"
         prepend-icon="building"
-        :disabled="loadingDetail"
-        @click="select(item.id)"
+        @click="select(item)"
       />
     </SiList>
 
