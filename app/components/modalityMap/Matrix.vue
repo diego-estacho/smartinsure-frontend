@@ -110,7 +110,7 @@ const headers = [
 
             <div class="si-modality-map-matrix__origins">
               <strong>{{ insurer.insurerName }}</strong>
-              <span>{{ insurer.count }} Modalidade{{ insurer.count === 1 ? '' : 's' }} Importada{{ insurer.count === 1 ? '' : 's' }}</span>
+              <span>{{ insurer.count }} Modalidade{{ Number(insurer.count) === 1 ? '' : 's' }} Importada{{ Number(insurer.count) === 1 ? '' : 's' }}</span>
               <ul>
                 <li
                   v-for="(origin, index) in insurer.origins"
@@ -222,7 +222,7 @@ const headers = [
 
           <div class="si-modality-map-matrix__origins">
             <strong>{{ insurer.insurerName }}</strong>
-            <span>{{ insurer.count }} Modalidade{{ insurer.count === 1 ? '' : 's' }} Importada{{ insurer.count === 1 ? '' : 's' }}</span>
+            <span>{{ insurer.count }} Modalidade{{ Number(insurer.count) === 1 ? '' : 's' }} Importada{{ Number(insurer.count) === 1 ? '' : 's' }}</span>
             <ul>
               <li
                 v-for="(origin, index) in insurer.origins"

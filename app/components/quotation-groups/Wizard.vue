@@ -11,6 +11,14 @@ import { WIZARD_STEPS } from '~/stores/quotationGroupWizard'
 const wizard = useQuotationGroupWizardStore()
 const { isMobile } = useIsMobile()
 
+// A store é singleton da app (ADR-002); nada a limpa ao sair do wizard. Sem isto, voltar a
+// /ofertas/nova (link da marca, voltar do navegador) reexibe uma tela de sucesso "Apólice emitida"
+// ou dados de uma passagem anterior. Reiniciar ao desmontar garante um começo limpo na próxima
+// entrada, sem descartar estado arranjado durante a montagem atual.
+onUnmounted(() => {
+  wizard.reset()
+})
+
 const steps = WIZARD_STEPS.map(step => ({ label: step.label }))
 const currentLabel = computed(() => WIZARD_STEPS[wizard.currentStep]?.label ?? '')
 const primaryLabel = computed(() => (wizard.isLastStep ? 'Emitir' : 'Continuar'))

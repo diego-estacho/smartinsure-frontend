@@ -1,16 +1,13 @@
+import { proxyBackend } from "~~/server/utils/proxyBackend"
 import type { components } from '~/types/gen/api'
 
 type InsurerListResponse = components['schemas']['PagedResponseOfInsurerListItemResponse']
 
 export default defineEventHandler(async (event): Promise<InsurerListResponse> => {
-  const { backendBaseUrl } = useRuntimeConfig(event)
   const query = getQuery(event)
-  const token = getCookie(event, 'sessao')
 
-  return await $fetch<InsurerListResponse>('/api/v1/insurers', {
-    baseURL: backendBaseUrl,
+  return await proxyBackend<InsurerListResponse>(event, '/api/v1/insurers', {
     method: 'GET',
     query,
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
   })
 })

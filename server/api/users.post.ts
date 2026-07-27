@@ -1,3 +1,4 @@
+import { proxyBackend } from "~~/server/utils/proxyBackend"
 import type { components } from '~/types/gen/api'
 
 type CreateUserRequest = components['schemas']['CreateUserRequest']
@@ -9,14 +10,10 @@ type CreateUserResponse = components['schemas']['CreateUserResponse']
  * Nenhuma decisão de negócio aqui — quem valida e decide é o servidor .NET.
  */
 export default defineEventHandler(async (event): Promise<CreateUserResponse> => {
-  const { backendBaseUrl } = useRuntimeConfig(event)
   const body = await readBody<CreateUserRequest>(event)
-  const token = getCookie(event, 'sessao')
 
-  return await $fetch<CreateUserResponse>('/api/v1/users', {
-    baseURL: backendBaseUrl,
+  return await proxyBackend<CreateUserResponse>(event, '/api/v1/users', {
     method: 'POST',
     body,
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
   })
 })

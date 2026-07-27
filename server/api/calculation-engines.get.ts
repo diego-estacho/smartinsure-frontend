@@ -1,14 +1,10 @@
+import { proxyBackend } from "~~/server/utils/proxyBackend"
 import type { components } from '~/types/gen/api'
 
 type CalculationEngineListItemResponse = components['schemas']['CalculationEngineListItemResponse']
 
 export default defineEventHandler(async (event): Promise<CalculationEngineListItemResponse[]> => {
-  const { backendBaseUrl } = useRuntimeConfig(event)
-  const token = getCookie(event, 'sessao')
-
-  return await $fetch<CalculationEngineListItemResponse[]>('/api/v1/calculation-engines', {
-    baseURL: backendBaseUrl,
+  return await proxyBackend<CalculationEngineListItemResponse[]>(event, '/api/v1/calculation-engines', {
     method: 'GET',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
   })
 })

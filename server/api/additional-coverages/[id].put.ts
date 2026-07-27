@@ -1,18 +1,15 @@
+import { proxyBackend } from "~~/server/utils/proxyBackend"
 import type { components } from '~/types/gen/api'
 
 type AdditionalCoverageNameBody = components['schemas']['AdditionalCoverageNameBody']
 type UpdateAdditionalCoverageResponse = components['schemas']['UpdateAdditionalCoverageResponse']
 
 export default defineEventHandler(async (event): Promise<UpdateAdditionalCoverageResponse> => {
-  const { backendBaseUrl } = useRuntimeConfig(event)
   const id = getRouterParam(event, 'id')
   const body = await readBody<AdditionalCoverageNameBody>(event)
-  const token = getCookie(event, 'sessao')
 
-  return await $fetch<UpdateAdditionalCoverageResponse>(`/api/v1/additional-coverages/${id}`, {
-    baseURL: backendBaseUrl,
+  return await proxyBackend<UpdateAdditionalCoverageResponse>(event, `/api/v1/additional-coverages/${id}`, {
     method: 'PUT',
     body,
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
   })
 })

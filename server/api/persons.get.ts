@@ -1,3 +1,4 @@
+import { proxyBackend } from "~~/server/utils/proxyBackend"
 import type { components } from '~/types/gen/api'
 
 type SearchPersonsResponse = components['schemas']['SearchPersonsResponse']
@@ -8,14 +9,10 @@ type SearchPersonsResponse = components['schemas']['SearchPersonsResponse']
  * `Insured` de uma Pessoa).
  */
 export default defineEventHandler(async (event): Promise<SearchPersonsResponse> => {
-  const { backendBaseUrl } = useRuntimeConfig(event)
   const query = getQuery(event)
-  const token = getCookie(event, 'sessao')
 
-  return await $fetch<SearchPersonsResponse>('/api/v1/persons', {
-    baseURL: backendBaseUrl,
+  return await proxyBackend<SearchPersonsResponse>(event, '/api/v1/persons', {
     method: 'GET',
     query,
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
   })
 })

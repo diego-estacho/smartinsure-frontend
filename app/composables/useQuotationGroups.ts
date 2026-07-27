@@ -29,19 +29,36 @@ export interface SaveQuotationGroupResult {
 }
 
 /**
+ * Escopo do wizard ('all' | 'specific') → nome estável do contrato ('All' | 'Specific'), ADR-004.
+ * Mapeamento exaustivo: 'specific' vira 'Specific'; 'all' (e qualquer outro) cai em 'All' como
+ * padrão seguro — o wizard só produz esses dois modos.
+ */
+function toScopeMode(mode: string): string {
+  return mode === 'specific' ? 'Specific' : 'All'
+}
+
+/**
  * Estado do wizard → contrato do backend (achata escopo/risco; enum em nome estável). O wizard
  * garante os campos obrigatórios preenchidos (`validateCurrentStep`) antes de salvar — os fallbacks
  * abaixo não disparam no fluxo real; se dispararem, o servidor recusa (validação de negócio, ADR-004).
  */
 function toRequestBody(payload: QuotationGroupPayload): QuotationGroupBody {
+  // IS (insuredAmount) é obrigatória (contrato do backend). O wizard já garante não-nulo no passo
+  // de risco (`validateCurrentStep`); em vez de coagir silenciosamente para 0 (valor plausível que
+  // mascara o dado faltante), falhamos explícito se chegar aqui vazia — não é o fluxo real.
+  const insuredAmount = payload.risk.insuredAmount
+  if (insuredAmount == null) {
+    throw new Error('Importância segurada ausente ao salvar a oferta.')
+  }
+
   return {
     policyHolderId: payload.policyHolderId ?? '',
     insuredId: payload.insuredId ?? '',
     modalityId: payload.risk.modalityId ?? '',
-    insuredAmount: payload.risk.insuredAmount ?? 0,
+    insuredAmount,
     coverageStartDate: payload.risk.startDate ?? '',
     coverageEndDate: payload.risk.endDate ?? '',
-    scopeMode: payload.scope.mode === 'specific' ? 'Specific' : 'All',
+    scopeMode: toScopeMode(payload.scope.mode),
     insurerIds: payload.scope.insurerIds,
     includesPenaltyCoverage: payload.risk.coverageMulta,
     includesLaborCoverage: payload.risk.coverageLabor,

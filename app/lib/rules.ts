@@ -35,9 +35,18 @@ export const url = (message = 'Endereço inválido'): Rule =>
     }
   }
 
-/** Número inteiro (validação de forma; sem casas decimais). */
+/**
+ * Número inteiro (validação de forma; sem casas decimais). Faz trim antes de `Number` para que uma
+ * string só de espaços ('   ') não seja tratada como o inteiro 0 válido: campo opcional em branco
+ * (inclusive após trim) volta a delegar ao `required()`; qualquer outro conteúdo precisa ser inteiro.
+ */
 export const integer = (message = 'Informe um número inteiro'): Rule =>
-  v => (isEmpty(v) || Number.isInteger(Number(v)) ? true : message)
+  (v) => {
+    if (isEmpty(v)) return true
+    const trimmed = String(v).trim()
+    if (trimmed === '') return true
+    return Number.isInteger(Number(trimmed)) ? true : message
+  }
 
 /** Valor numérico mínimo (validação de forma). */
 export const minValue = (min: number, message?: string): Rule =>

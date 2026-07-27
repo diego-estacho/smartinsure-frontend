@@ -14,8 +14,10 @@ interface ViaCepResponse {
 export default defineEventHandler(async (event) => {
   const digits = (getRouterParam(event, 'cep') ?? '').replace(/\D/g, '')
 
+  // Casos de negócio (CEP inválido / não encontrado) voltam com HTTP 200 + { error },
+  // pois o consumidor faz `const data = await $fetch(...)` e trata `if (data.error)` —
+  // ramo só alcançável em 2xx. 5xx fica reservado a falha real de transporte do ViaCEP.
   if (digits.length !== 8) {
-    setResponseStatus(event, 400)
     return { error: 'CEP inválido.' }
   }
 
@@ -23,7 +25,6 @@ export default defineEventHandler(async (event) => {
     const data = await $fetch<ViaCepResponse>(`https://viacep.com.br/ws/${digits}/json/`)
 
     if (data?.erro) {
-      setResponseStatus(event, 404)
       return { error: 'CEP não encontrado.' }
     }
 
