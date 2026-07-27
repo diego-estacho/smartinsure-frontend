@@ -477,7 +477,13 @@ export interface paths {
                 query?: {
                     page?: number | string;
                     pageSize?: number | string;
-                    status?: string;
+                    q?: string;
+                    situation?: string;
+                    insurerId?: string;
+                    calculationEngine?: string;
+                    sector?: string;
+                    registeredFrom?: string;
+                    registeredTo?: string;
                 };
                 header?: never;
                 path?: never;
@@ -491,7 +497,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["PagedResponseOfBrokerageListItemResponse"];
+                        "application/json": components["schemas"]["ListBrokeragesResponse"];
                     };
                 };
             };
@@ -527,6 +533,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/brokerages/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cnpj?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BrokeragePreviewResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/brokerages/{id}": {
         parameters: {
             query?: never;
@@ -552,6 +595,68 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["GetBrokerageResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateBrokerageBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GetBrokerageResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/brokerages/{id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GetBrokerageHistoryResponse"];
                     };
                 };
             };
@@ -1907,6 +2012,13 @@ export interface components {
             city: null | string;
             state: null | string;
         };
+        BrokerageHistoryEventResponse: {
+            type: string;
+            subject: null | string;
+            /** Format: date-time */
+            occurredAt: string;
+            author: string;
+        };
         BrokerageInsurerEnablementListItemResponse: {
             /** Format: uuid */
             id: string;
@@ -1928,6 +2040,44 @@ export interface components {
             socialName: null | string;
             isPrivateSector: null | boolean;
             status: string;
+            situation: string;
+            /** Format: date-time */
+            registeredAt: string;
+            /** Format: int32 */
+            enabledInsurerCount: number | string;
+            enabledInsurerNames: string[];
+            calculationEngines: string[];
+        };
+        BrokeragePreviewAddressResponse: {
+            zipCode: null | string;
+            street: null | string;
+            number: null | string;
+            complement: null | string;
+            neighborhood: null | string;
+            city: null | string;
+            state: null | string;
+        };
+        BrokeragePreviewResponse: {
+            documentNumber: string;
+            name: string;
+            socialName: null | string;
+            legalNatureCode: null | string;
+            legalNatureName: null | string;
+            isPrivateSector: null | boolean;
+            alreadyRegistered: boolean;
+            /** Format: uuid */
+            existingBrokerageId: null | string;
+            mainAddress: null | components["schemas"]["BrokeragePreviewAddressResponse"];
+        };
+        BrokerageSituationCountsResponse: {
+            /** Format: int64 */
+            all: number | string;
+            /** Format: int64 */
+            active: number | string;
+            /** Format: int64 */
+            incomplete: number | string;
+            /** Format: int64 */
+            inactive: number | string;
         };
         CalculationEngineListItemResponse: {
             name: string;
@@ -1997,7 +2147,12 @@ export interface components {
             status: string;
         };
         CreateBrokerageRequest: {
-            cnpj: string;
+            cnpj?: string;
+            socialName?: null | string;
+            contactEmail?: null | string;
+            contactPhone?: null | string;
+            responsibleName?: null | string;
+            activateOnSave?: boolean;
         };
         CreateBrokerageResponse: {
             /** Format: uuid */
@@ -2009,6 +2164,14 @@ export interface components {
             legalNatureName: null | string;
             isPrivateSector: null | boolean;
             status: string;
+            situation: string;
+            contactEmail: null | string;
+            contactPhone: null | string;
+            responsibleName: null | string;
+            /** Format: date-time */
+            registeredAt: string;
+            /** Format: int32 */
+            enabledInsurerCount: number | string;
             mainAddress: null | components["schemas"]["ImportedBrokerageAddressResponse"];
         };
         CreateInsurerRequest: {
@@ -2180,6 +2343,9 @@ export interface components {
             summary: components["schemas"]["CreditInquirySummary"];
             results: components["schemas"]["CreditInquiryResultResponse"][];
         };
+        GetBrokerageHistoryResponse: {
+            events: components["schemas"]["BrokerageHistoryEventResponse"][];
+        };
         GetBrokerageInsurerEnablementResponse: {
             /** Format: uuid */
             id: string;
@@ -2203,6 +2369,14 @@ export interface components {
             legalNatureName: null | string;
             isPrivateSector: null | boolean;
             status: string;
+            situation: string;
+            contactEmail: null | string;
+            contactPhone: null | string;
+            responsibleName: null | string;
+            /** Format: date-time */
+            registeredAt: string;
+            /** Format: int32 */
+            enabledInsurerCount: number | string;
             mainAddress: null | components["schemas"]["BrokerageAddressResponse"];
         };
         GetCreditInquiryResponse: {
@@ -2303,6 +2477,18 @@ export interface components {
             /** Format: uuid */
             additionalCoverageId: string;
         };
+        ListBrokeragesResponse: {
+            items: components["schemas"]["BrokerageListItemResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int64 */
+            totalCount: number | string;
+            counts: components["schemas"]["BrokerageSituationCountsResponse"];
+            /** Format: int64 */
+            totalPages?: number | string;
+        };
         MapInsurerResponse: {
             /** Format: uuid */
             insurerId: string;
@@ -2342,17 +2528,6 @@ export interface components {
         };
         PagedResponseOfBrokerageInsurerEnablementListItemResponse: {
             items: components["schemas"]["BrokerageInsurerEnablementListItemResponse"][];
-            /** Format: int32 */
-            page: number | string;
-            /** Format: int32 */
-            pageSize: number | string;
-            /** Format: int64 */
-            totalCount: number | string;
-            /** Format: int64 */
-            totalPages?: number | string;
-        };
-        PagedResponseOfBrokerageListItemResponse: {
-            items: components["schemas"]["BrokerageListItemResponse"][];
             /** Format: int32 */
             page: number | string;
             /** Format: int32 */
@@ -2526,6 +2701,12 @@ export interface components {
             id: string;
             name: string;
             status: string;
+        };
+        UpdateBrokerageBody: {
+            socialName: null | string;
+            contactEmail: null | string;
+            contactPhone: null | string;
+            responsibleName: null | string;
         };
         UpdateBrokerageInsurerEnablementBody: {
             calculationEngine: string;

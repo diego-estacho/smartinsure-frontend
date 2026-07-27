@@ -17,6 +17,19 @@ export function createSessionExpiredHandler(fetcher: Fetcher, navigate: Navigate
 
 export default defineNuxtPlugin(() => {
   const api = $fetch.create({
+    // SSR: encaminha o cookie de sessão da requisição de entrada para o BFF. Sem isso, a busca
+    // de dados server-side vai sem sessão, cai em 401 e o cliente refaz o fetch — gerando erro de
+    // SSR e hydration mismatch. No cliente o browser já anexa o cookie automaticamente.
+    onRequest({ options }) {
+      if (import.meta.server) {
+        const cookie = useRequestHeaders(['cookie']).cookie
+        if (cookie) {
+          const headers = new Headers(options.headers)
+          headers.set('cookie', cookie)
+          options.headers = headers
+        }
+      }
+    },
     onResponseError: createSessionExpiredHandler($fetch, navigateTo),
   })
 

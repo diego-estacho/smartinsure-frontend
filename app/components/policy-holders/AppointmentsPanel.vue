@@ -64,7 +64,7 @@ function openCreateDialog() {
 async function loadFormData() {
   try {
     const [brokeragesPage, insurersPage] = await Promise.all([
-      listBrokerages({ status: 'Active', pageSize: 100 }),
+      listBrokerages({ situation: 'Active', pageSize: 100 }),
       listInsurers({ status: 'Active', pageSize: 100 }),
     ])
     brokerages.value = brokeragesPage.items

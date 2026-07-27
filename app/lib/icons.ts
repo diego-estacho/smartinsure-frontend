@@ -74,6 +74,7 @@ import KeyRound from 'lucide-vue-next/dist/esm/icons/key-round'
 import Settings from 'lucide-vue-next/dist/esm/icons/settings'
 import ChartColumn from 'lucide-vue-next/dist/esm/icons/chart-column'
 import CreditCard from 'lucide-vue-next/dist/esm/icons/credit-card'
+import SlidersHorizontal from 'lucide-vue-next/dist/esm/icons/sliders-horizontal'
 import Network from 'lucide-vue-next/dist/esm/icons/network'
 import Tag from 'lucide-vue-next/dist/esm/icons/tag'
 
@@ -122,6 +123,7 @@ export const appIcons = {
   download: Download,
   calendar: CalendarDays,
   creditCard: CreditCard,
+  sliders: SlidersHorizontal,
   sitemap: Network,
   tag: Tag,
 
