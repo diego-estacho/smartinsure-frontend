@@ -34,12 +34,17 @@ const pending = ref<PendingImportedModality[]>([])
 const modalities = ref<ModalityListItem[]>([])
 const loading = ref(false)
 const saving = ref(false)
+const modalitiesLoading = ref(false)
+const modalitiesLoaded = ref(false)
 const error = ref<string | null>(null)
 const success = ref<string | null>(null)
 
 const reassignDialogOpen = ref(false)
 const ignoreDialogOpen = ref(false)
 const selectedPending = ref<PendingImportedModality | null>(null)
+
+// Tamanho de página do endpoint de Modalidades ao paginar o alvo do Reatribuir.
+const MODALITY_PAGE_SIZE = 100
 
 await refresh()
 
@@ -48,16 +53,16 @@ async function refresh() {
   error.value = null
 
   try {
-    // A matriz + a Fila vêm juntas do mapa; a lista de Modalidades alimenta o Reatribuir.
-    const [map, modalitiesPage] = await Promise.all([
-      getModalityMap(),
-      listModalities({ pageSize: 100 }),
-    ])
+    // A matriz + a Fila vêm juntas do mapa. A lista de Modalidades (alvo do Reatribuir) só é
+    // buscada sob demanda — ver `loadReassignModalities` (não roda com a Fila oculta, OPEN-14).
+    const map = await getModalityMap()
     entries.value = [...map.modalities]
     pending.value = [...map.pending]
-    modalities.value = [...modalitiesPage.items]
   }
   catch {
+    // Sucesso e erro são mutuamente exclusivos: uma falha na recarga encerra o sucesso anterior
+    // (ex.: ação bem-sucedida seguida de refresh com erro não mostra os dois banners juntos).
+    success.value = null
     error.value = 'Não foi possível carregar o Mapa de Modalidades.'
   }
   finally {
@@ -65,10 +70,45 @@ async function refresh() {
   }
 }
 
+/**
+ * Alvo do Reatribuir (RN-037): busca TODAS as Modalidades para que nenhuma fique inalcançável.
+ * O endpoint não expõe filtro por nome, então percorre todas as páginas (loop) até o totalCount.
+ * Lazy: só dispara quando a Fila abre o dialog (não corre com a Fila oculta — OPEN-14).
+ */
+async function loadReassignModalities(force = false): Promise<void> {
+  if (modalitiesLoading.value) return
+  if (modalitiesLoaded.value && !force) return
+
+  modalitiesLoading.value = true
+  try {
+    const all: ModalityListItem[] = []
+    let page = 1
+    let total = Infinity
+    while (all.length < total) {
+      const response = await listModalities({ page, pageSize: MODALITY_PAGE_SIZE })
+      all.push(...response.items)
+      total = Number(response.totalCount)
+      if (!response.items.length) break
+      page++
+    }
+    modalities.value = all
+    modalitiesLoaded.value = true
+  }
+  catch {
+    success.value = null
+    error.value = 'Não foi possível carregar as Modalidades para reatribuição.'
+  }
+  finally {
+    modalitiesLoading.value = false
+  }
+}
+
 function openReassignDialog(item: PendingImportedModality) {
   selectedPending.value = item
   success.value = null
   reassignDialogOpen.value = true
+  // Carrega o alvo sob demanda ao abrir o dialog (nada é buscado com a Fila oculta).
+  loadReassignModalities()
 }
 
 function openIgnoreDialog(item: PendingImportedModality) {
@@ -237,6 +277,7 @@ async function restore(item: PendingImportedModality) {
       v-model="reassignDialogOpen"
       :pending="selectedPending"
       :modalities="modalities"
+      :modalities-loading="modalitiesLoading"
       :saving="saving"
       @confirm="confirmReassign"
     />

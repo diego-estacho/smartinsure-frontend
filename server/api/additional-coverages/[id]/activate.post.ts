@@ -1,15 +1,12 @@
+import { proxyBackend } from "~~/server/utils/proxyBackend"
 import type { components } from '~/types/gen/api'
 
 type ActivateAdditionalCoverageResponse = components['schemas']['ActivateAdditionalCoverageResponse']
 
 export default defineEventHandler(async (event): Promise<ActivateAdditionalCoverageResponse> => {
-  const { backendBaseUrl } = useRuntimeConfig(event)
   const id = getRouterParam(event, 'id')
-  const token = getCookie(event, 'sessao')
 
-  return await $fetch<ActivateAdditionalCoverageResponse>(`/api/v1/additional-coverages/${id}/activate`, {
-    baseURL: backendBaseUrl,
+  return await proxyBackend<ActivateAdditionalCoverageResponse>(event, `/api/v1/additional-coverages/${id}/activate`, {
     method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
   })
 })

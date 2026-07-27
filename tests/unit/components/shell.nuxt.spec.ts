@@ -83,10 +83,14 @@ describe('Layout shell — menu de navegação (exec-plan 0014)', () => {
     const items = w.findAll('.si-shell-nav-item')
     const painel = items.find(i => i.text().includes('Painel'))
     const cotacoes = items.find(i => i.text().includes('Cotações'))
+    const apolices = items.find(i => i.text().includes('Apólices'))
     expect(painel).toBeTruthy()
-    expect(cotacoes).toBeTruthy()
+    expect(apolices).toBeTruthy()
     expect(painel!.classes()).not.toContain('v-list-item--disabled')
-    expect(cotacoes!.classes()).toContain('v-list-item--disabled')
+    // Cotações passou a navegar para /cotacoes (exec-plan 0015) → habilitado.
+    expect(cotacoes!.classes()).not.toContain('v-list-item--disabled')
+    // Apólices segue sem rota → desabilitado.
+    expect(apolices!.classes()).toContain('v-list-item--disabled')
   })
 
   it('mostra o grupo "Operação", o switcher e a conta neutra (sem identidade real)', async () => {

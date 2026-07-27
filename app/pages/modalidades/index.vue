@@ -25,6 +25,8 @@ const saving = ref(false)
 const includeInactive = ref(false)
 const error = ref<string | null>(null)
 const success = ref<string | null>(null)
+const page = ref(1)
+const pageSize = ref(20)
 
 const formOpen = ref(false)
 const editingModality = ref<ModalityListItem | null>(null)
@@ -39,16 +41,41 @@ async function refresh() {
   error.value = null
 
   try {
-    const modalitiesPage = await listModalities({ includeInactive: includeInactive.value })
+    const modalitiesPage = await listModalities({
+      page: page.value,
+      pageSize: pageSize.value,
+      includeInactive: includeInactive.value,
+    })
     items.value = [...modalitiesPage.items]
     totalCount.value = Number(modalitiesPage.totalCount)
   }
   catch {
+    // Sucesso e erro são mutuamente exclusivos: uma falha na recarga encerra o sucesso anterior
+    // (ex.: ação bem-sucedida seguida de refresh com erro não mostra os dois banners juntos).
+    success.value = null
     error.value = 'Não foi possível carregar as Modalidades.'
   }
   finally {
     loading.value = false
   }
+}
+
+// Trocar o filtro de situação volta à página 1 e refaz o fetch (server-side).
+function onFilterChange() {
+  page.value = 1
+  refresh()
+}
+
+// Navegação e tamanho de página vêm do SiPagination (server-side → refetch explícito).
+function goToPage(target: number) {
+  page.value = target
+  refresh()
+}
+
+function changePageSize(size: number) {
+  pageSize.value = size
+  page.value = 1
+  refresh()
 }
 
 function openCreateDialog() {
@@ -162,7 +189,7 @@ async function confirmStatusChange() {
 
         <ModalitiesStatusFilter
           v-model="includeInactive"
-          @update:model-value="refresh"
+          @update:model-value="onFilterChange"
         />
       </div>
 
@@ -185,6 +212,15 @@ async function confirmStatusChange() {
         :loading="loading"
         @edit="openEditDialog"
         @change-status="openStatusDialog"
+      />
+
+      <!-- Paginação server-side (RN-032): consome o totalCount do backend; navegar refaz o fetch. -->
+      <SiPagination
+        :page="page"
+        :items-per-page="pageSize"
+        :total="totalCount"
+        @update:page="goToPage"
+        @update:items-per-page="changePageSize"
       />
     </SiCard>
 

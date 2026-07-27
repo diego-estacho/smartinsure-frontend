@@ -35,7 +35,8 @@ const headers = [
     :headers="headers"
     :items="items"
     :loading="loading"
-    :items-per-page="20"
+    :items-per-page="items.length || 1"
+    hide-default-footer
     density="compact"
     class="si-modalities-table"
   >

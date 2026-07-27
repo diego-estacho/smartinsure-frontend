@@ -47,7 +47,7 @@ const rail = computed(() => !mobile.value && collapsed.value)
 
 const primaryNav: NavItem[] = [
   { key: 'painel', title: 'Painel', icon: 'dashboard', to: '/' },
-  { key: 'cotacoes', title: 'Cotações', icon: 'fileText' },
+  { key: 'cotacoes', title: 'Cotações', icon: 'fileText', to: '/cotacoes' },
   { key: 'apolices', title: 'Apólices', icon: 'shieldCheck' },
   { key: 'tomadores', title: 'Tomadores', icon: 'users', to: '/tomadores' },
   { key: 'consultaCredito', title: 'Consulta de Crédito', icon: 'creditCard', to: '/consulta-credito' },

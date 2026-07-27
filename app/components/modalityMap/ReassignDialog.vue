@@ -16,6 +16,8 @@ const open = defineModel<boolean>({ required: true })
 defineProps<{
   pending: PendingImportedModality | null
   modalities: ModalityListItem[]
+  /** Todas as Modalidades (alvo) são buscadas sob demanda ao abrir; reflete o carregamento no campo. */
+  modalitiesLoading?: boolean
   saving?: boolean
 }>()
 
@@ -69,6 +71,8 @@ async function submit() {
           :items="modalities"
           item-title="name"
           item-value="id"
+          :loading="modalitiesLoading"
+          :no-data-text="modalitiesLoading ? 'Carregando Modalidades…' : 'Nenhuma Modalidade disponível'"
           :rules="[required('Selecione a Modalidade')]"
         />
       </SiForm>

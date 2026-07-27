@@ -63,6 +63,9 @@ async function refresh() {
     pending.value = [...map.pending]
   }
   catch {
+    // Sucesso e erro são mutuamente exclusivos: uma falha na recarga encerra o sucesso anterior
+    // (ex.: ação bem-sucedida seguida de refresh com erro não mostra os dois banners juntos).
+    success.value = null
     error.value = 'Não foi possível carregar as Coberturas Adicionais.'
   }
   finally {
@@ -240,6 +243,7 @@ async function restore(item: PendingCoverageItem) {
     saving.value = false
   }
 }
+
 </script>
 
 <template>
