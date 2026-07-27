@@ -42,12 +42,6 @@ const busy = ref(false)
 const toast = ref('')
 const createOpen = ref(false)
 
-const subtitle = computed(() =>
-  `${counts.value.all} corretora${counts.value.all === 1 ? '' : 's'}`
-  + ` · ${counts.value.active} ativa${counts.value.active === 1 ? '' : 's'}`
-  + ` · ${counts.value.incomplete} com cadastro incompleto`,
-)
-
 // Nº de filtros avançados aplicados (a situação vive nas abas).
 const advancedFilterCount = computed(() =>
   [filters.value.insurerId, filters.value.calculationEngine, filters.value.sector,
@@ -242,9 +236,6 @@ function formatDate(value: string) {
         <h1 class="si-brokerages__title">
           Corretoras
         </h1>
-        <p class="si-brokerages__subtitle">
-          {{ subtitle }}
-        </p>
       </div>
 
       <div class="si-brokerages__actions">
@@ -492,12 +483,6 @@ function formatDate(value: string) {
   line-height: 1.2;
   letter-spacing: -0.02em;
   font-weight: var(--si-font-weight-semibold);
-}
-
-.si-brokerages__subtitle {
-  margin: var(--si-space-1) 0 0;
-  color: var(--si-cinza);
-  font-size: var(--si-fs-body-2);
 }
 
 .si-brokerages__actions {
