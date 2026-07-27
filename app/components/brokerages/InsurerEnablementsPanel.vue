@@ -26,11 +26,15 @@ const saving = ref(false)
 const error = ref<string | null>(null)
 const success = ref<string | null>(null)
 
+const { isMobile } = useIsMobile()
+
+// Larguras curadas na mesma linguagem da listagem de Corretoras (DS): a Seguradora domina e as
+// demais colunas ficam compactas; `table-layout: fixed` (skin abaixo) trunca nome longo com elipse.
 const headers = [
-  { title: 'Seguradora', key: 'insurerCorporateName' },
-  { title: 'Motor de cálculo', key: 'calculationEngine' },
-  { title: 'Situação', key: 'status' },
-  { title: 'Ações', key: 'actions', sortable: false, align: 'end' as const },
+  { title: 'Seguradora', key: 'insurerCorporateName', width: '52%' },
+  { title: 'Motor de cálculo', key: 'calculationEngine', width: '18%' },
+  { title: 'Situação', key: 'status', width: '15%' },
+  { title: 'Ações', key: 'actions', sortable: false, align: 'end' as const, width: '15%' },
 ]
 
 /** Formulário do dialog (criar/editar). Campos do PlugV2 viram JSON só no envio. */
@@ -243,7 +247,84 @@ async function confirmStatusChange() {
       :text="success"
     />
 
-    <div class="si-enablements__table">
+    <!-- Mobile (< 1024px): cards, mesma linguagem da listagem de Corretoras; a tabela é desktop-only. -->
+    <template v-if="isMobile">
+      <SiProgressLinear
+        v-if="loading"
+        indeterminate
+        class="si-enablements-cards__progress"
+      />
+      <ul
+        v-if="enablements.length"
+        class="si-enablements-cards"
+      >
+        <li
+          v-for="item in enablements"
+          :key="item.id"
+          class="si-enablements-cards__item"
+        >
+          <div class="si-enablements-cards__main">
+            <SiAvatar
+              size="sm"
+              color="surface"
+              class="si-enablements__insurer-logo"
+            >
+              <VImg
+                v-if="item.insurerLogoUrl"
+                :src="item.insurerLogoUrl"
+                :alt="`Logo ${item.insurerCorporateName}`"
+                contain
+              />
+              <span
+                v-else
+                class="si-enablements__insurer-initials"
+              >{{ insurerInitials(item.insurerCorporateName) }}</span>
+            </SiAvatar>
+            <div class="si-enablements-cards__identity">
+              <span class="si-cell-strong">{{ item.insurerCorporateName }}</span>
+              <span class="si-enablements__meta">{{ item.calculationEngine }}</span>
+            </div>
+            <SiChip
+              :color="getEnablementStatusView(item.status).color"
+              size="small"
+            >
+              {{ getEnablementStatusView(item.status).label }}
+            </SiChip>
+          </div>
+          <div class="si-enablements-cards__actions">
+            <SiButton
+              variant="text"
+              size="small"
+              :prepend-icon="'pencil'"
+              @click="openEditDialog(item)"
+            >
+              Editar
+            </SiButton>
+            <SiButton
+              variant="text"
+              size="small"
+              :color="getEnablementStatusAction(item.status).color"
+              :prepend-icon="getEnablementStatusAction(item.status).icon"
+              :disabled="getEnablementStatusAction(item.status).disabled"
+              @click="openStatusDialog(item)"
+            >
+              {{ getEnablementStatusAction(item.status).shortLabel }}
+            </SiButton>
+          </div>
+        </li>
+      </ul>
+      <div
+        v-else-if="!loading"
+        class="si-enablements__empty"
+      >
+        Nenhuma seguradora habilitada para esta corretora.
+      </div>
+    </template>
+
+    <div
+      v-else
+      class="si-enablements__table"
+    >
       <SiDataTable
         :headers="headers"
         :items="enablements"
@@ -267,7 +348,7 @@ async function confirmStatusChange() {
               class="si-enablements__insurer-initials"
             >{{ insurerInitials(item.insurerCorporateName) }}</span>
           </SiAvatar>
-          <span>{{ item.insurerCorporateName }}</span>
+          <span class="si-cell-strong">{{ item.insurerCorporateName }}</span>
         </div>
       </template>
 
@@ -282,25 +363,41 @@ async function confirmStatusChange() {
 
       <template #[`item.actions`]="{ item }">
         <div class="si-enablements__row-actions">
-          <SiButton
-            variant="text"
-            size="small"
-            :prepend-icon="'pencil'"
-            @click="openEditDialog(item)"
-          >
-            Editar
-          </SiButton>
+          <SiTooltip text="Editar habilitação">
+            <template #activator="{ props: tip }">
+              <SiIconButton
+                v-bind="tip"
+                icon="pencil"
+                aria-label="Editar habilitação"
+                @click="openEditDialog(item)"
+              />
+            </template>
+          </SiTooltip>
 
-          <SiButton
-            variant="text"
-            size="small"
-            :color="getEnablementStatusAction(item.status).color"
-            :prepend-icon="getEnablementStatusAction(item.status).icon"
-            :disabled="getEnablementStatusAction(item.status).disabled"
-            @click="openStatusDialog(item)"
-          >
-            {{ getEnablementStatusAction(item.status).shortLabel }}
-          </SiButton>
+          <SiMenu location="bottom end">
+            <template #activator="{ props: menu }">
+              <SiIconButton
+                v-bind="menu"
+                icon="dotsHorizontal"
+                aria-label="Mais ações"
+              />
+            </template>
+            <SiList
+              density="compact"
+              class="si-rowmenu"
+            >
+              <SiListItem
+                title="Editar habilitação"
+                @click="openEditDialog(item)"
+              />
+              <SiListItem
+                :title="getEnablementStatusAction(item.status).label"
+                :disabled="getEnablementStatusAction(item.status).disabled"
+                :class="getEnablementStatusAction(item.status).color === 'error' ? 'si-rowmenu__danger' : undefined"
+                @click="openStatusDialog(item)"
+              />
+            </SiList>
+          </SiMenu>
         </div>
       </template>
 
@@ -416,15 +513,34 @@ async function confirmStatusChange() {
   margin-bottom: var(--si-space-3);
 }
 
+/* ─── Desktop: tabela DS (mesma linguagem da listagem de Corretoras) ───────── */
+.si-enablements__table :deep(table) {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.si-enablements__table :deep(td),
+.si-enablements__table :deep(th) {
+  overflow: hidden;
+}
+
 .si-enablements__insurer {
   display: flex;
   align-items: center;
   gap: var(--si-space-3);
+  min-width: 0;
+}
+
+.si-enablements__insurer .si-cell-strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .si-enablements__insurer-logo {
   border: 1px solid var(--si-cinza-claro);
   background: rgb(var(--v-theme-surface));
+  flex-shrink: 0;
 }
 
 .si-enablements__insurer-logo :deep(.v-img__img) {
@@ -438,9 +554,12 @@ async function confirmStatusChange() {
   color: var(--si-cinza);
 }
 
-/* Mobile: tabela rola horizontal dentro do próprio painel. */
-.si-enablements__table {
-  overflow-x: auto;
+.si-enablements__meta {
+  color: var(--si-cinza);
+  font-size: var(--si-fs-caption);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .si-enablements__row-actions,
@@ -449,5 +568,61 @@ async function confirmStatusChange() {
   align-items: center;
   justify-content: flex-end;
   gap: var(--si-space-2);
+}
+
+.si-rowmenu__danger :deep(.v-list-item-title) {
+  color: rgb(var(--v-theme-error));
+}
+
+/* ─── Mobile: cards (mesma primitiva visual da listagem de Corretoras) ─────── */
+.si-enablements-cards__progress {
+  margin-bottom: var(--si-space-2);
+}
+
+.si-enablements-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--si-space-3);
+}
+
+.si-enablements-cards__item {
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid var(--si-cinza-claro);
+  border-radius: var(--si-radius-lg);
+  padding: var(--si-space-3) var(--si-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--si-space-2);
+}
+
+.si-enablements-cards__main {
+  display: flex;
+  align-items: center;
+  gap: var(--si-space-3);
+}
+
+.si-enablements-cards__identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.si-enablements-cards__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--si-space-2);
+  border-top: 1px solid var(--si-cinza-claro);
+  padding-top: var(--si-space-2);
+}
+
+.si-enablements__empty {
+  padding: var(--si-space-8) var(--si-space-4);
+  text-align: center;
+  color: var(--si-cinza);
+  font-size: var(--si-fs-small);
 }
 </style>
