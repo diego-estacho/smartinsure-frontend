@@ -68,11 +68,6 @@ function onEdited(updated: GetBrokerageResponse) {
   toast.value = 'Dados atualizados.'
 }
 
-function exportBrokerage() {
-  // TODO(AB#): exportação de dados da corretora ainda sem endpoint (RN a definir).
-  toast.value = 'Exportação disponível em breve.'
-}
-
 async function confirmInactivate() {
   if (!brokerage.value) return
   busy.value = true
@@ -173,10 +168,6 @@ function dash(value: string | null | undefined) {
                 <SiListItem
                   title="Editar dados cadastrais"
                   @click="editOpen = true"
-                />
-                <SiListItem
-                  title="Exportar dados da corretora"
-                  @click="exportBrokerage"
                 />
                 <SiListItem
                   title="Inativar corretora"
