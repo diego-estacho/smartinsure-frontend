@@ -135,7 +135,9 @@ async function addBranch(): Promise<void> {
       branchCnpj.value = ''
     }
     else {
-      branchNotice.value = result.notice
+      // Contrato-impossível: nem `branchId` nem `notice` vieram preenchidos. Mensagem genérica —
+      // não inventamos um motivo que o backend não informou (ADR-004).
+      branchNotice.value = result.notice ?? 'Não foi possível registrar a filial: resposta inesperada do servidor.'
     }
   }
   catch {

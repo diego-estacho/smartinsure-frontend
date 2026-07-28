@@ -28,12 +28,19 @@ const rows = computed(() => {
   const list: { key: string, label: string, value: string }[] = []
   const holder = wizard.policyHolder
   if (holder) {
-    // Com Filial marcada, o resumo mostra o CNPJ DELA; sem marcação, o estabelecimento é a
-    // matriz e mostra o CNPJ do tomador (RN-053) — a razão social é sempre a do tomador (a
-    // Filial não tem razão social própria no contrato hoje).
+    // Com Filial marcada, o resumo mostra o CNPJ DELA; sem marcação, o estabelecimento é a matriz
+    // e mostra o CNPJ do tomador (RN-053). A razão social exibida é sempre a do tomador — ele É a
+    // matriz (RN-016), inclusive com Filial marcada — e não a da Filial: `PolicyHolderBranchResponse`
+    // até traz `name`/`socialName` próprios no contrato, mas o resumo não os lê, porque a Filial
+    // aqui é só o estabelecimento da cotação, não uma segunda Pessoa a apresentar. Por isso o
+    // rótulo do CNPJ muda com a marcação (em vez de ficar sempre "CNPJ do tomador"): sem isso, o
+    // CNPJ da Filial apareceria rotulado como se fosse do mesmo estabelecimento da razão social do
+    // tomador (matriz) mostrada logo abaixo — dois documentos de Pessoas jurídicas diferentes lidos
+    // como um só.
     const markedBranch = wizard.branches.find((branch: PolicyHolderBranch) => branch.id === wizard.selectedBranchId)
     const documentNumber = markedBranch?.documentNumber ?? holder.documentNumber
-    list.push({ key: 'holder-doc', label: 'CNPJ do tomador', value: formatCnpj(documentNumber) })
+    const documentLabel = markedBranch ? 'CNPJ da filial' : 'CNPJ do tomador'
+    list.push({ key: 'holder-doc', label: documentLabel, value: formatCnpj(documentNumber) })
     list.push({ key: 'holder-name', label: 'Razão social do tomador', value: holder.name })
   }
   const insured = wizard.insured

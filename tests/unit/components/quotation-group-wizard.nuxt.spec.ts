@@ -1,6 +1,7 @@
 // @vitest-environment nuxt
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mountSuspended } from '@nuxt/test-utils/runtime'
+import { flushPromises } from '@vue/test-utils'
+import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import Wizard from '~/components/quotation-groups/Wizard.vue'
 import EntryStep from '~/components/quotation-groups/EntryStep.vue'
 import SummarySidebar from '~/components/quotation-groups/SummarySidebar.vue'
@@ -21,6 +22,13 @@ import { useQuotationGroupWizardStore, WIZARD_STEPS } from '~/stores/quotationGr
 function forceDesktopViewport() {
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 })
   window.dispatchEvent(new Event('resize'))
+}
+
+// O VOverlay do Vuetify (base do SiDialog) lê o global `visualViewport` ao abrir para recalcular
+// posição; a referência é direta (não via `window.`), então em ambiente sem esse global (happy-dom)
+// vira ReferenceError antes mesmo de montar. Sem isso, qualquer teste que abra um SiDialog quebra.
+if (typeof globalThis.visualViewport === 'undefined') {
+  (globalThis as unknown as { visualViewport?: VisualViewport }).visualViewport = undefined
 }
 
 // A store vem do contexto Nuxt (a mesma que os componentes montados usam); resetamos entre os
@@ -320,6 +328,203 @@ describe('Etapa 1 — Filial do tomador (RN-053)', () => {
     const w = await mountSuspended(Step1PolicyHolder)
     const checkboxes = w.findAllComponents({ name: 'VCheckbox' })
     await checkboxes[0]!.find('input').setValue(false)
+    expect(store.selectedBranchId).toBeNull()
+  })
+})
+
+describe('Etapa 1 — select() nasce marcada/desmarcada conforme preSelectedBranchId (RN-053)', () => {
+  beforeEach(() => {
+    useQuotationGroupWizardStore().reset()
+    forceDesktopViewport()
+  })
+
+  /** Busca e seleciona o único item da lista de resultados — caminho real (search → select()),
+   * não a store direto: é o único jeito de exercitar `select()` de verdade (os testes de RN-053
+   * acima montam o tomador via `setPolicyHolder`, que nunca passa por `select()`). */
+  async function searchAndSelectFirstResult(w: Awaited<ReturnType<typeof mountSuspended>>, term: string) {
+    await w.find('input').setValue(term)
+    await w.find('form').trigger('submit')
+    await flushPromises()
+    const item = w.findComponent({ name: 'SiListItem' })
+    await item.trigger('click')
+    await flushPromises()
+  }
+
+  it('CNPJ de Filial na busca: select() nasce com a Filial marcada (RN-053, "born marked")', async () => {
+    const store = useQuotationGroupWizardStore()
+    registerEndpoint('/api/persons', {
+      method: 'GET',
+      once: true,
+      handler: () => ({
+        items: [{
+          id: 'ph-born',
+          documentNumber: '12345678000190',
+          name: 'Construtora Aurora Engenharia LTDA',
+          socialName: null,
+          type: 'PJ',
+          isPrivateSector: null,
+          roles: ['PolicyHolder'],
+          mainAddress: null,
+          preSelectedBranchId: 'br-1',
+          preSelectedBranchDocumentNumber: '11222333000262',
+        }],
+        notice: null,
+      }),
+    })
+    registerEndpoint('/api/policy-holders/ph-born/branches', {
+      method: 'GET',
+      once: true,
+      handler: () => ({
+        branches: [{ id: 'br-1', documentNumber: '11222333000262', name: 'Filial SP', socialName: null }],
+      }),
+    })
+
+    const w = await mountSuspended(Step1PolicyHolder)
+    await searchAndSelectFirstResult(w, '11222333000262')
+
+    expect(store.policyHolder?.id).toBe('ph-born')
+    // `select()` já marca a Filial de forma síncrona a partir de `preSelectedBranchId` do item de
+    // busca — não depende do `loadBranches` (GET) em segundo plano ter terminado.
+    expect(store.selectedBranchId).toBe('br-1')
+  })
+
+  it('busca sem preSelectedBranchId: select() abre a lista de Filiais desmarcada (RN-053)', async () => {
+    const store = useQuotationGroupWizardStore()
+    registerEndpoint('/api/persons', {
+      method: 'GET',
+      once: true,
+      handler: () => ({
+        items: [{
+          id: 'ph-unmarked',
+          documentNumber: '98765432000110',
+          name: 'Outra Construtora LTDA',
+          socialName: null,
+          type: 'PJ',
+          isPrivateSector: null,
+          roles: ['PolicyHolder'],
+          mainAddress: null,
+        }],
+        notice: null,
+      }),
+    })
+    registerEndpoint('/api/policy-holders/ph-unmarked/branches', {
+      method: 'GET',
+      once: true,
+      handler: () => ({
+        branches: [{ id: 'br-9', documentNumber: '11222333000262', name: 'Filial SP', socialName: null }],
+      }),
+    })
+
+    const w = await mountSuspended(Step1PolicyHolder)
+    await searchAndSelectFirstResult(w, 'Outra Construtora')
+
+    expect(store.policyHolder?.id).toBe('ph-unmarked')
+    expect(store.selectedBranchId).toBeNull()
+    // Drena o `loadBranches` em segundo plano (GET) antes de sair — evita que a resposta chegue
+    // atrasada e vaze efeito colateral para o próximo teste (mesmo singleton do Pinia no arquivo).
+    await vi.waitFor(() => expect(store.branches.map(b => b.id)).toContain('br-9'))
+  })
+})
+
+describe('Etapa 1 — addBranch() e seus três desfechos (Task 9/10, RN-053)', () => {
+  const HOLDER_FOR_MODAL = {
+    id: 'ph-modal',
+    name: 'Empresa Cedro LTDA',
+    documentNumber: '12345678000190',
+    mainAddress: null,
+  }
+
+  beforeEach(() => {
+    useQuotationGroupWizardStore().reset()
+    forceDesktopViewport()
+  })
+
+  /** Abre o modal "Adicionar filial", preenche o CNPJ e clica no botão de submissão do modal —
+   * distinto do botão homônimo que abre o modal (mesmo texto, elemento diferente: VDialog
+   * teleporta o conteúdo para fora da árvore DOM do wrapper, então localizamos por componente,
+   * não por seletor DOM, e desambiguamos comparando o elemento). */
+  async function openFillAndSubmitBranchModal(w: Awaited<ReturnType<typeof mountSuspended>>, cnpj: string) {
+    const openBtn = w.findAllComponents({ name: 'VBtn' }).find(b => b.text().includes('Adicionar filial'))
+    await openBtn!.trigger('click')
+    const cnpjField = w.findAllComponents({ name: 'VTextField' }).at(-1)
+    await cnpjField!.find('input').setValue(cnpj)
+    const submitBtn = w.findAllComponents({ name: 'VBtn' })
+      .find(b => b.text().includes('Adicionar filial') && b.element !== openBtn!.element)
+    await submitBtn!.trigger('click')
+    await flushPromises()
+  }
+
+  it('branchId presente: recarrega as filiais, marca a recém-criada e fecha o modal', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER_FOR_MODAL)
+    registerEndpoint(`/api/policy-holders/${HOLDER_FOR_MODAL.id}/branches`, {
+      method: 'POST',
+      once: true,
+      handler: () => ({ headquartersId: HOLDER_FOR_MODAL.id, branchId: 'br-new', notice: null }),
+    })
+    registerEndpoint(`/api/policy-holders/${HOLDER_FOR_MODAL.id}/branches`, {
+      method: 'GET',
+      once: true,
+      handler: () => ({
+        branches: [{ id: 'br-new', documentNumber: '11222333000262', name: 'Filial Nova', socialName: null }],
+      }),
+    })
+
+    const w = await mountSuspended(Step1PolicyHolder)
+    await openFillAndSubmitBranchModal(w, '11222333000262')
+
+    // Caminho feliz encadeia DOIS fetches (POST cria, depois GET recarrega) dentro do mesmo
+    // `addBranch()` — um único `flushPromises()` no helper pode não drenar as duas rodadas de
+    // microtasks; `vi.waitFor` espera até o encadeamento assentar, sem acoplar no nº de hops.
+    await vi.waitFor(() => expect(store.selectedBranchId).toBe('br-new'))
+    expect(store.branches.map(b => b.id)).toContain('br-new')
+  })
+
+  it('branchId nulo + notice: Birô não achou o CNPJ — mostra o aviso (info), modal continua aberto, matriz continua usável', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER_FOR_MODAL)
+    registerEndpoint(`/api/policy-holders/${HOLDER_FOR_MODAL.id}/branches`, {
+      method: 'POST',
+      once: true,
+      handler: () => ({ headquartersId: HOLDER_FOR_MODAL.id, branchId: null, notice: 'CNPJ não encontrado no Birô.' }),
+    })
+
+    const w = await mountSuspended(Step1PolicyHolder)
+    await openFillAndSubmitBranchModal(w, '99999999000199')
+
+    const infoAlert = await vi.waitFor(() => {
+      const alert = w.findAllComponents({ name: 'VAlert' }).find(a => a.classes().includes('si-alert--info'))
+      expect(alert).toBeTruthy()
+      return alert!
+    })
+    expect(infoAlert.text()).toContain('CNPJ não encontrado no Birô.')
+    // Não é erro: nenhuma marcação muda, a matriz segue sendo o estabelecimento, e o modal
+    // permanece aberto (o campo de CNPJ ainda está montado, dentro do formulário).
+    expect(store.selectedBranchId).toBeNull()
+    expect(store.policyHolder?.id).toBe(HOLDER_FOR_MODAL.id)
+    expect(w.findAllComponents({ name: 'VTextField' }).length).toBeGreaterThan(0)
+  })
+
+  it('falha de rede (exceção): mostra o aviso de erro, distinto do notice do Birô', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER_FOR_MODAL)
+    registerEndpoint(`/api/policy-holders/${HOLDER_FOR_MODAL.id}/branches`, {
+      method: 'POST',
+      once: true,
+      handler: () => {
+        throw new Error('Erro interno simulado')
+      },
+    })
+
+    const w = await mountSuspended(Step1PolicyHolder)
+    await openFillAndSubmitBranchModal(w, '11222333000262')
+
+    const errorAlert = await vi.waitFor(() => {
+      const alert = w.findAllComponents({ name: 'VAlert' }).find(a => a.classes().includes('si-alert--error'))
+      expect(alert).toBeTruthy()
+      return alert!
+    })
+    expect(errorAlert.text()).toContain('Não foi possível registrar a filial.')
     expect(store.selectedBranchId).toBeNull()
   })
 })
