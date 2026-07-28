@@ -12,6 +12,7 @@ import { quotationStatusView } from '~/composables/useQuotations'
 
 const wizard = useQuotationGroupWizardStore()
 const { fetchQuotations } = useQuotations()
+const { brokerage } = useCurrentBrokerage()
 const { isMobile } = useIsMobile()
 
 const loading = ref(false)
@@ -68,10 +69,15 @@ function select(quotation: Quotation): void {
 }
 
 async function loadQuotations(): Promise<void> {
+  const groupId = wizard.quotationGroupId
+  if (!groupId) {
+    error.value = 'Grupo de cotação não encontrado. Volte e conclua a etapa de risco.'
+    return
+  }
   loading.value = true
   error.value = null
   try {
-    wizard.setQuotations(await fetchQuotations())
+    wizard.setQuotations(await fetchQuotations({ groupId, brokerageId: brokerage.id }))
     wizard.markQuotationsGenerated()
   }
   catch {
@@ -176,12 +182,21 @@ onMounted(() => {
             {{ brl(item.limite) }}
           </template>
           <template #[`item.status`]="{ item }">
-            <SiChip
-              :color="statusView(item.status).color"
-              size="small"
-            >
-              {{ statusView(item.status).label }}
-            </SiChip>
+            <div class="si-qg-step4__status-cell">
+              <SiChip
+                :color="statusView(item.status).color"
+                size="small"
+              >
+                {{ item.statusLabel }}
+              </SiChip>
+              <SiChip
+                v-if="item.requiresCcg"
+                color="info"
+                size="small"
+              >
+                Exige CCG
+              </SiChip>
+            </div>
           </template>
           <template #[`item.actions`]="{ item }">
             <SiButton
@@ -209,12 +224,21 @@ onMounted(() => {
           >
             <div class="si-qg-step4__card-head">
               <span class="si-qg-step4__card-name">{{ item.name }}</span>
-              <SiChip
-                :color="statusView(item.status).color"
-                size="small"
-              >
-                {{ statusView(item.status).label }}
-              </SiChip>
+              <div class="si-qg-step4__status-cell">
+                <SiChip
+                  :color="statusView(item.status).color"
+                  size="small"
+                >
+                  {{ item.statusLabel }}
+                </SiChip>
+                <SiChip
+                  v-if="item.requiresCcg"
+                  color="info"
+                  size="small"
+                >
+                  Exige CCG
+                </SiChip>
+              </div>
             </div>
             <div class="si-qg-step4__card-facts">
               <div class="si-qg-step4__card-premio">
@@ -398,6 +422,13 @@ onMounted(() => {
 .si-qg-step4__premio {
   font-weight: var(--si-font-weight-bold);
   font-variant-numeric: tabular-nums;
+}
+
+.si-qg-step4__status-cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--si-space-1);
 }
 
 /* ── Cards (mobile) ── */
