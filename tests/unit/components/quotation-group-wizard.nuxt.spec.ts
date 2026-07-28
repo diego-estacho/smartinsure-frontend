@@ -294,7 +294,8 @@ describe('Etapa 1 — Filial do tomador (RN-053)', () => {
     store.setPolicyHolder(HOLDER)
     let w = await mountSuspended(SummarySidebar)
     expect(w.text()).toContain(formatCnpj(HOLDER.documentNumber))
-    // Sem Filial marcada, o rótulo é o do tomador — o estabelecimento é a matriz (RN-053).
+    // O rótulo é fixo nos dois estados: no contexto da oferta o estabelecimento cotado é o
+    // tomador, então "CNPJ do tomador" não muda com o tipo da empresa. Só o VALOR troca (RN-053).
     expect(w.text()).toContain('CNPJ do tomador')
     expect(w.text()).not.toContain('CNPJ da filial')
 
@@ -302,9 +303,8 @@ describe('Etapa 1 — Filial do tomador (RN-053)', () => {
     w = await mountSuspended(SummarySidebar)
     expect(w.text()).toContain(formatCnpj('11222333000262'))
     expect(w.text()).not.toContain(formatCnpj(HOLDER.documentNumber))
-    // Com a Filial marcada, o rótulo muda — é o ponto da correção anterior (SummarySidebar.vue:42).
-    expect(w.text()).toContain('CNPJ da filial')
-    expect(w.text()).not.toContain('CNPJ do tomador')
+    expect(w.text()).toContain('CNPJ do tomador')
+    expect(w.text()).not.toContain('CNPJ da filial')
   })
 
   it('a etapa 1 lista as filiais com marcação exclusiva; marcar uma desmarca a outra', async () => {
