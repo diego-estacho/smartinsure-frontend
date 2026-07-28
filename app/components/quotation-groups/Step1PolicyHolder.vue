@@ -13,7 +13,7 @@
  * backend quando o CNPJ não é localizado (a matriz continua usável — não é erro).
  */
 import type { PersonAddress, PersonSearchItem } from '~/composables/usePersons'
-import type { CreatePolicyHolderBranchResponse } from '~/composables/usePolicyHolderBranches'
+import type { CreatePolicyHolderBranchResponse, PolicyHolderBranch } from '~/composables/usePolicyHolderBranches'
 import type { SelectedPolicyHolder } from '~/stores/quotationGroupWizard'
 import { formatCnpj } from '~/lib/documents'
 
@@ -27,6 +27,9 @@ const error = ref<string | null>(null)
 const notice = ref<string | null>(null)
 const results = ref<PersonSearchItem[]>([])
 const searched = ref(false)
+/** Falha ao listar as Filiais (não é silenciosa — Finding 2 da revisão final): visível sempre,
+ * independentemente de haver ou não uma Filial marcada no momento da falha. */
+const branchesError = ref<string | null>(null)
 
 const limitsModalOpen = ref(false)
 const branchModalOpen = ref(false)
@@ -93,18 +96,41 @@ function select(item: PersonSearchItem): void {
   branchNotice.value = null
   branchError.value = null
   results.value = []
-  void loadBranches(item.id)
+  // Se a busca já veio com Filial pré-selecionada (RN-016), essa é a única Filial que pode estar
+  // marcada quando o GET abaixo falhar (o corretor não teve chance de marcar outra antes disso) —
+  // por isso é o fallback que `loadBranches` usa para nunca deixar a marcação invisível.
+  void loadBranches(
+    item.id,
+    item.preSelectedBranchId && item.preSelectedBranchDocumentNumber
+      ? fallbackBranch(item.preSelectedBranchId, item.preSelectedBranchDocumentNumber, item.name)
+      : null,
+  )
 }
 
-/** Busca as Filiais já registradas do tomador (RN-053). Falha na listagem não impede seguir com a
- * matriz — a tela apenas nasce sem Filiais para marcar. */
-async function loadBranches(policyHolderId: string): Promise<void> {
+/** Filial mínima reconstruída só com o que o próprio fluxo já sabe (nunca inventado, ADR-004) —
+ * usada apenas quando a listagem completa falha, pra nunca deixar uma Filial marcada sem checkbox
+ * pra vê-la/desmarcá-la (Finding 2 da revisão final). */
+function fallbackBranch(id: string, documentNumber: string, name: string): PolicyHolderBranch {
+  return { id, documentNumber, name, socialName: null }
+}
+
+/**
+ * Busca as Filiais já registradas do tomador (RN-053). Falha na listagem NÃO é silenciosa (aviso
+ * visível, `branchesError`) e nunca apaga uma Filial já marcada da tela: `selectedBranchId` pode já
+ * estar apontando pra uma Filial (marcação síncrona em `select()`, ou a recém-criada em
+ * `addBranch()`) que só existiria como checkbox através da lista que este GET traria — se ele
+ * falhar sem esse cuidado, a marcação fica invisível e sem como desmarcar, mas ainda é o que vai
+ * pro servidor. `fallback`, quando informado, garante que a Filial marcada permaneça visível.
+ */
+async function loadBranches(policyHolderId: string, fallback: PolicyHolderBranch | null = null): Promise<void> {
+  branchesError.value = null
   try {
     const response = await listBranches(policyHolderId)
     wizard.setBranches(response.branches)
   }
   catch {
-    wizard.setBranches([])
+    branchesError.value = 'Não foi possível carregar as filiais do tomador.'
+    wizard.setBranches(fallback ? [fallback] : [])
   }
 }
 
@@ -129,7 +155,12 @@ async function addBranch(): Promise<void> {
   try {
     const result: CreatePolicyHolderBranchResponse = await createBranch(selected.value.id, branchCnpj.value)
     if (result.branchId) {
-      await loadBranches(selected.value.id)
+      // Mesmo cuidado de `select()`: se o GET de recarga falhar, a Filial que acabou de ser
+      // criada — e que `wizard.setBranch` abaixo vai marcar — não pode ficar sem checkbox.
+      await loadBranches(
+        selected.value.id,
+        fallbackBranch(result.branchId, branchCnpj.value, selected.value.name),
+      )
       wizard.setBranch(result.branchId)
       branchModalOpen.value = false
       branchCnpj.value = ''
@@ -251,6 +282,15 @@ function closeBranchModal(): void {
       >
         {{ selected.mainAddress }}
       </p>
+
+      <!-- Falha ao listar Filiais nunca é silenciosa (Finding 2 da revisão final): mostrada sempre,
+      mesmo quando não há Filial marcada para preservar. -->
+      <SiAlert
+        v-if="branchesError"
+        type="error"
+        class="mt-3 mb-0"
+        :text="branchesError"
+      />
 
       <!-- Filiais do tomador (RN-053): marcação exclusiva — no máx. uma; desmarcar volta à matriz. -->
       <div

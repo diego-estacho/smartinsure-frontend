@@ -424,6 +424,55 @@ describe('Etapa 1 — select() nasce marcada/desmarcada conforme preSelectedBran
     // atrasada e vaze efeito colateral para o próximo teste (mesmo singleton do Pinia no arquivo).
     await vi.waitFor(() => expect(store.branches.map(b => b.id)).toContain('br-9'))
   })
+
+  it('GET de Filiais falha com uma Filial pré-selecionada: a marcação nunca fica invisível nem sem como desmarcar (revisão final, Finding 2)', async () => {
+    const store = useQuotationGroupWizardStore()
+    registerEndpoint('/api/persons', {
+      method: 'GET',
+      once: true,
+      handler: () => ({
+        items: [{
+          id: 'ph-fail',
+          documentNumber: '12345678000190',
+          name: 'Construtora Aurora Engenharia LTDA',
+          socialName: null,
+          type: 'PJ',
+          isPrivateSector: null,
+          roles: ['PolicyHolder'],
+          mainAddress: null,
+          preSelectedBranchId: 'br-1',
+          preSelectedBranchDocumentNumber: '11222333000262',
+        }],
+        notice: null,
+      }),
+    })
+    registerEndpoint('/api/policy-holders/ph-fail/branches', {
+      method: 'GET',
+      once: true,
+      handler: () => {
+        throw createError({ statusCode: 500, statusMessage: 'Erro interno simulado' })
+      },
+    })
+
+    const w = await mountSuspended(Step1PolicyHolder)
+    await searchAndSelectFirstResult(w, '11222333000262')
+
+    // `select()` já marcou br-1 de forma síncrona (RN-053, "born marked"); o GET que traria a lista
+    // completa falhou em seguida — a marcação não pode ter sido apagada nem ter ficado sem
+    // checkbox pra vê-la/desmarcá-la, e a falha não pode ter sido engolida silenciosamente.
+    await vi.waitFor(() => {
+      expect(w.findAllComponents({ name: 'VAlert' }).some(a => a.classes().includes('si-alert--error'))).toBe(true)
+    })
+    expect(store.selectedBranchId).toBe('br-1')
+
+    const checkboxes = w.findAllComponents({ name: 'VCheckbox' })
+    expect(checkboxes).toHaveLength(1)
+    expect(checkboxes[0]!.props('modelValue')).toBe(true)
+
+    // O corretor consegue desmarcar o que seria enviado ao servidor mesmo com a listagem quebrada.
+    await checkboxes[0]!.find('input').setValue(false)
+    expect(store.selectedBranchId).toBeNull()
+  })
 })
 
 describe('Etapa 1 — addBranch() e seus três desfechos (Task 9/10, RN-053)', () => {
