@@ -1,6 +1,7 @@
 // @vitest-environment nuxt
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
+import { createError } from 'h3'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import Wizard from '~/components/quotation-groups/Wizard.vue'
 import EntryStep from '~/components/quotation-groups/EntryStep.vue'
@@ -22,13 +23,6 @@ import { useQuotationGroupWizardStore, WIZARD_STEPS } from '~/stores/quotationGr
 function forceDesktopViewport() {
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 })
   window.dispatchEvent(new Event('resize'))
-}
-
-// O VOverlay do Vuetify (base do SiDialog) lê o global `visualViewport` ao abrir para recalcular
-// posição; a referência é direta (não via `window.`), então em ambiente sem esse global (happy-dom)
-// vira ReferenceError antes mesmo de montar. Sem isso, qualquer teste que abra um SiDialog quebra.
-if (typeof globalThis.visualViewport === 'undefined') {
-  (globalThis as unknown as { visualViewport?: VisualViewport }).visualViewport = undefined
 }
 
 // A store vem do contexto Nuxt (a mesma que os componentes montados usam); resetamos entre os
@@ -300,11 +294,17 @@ describe('Etapa 1 — Filial do tomador (RN-053)', () => {
     store.setPolicyHolder(HOLDER)
     let w = await mountSuspended(SummarySidebar)
     expect(w.text()).toContain(formatCnpj(HOLDER.documentNumber))
+    // Sem Filial marcada, o rótulo é o do tomador — o estabelecimento é a matriz (RN-053).
+    expect(w.text()).toContain('CNPJ do tomador')
+    expect(w.text()).not.toContain('CNPJ da filial')
 
     store.setBranch('br-1')
     w = await mountSuspended(SummarySidebar)
     expect(w.text()).toContain(formatCnpj('11222333000262'))
     expect(w.text()).not.toContain(formatCnpj(HOLDER.documentNumber))
+    // Com a Filial marcada, o rótulo muda — é o ponto da correção anterior (SummarySidebar.vue:42).
+    expect(w.text()).toContain('CNPJ da filial')
+    expect(w.text()).not.toContain('CNPJ do tomador')
   })
 
   it('a etapa 1 lista as filiais com marcação exclusiva; marcar uma desmarca a outra', async () => {
@@ -499,10 +499,14 @@ describe('Etapa 1 — addBranch() e seus três desfechos (Task 9/10, RN-053)', (
     })
     expect(infoAlert.text()).toContain('CNPJ não encontrado no Birô.')
     // Não é erro: nenhuma marcação muda, a matriz segue sendo o estabelecimento, e o modal
-    // permanece aberto (o campo de CNPJ ainda está montado, dentro do formulário).
+    // permanece aberto. Checar por um VTextField qualquer não provaria nada — a busca (SEMPRE
+    // visível, fora do modal) já é um; o que discrimina é o `modelValue` da própria SiDialog "Adicionar
+    // filial" (a segunda no template — a primeira é a de "Limites e taxas" — ambas estáticas, não
+    // v-for), que só é `true` enquanto o modal segue aberto.
     expect(store.selectedBranchId).toBeNull()
     expect(store.policyHolder?.id).toBe(HOLDER_FOR_MODAL.id)
-    expect(w.findAllComponents({ name: 'VTextField' }).length).toBeGreaterThan(0)
+    const branchDialog = w.findAllComponents({ name: 'SiDialog' }).at(1)!
+    expect(branchDialog.props('modelValue')).toBe(true)
   })
 
   it('falha de rede (exceção): mostra o aviso de erro, distinto do notice do Birô', async () => {
@@ -511,8 +515,12 @@ describe('Etapa 1 — addBranch() e seus três desfechos (Task 9/10, RN-053)', (
     registerEndpoint(`/api/policy-holders/${HOLDER_FOR_MODAL.id}/branches`, {
       method: 'POST',
       once: true,
+      // `createError` (em vez de `throw new Error`) produz um H3Error já "reconhecido": o handler
+      // ainda falha e o cliente ainda recebe 500 (o composable ainda lança, cai no catch de erro de
+      // rede), mas o h3 não marca `unhandled: true` nem loga "[h3] [unhandled]" no stderr — barulho
+      // que não tem nada a ver com o que este teste prova.
       handler: () => {
-        throw new Error('Erro interno simulado')
+        throw createError({ statusCode: 500, statusMessage: 'Erro interno simulado' })
       },
     })
 

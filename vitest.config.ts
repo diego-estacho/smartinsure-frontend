@@ -15,6 +15,7 @@ export default defineVitestConfig({
   test: {
     environment: 'happy-dom',
     hookTimeout: 30_000,
+    setupFiles: ['./tests/unit/setup.ts'],
     include: ['tests/unit/**/*.spec.ts'],
     coverage: {
       provider: 'v8',
