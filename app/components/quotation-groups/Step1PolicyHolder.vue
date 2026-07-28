@@ -299,7 +299,7 @@ function closeBranchModal(): void {
       >
         <span class="si-qg-step1__branches-label">Filial da cotação</span>
         <p class="si-qg-step1__branches-hint">
-          Marque uma filial para cotar por ela; sem marcação, o estabelecimento é a matriz.
+          Caso deseje utilizar uma filial, selecione abaixo ou adicione uma.
         </p>
         <SiCheckbox
           v-for="branch in selected.branches"
