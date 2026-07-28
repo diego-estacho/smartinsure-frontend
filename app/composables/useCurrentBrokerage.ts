@@ -13,10 +13,11 @@ export interface CurrentBrokerage {
 }
 
 const MOCK_BROKERAGE: CurrentBrokerage = {
-  // TODO(OPEN-03): trocar pelo id da Corretora real do ambiente (placeholder até o vínculo existir).
-  id: '11111111-1111-1111-1111-111111111111',
-  cnpj: '34060267000196',
-  name: 'Corretora Bravo Ltda.',
+  // TODO(OPEN-03): id da Corretora do seed de dev (dev-seed-cotacao.local.sql). Trocar pela Corretora
+  // do usuário autenticado quando o vínculo Usuário→Corretora existir.
+  id: '01900000-c07e-7000-8000-0000000000a1',
+  cnpj: '12233445000109',
+  name: 'Alfa Corretora de Seguros LTDA',
 }
 
 export function useCurrentBrokerage(): { brokerage: CurrentBrokerage } {
