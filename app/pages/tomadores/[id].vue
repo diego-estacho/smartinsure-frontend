@@ -15,6 +15,7 @@ const tab = ref('visao-geral')
 
 const addressesPanelRef = ref<{ openCreateDialog: () => void } | null>(null)
 const appointmentsPanelRef = ref<{ openCreateDialog: () => void } | null>(null)
+const branchesPanelRef = ref<{ openCreateDialog: () => void } | null>(null)
 
 /** Quick facts for the hero section. */
 const quickFacts = computed(() => {
@@ -116,6 +117,10 @@ function openAppointmentDialog() {
             value="nomeacoes"
             text="Nomeações"
           />
+          <SiTab
+            value="filiais"
+            text="Filiais"
+          />
         </SiTabs>
       </VContainer>
     </header>
@@ -198,6 +203,26 @@ function openAppointmentDialog() {
             ref="appointmentsPanelRef"
             :policy-holder-id="policyHolder.id"
             :appointments="policyHolder.appointments"
+            hide-toolbar
+            @changed="refresh"
+          />
+        </VTabsWindowItem>
+
+        <!-- Filiais tab -->
+        <VTabsWindowItem value="filiais">
+          <div class="si-policy-holder-detail__tab-actions">
+            <SiButton
+              :prepend-icon="'plus'"
+              @click="branchesPanelRef?.openCreateDialog()"
+            >
+              Nova filial
+            </SiButton>
+          </div>
+          <PolicyHoldersBranchesPanel
+            v-if="policyHolder"
+            ref="branchesPanelRef"
+            :policy-holder-id="policyHolder.id"
+            :branches="policyHolder.branches"
             hide-toolbar
             @changed="refresh"
           />
