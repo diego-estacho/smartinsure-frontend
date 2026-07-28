@@ -15,7 +15,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "types:gen": "openapi-typescript ${OPENAPI_CONTRACT:-../smartinsure-backend/docs/generated/openapi.json} -o app/types/gen/api.ts"
+    "types:gen": "node scripts/types-gen.mjs"
   },
   "dependencies": {
     "@unovis/ts": "^1.6.7",
