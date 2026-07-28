@@ -8,11 +8,13 @@ import Step4Quotations from '~/components/quotation-groups/Step4Quotations.vue'
 import MinutaClauses from '~/components/quotation-groups/MinutaClauses.vue'
 import Step5Issuance from '~/components/quotation-groups/Step5Issuance.vue'
 import Step2Insured from '~/components/quotation-groups/Step2Insured.vue'
+import Step1PolicyHolder from '~/components/quotation-groups/Step1PolicyHolder.vue'
 import { useQuotations } from '~/composables/useQuotations'
 import { useIssuance } from '~/composables/useIssuance'
 import { usePersons } from '~/composables/usePersons'
 import { useQuotationGroups } from '~/composables/useQuotationGroups'
 import { buildObjetoTemplate, parseTemplate } from '~/lib/minuta'
+import { formatCnpj } from '~/lib/documents'
 import { useQuotationGroupWizardStore, WIZARD_STEPS } from '~/stores/quotationGroupWizard'
 
 /** Força o desktop (>=1024) para o wizard nascer em 2 colunas com o SiStepper (não o compacto). */
@@ -210,6 +212,115 @@ describe('Etapa 1 — Dados do tomador (exec-plan 0015, incremento 2)', () => {
     store.setPolicyHolder(SAMPLE)
     const w = await mountSuspended(SummarySidebar)
     expect(w.text()).toContain('Construtora Aurora Engenharia LTDA')
+  })
+})
+
+describe('Etapa 1 — Filial do tomador (RN-053)', () => {
+  const HOLDER = {
+    id: 'ph-1',
+    name: 'Construtora Aurora Engenharia LTDA',
+    documentNumber: '12345678000190',
+    mainAddress: 'Av. das Nações Unidas, 1200 · São Paulo - SP',
+    branches: [
+      { id: 'br-1', documentNumber: '11222333000262', name: 'Filial SP', socialName: null },
+      { id: 'br-2', documentNumber: '11222333000343', name: 'Filial RJ', socialName: null },
+    ],
+    selectedBranchId: null,
+  }
+
+  beforeEach(() => {
+    useQuotationGroupWizardStore().reset()
+    forceDesktopViewport()
+  })
+
+  it('marca uma filial e limpa a anterior (RN-053)', () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER)
+    store.setBranch('br-1')
+    expect(store.selectedBranchId).toBe('br-1')
+    store.setBranch('br-2')
+    expect(store.selectedBranchId).toBe('br-2')
+    expect(store.policyHolder?.selectedBranchId).toBe('br-2')
+  })
+
+  it('desmarcar a filial volta o estabelecimento para a matriz (RN-053)', () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER)
+    store.setBranch('br-1')
+    store.clearBranch()
+    expect(store.selectedBranchId).toBeNull()
+  })
+
+  it('trocar o tomador limpa a filial marcada (RN-053)', () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER)
+    store.setBranch('br-1')
+    // Novo tomador — objeto novo, sem filial marcada (é assim que a etapa 1 constrói ao selecionar).
+    store.setPolicyHolder({ ...HOLDER, id: 'ph-2', name: 'Outro Tomador LTDA' })
+    expect(store.selectedBranchId).toBeNull()
+  })
+
+  it('a filial entra na assinatura de recálculo (RN-051)', () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER)
+    store.risk.modalityId = 'm1'
+    store.risk.insuredAmount = 1000
+    store.markQuotationsGenerated()
+    expect(store.signatureChanged).toBe(false)
+    store.setBranch('br-1')
+    expect(store.signatureChanged).toBe(true)
+  })
+
+  it('retomar um rascunho com filial já persistida nasce marcada (RN-053)', () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder({ ...HOLDER, selectedBranchId: 'br-2' })
+    expect(store.selectedBranchId).toBe('br-2')
+  })
+
+  it('reset limpa a filial marcada e a lista de filiais', () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER)
+    store.setBranch('br-1')
+    store.reset()
+    expect(store.policyHolder).toBeNull()
+    expect(store.selectedBranchId).toBeNull()
+    expect(store.branches).toEqual([])
+  })
+
+  it('o resumo mostra o CNPJ da matriz sem marcação e o da filial quando marcada', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER)
+    let w = await mountSuspended(SummarySidebar)
+    expect(w.text()).toContain(formatCnpj(HOLDER.documentNumber))
+
+    store.setBranch('br-1')
+    w = await mountSuspended(SummarySidebar)
+    expect(w.text()).toContain(formatCnpj('11222333000262'))
+    expect(w.text()).not.toContain(formatCnpj(HOLDER.documentNumber))
+  })
+
+  it('a etapa 1 lista as filiais com marcação exclusiva; marcar uma desmarca a outra', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER)
+    const w = await mountSuspended(Step1PolicyHolder)
+    const checkboxes = w.findAllComponents({ name: 'VCheckbox' })
+    expect(checkboxes.length).toBe(2)
+
+    await checkboxes[0]!.find('input').setValue(true)
+    expect(store.selectedBranchId).toBe('br-1')
+
+    await checkboxes[1]!.find('input').setValue(true)
+    expect(store.selectedBranchId).toBe('br-2')
+  })
+
+  it('desmarcar o checkbox da filial volta o estabelecimento para a matriz', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER)
+    store.setBranch('br-1')
+    const w = await mountSuspended(Step1PolicyHolder)
+    const checkboxes = w.findAllComponents({ name: 'VCheckbox' })
+    await checkboxes[0]!.find('input').setValue(false)
+    expect(store.selectedBranchId).toBeNull()
   })
 })
 
@@ -460,6 +571,7 @@ describe('Etapa 2 — Dados do segurado (exec-plan 0015, incremento 6)', () => {
 describe('Salvar QuotationGroup + recálculo inteligente (exec-plan 0015)', () => {
   const payload = {
     policyHolderId: 'p',
+    branchId: null,
     insuredId: 'i',
     scope: { mode: 'all', insurerIds: [] },
     risk: { modalityId: 'm', insuredAmount: 1000, startDate: '2026-01-01', endDate: '2026-02-01', coverageMulta: false, coverageLabor: false },

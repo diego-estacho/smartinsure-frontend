@@ -10,6 +10,7 @@
  * `defineStore`/`ref`/`computed` são auto-importados (Nuxt + @pinia/nuxt) — não importar à mão.
  */
 import type { Quotation, QuotationsResult } from '~/composables/useQuotations'
+import type { PolicyHolderBranch } from '~/composables/usePolicyHolderBranches'
 
 export type QuotationScopeMode = 'all' | 'specific'
 
@@ -19,12 +20,20 @@ export interface QuotationScope {
   insurerIds: string[]
 }
 
-/** Tomador selecionado na etapa 1 (subset consumido pela UI: card + resumo). */
+/**
+ * Tomador selecionado na etapa 1 (subset consumido pela UI: card + resumo). `branches` e
+ * `selectedBranchId` são opcionais na entrada (quem chama `setPolicyHolder` pode omiti-los — ex.:
+ * literais de teste já existentes) — a store normaliza para `[]`/`null` (matriz), RN-053.
+ */
 export interface SelectedPolicyHolder {
   id: string
   name: string
   documentNumber: string
   mainAddress: string | null
+  /** Filiais já registradas para este tomador — carregada ao selecioná-lo (Task 9/RN-053). */
+  branches?: PolicyHolderBranch[]
+  /** Filial marcada nesta oferta (no máx. uma); null/ausente = estabelecimento é a matriz. */
+  selectedBranchId?: string | null
 }
 
 /** Segurado selecionado na etapa 2 (papel `Insured` de uma Pessoa). */
@@ -147,8 +156,42 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     if (index >= 0 && index <= currentStep.value) currentStep.value = index
   }
 
+  /**
+   * Substitui o tomador selecionado. Normaliza `branches`/`selectedBranchId` (default `[]`/`null`
+   * — matriz) quando o chamador não os informa; como este método sempre troca o objeto inteiro
+   * (nunca funde com o anterior), trocar de tomador já limpa a Filial marcada de saída (RN-053).
+   */
   function setPolicyHolder(value: SelectedPolicyHolder | null): void {
     policyHolder.value = value
+      ? { ...value, branches: value.branches ?? [], selectedBranchId: value.selectedBranchId ?? null }
+      : null
+  }
+
+  /** Filial marcada (no máx. uma) — RN-053; null = estabelecimento é a matriz. */
+  const selectedBranchId = computed(() => policyHolder.value?.selectedBranchId ?? null)
+
+  /** Filiais do tomador selecionado, para a lista de marcação da etapa 1. */
+  const branches = computed<PolicyHolderBranch[]>(() => policyHolder.value?.branches ?? [])
+
+  /**
+   * Marca a Filial `id` como estabelecimento da oferta — substitui qualquer marcação anterior
+   * (exclusividade: no máx. uma, RN-053). Não-op sem tomador selecionado.
+   */
+  function setBranch(id: string): void {
+    if (!policyHolder.value) return
+    policyHolder.value.selectedBranchId = id
+  }
+
+  /** Desmarca a Filial — o estabelecimento volta a ser a matriz (RN-053). */
+  function clearBranch(): void {
+    if (!policyHolder.value) return
+    policyHolder.value.selectedBranchId = null
+  }
+
+  /** Atualiza a lista de Filiais do tomador selecionado (após listar/registrar via BFF). */
+  function setBranches(list: PolicyHolderBranch[]): void {
+    if (!policyHolder.value) return
+    policyHolder.value.branches = list
   }
 
   function setInsured(value: SelectedInsured | null): void {
@@ -172,6 +215,8 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     const r = risk.value
     return JSON.stringify([
       policyHolder.value?.id ?? null,
+      // Filial marcada alimenta o motor de cotação (RN-051) — entra na assinatura junto do tomador.
+      policyHolder.value?.selectedBranchId ?? null,
       insured.value?.id ?? null,
       scope.value.mode,
       [...scope.value.insurerIds].sort(),
@@ -256,6 +301,8 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     currentStep,
     scope,
     policyHolder,
+    selectedBranchId,
+    branches,
     insured,
     risk,
     selectedQuotation,
@@ -278,6 +325,9 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     goBack,
     goToStep,
     setPolicyHolder,
+    setBranch,
+    clearBranch,
+    setBranches,
     setInsured,
     setSelectedQuotation,
     setQuotations,

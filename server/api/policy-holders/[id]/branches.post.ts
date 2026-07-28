@@ -6,8 +6,10 @@ type CreatePolicyHolderBranchResponse = components['schemas']['CreatePolicyHolde
 
 /**
  * Registra a Filial por CNPJ via Birô e a vincula à matriz. O backend responde 201 (branchId
- * presente) ou 200 (branchId nulo + notice, CNPJ não achado no Birô) — ambos são sucesso HTTP;
- * o proxy só repassa status e corpo, sem decidir nada (a decisão é da tela, ADR-004/ADR-008).
+ * presente) ou 200 (branchId nulo + notice, CNPJ não achado no Birô) — ambos são sucesso HTTP.
+ * `proxyBackend` só define status na via de erro (`setResponseStatus` no catch); no caminho de
+ * sucesso o H3 responde 200 sempre, então a distinção 201×200 do backend não chega ao cliente —
+ * a tela decide olhando o CORPO (`branchId` × `notice`), nunca o status (ADR-004/ADR-008).
  */
 export default defineEventHandler(async (event): Promise<CreatePolicyHolderBranchResponse> => {
   const { id } = getRouterParams(event)

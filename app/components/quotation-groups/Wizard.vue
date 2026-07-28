@@ -54,6 +54,7 @@ async function onPrimary(): Promise<void> {
       const result = await saveQuotationGroup(
         {
           policyHolderId: wizard.policyHolder?.id ?? null,
+          branchId: wizard.selectedBranchId,
           insuredId: wizard.insured?.id ?? null,
           scope: { mode: wizard.scope.mode, insurerIds: wizard.scope.insurerIds },
           risk: {

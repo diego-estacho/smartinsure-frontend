@@ -8,6 +8,7 @@
  */
 import { formatCnpj } from '~/lib/documents'
 import { fromIsoDate, toBrDate } from '~/lib/dates'
+import type { PolicyHolderBranch } from '~/composables/usePolicyHolderBranches'
 
 defineProps<{ collapsible?: boolean }>()
 
@@ -27,7 +28,12 @@ const rows = computed(() => {
   const list: { key: string, label: string, value: string }[] = []
   const holder = wizard.policyHolder
   if (holder) {
-    list.push({ key: 'holder-doc', label: 'CNPJ do tomador', value: formatCnpj(holder.documentNumber) })
+    // Com Filial marcada, o resumo mostra o CNPJ DELA; sem marcação, o estabelecimento é a
+    // matriz e mostra o CNPJ do tomador (RN-053) — a razão social é sempre a do tomador (a
+    // Filial não tem razão social própria no contrato hoje).
+    const markedBranch = wizard.branches.find((branch: PolicyHolderBranch) => branch.id === wizard.selectedBranchId)
+    const documentNumber = markedBranch?.documentNumber ?? holder.documentNumber
+    list.push({ key: 'holder-doc', label: 'CNPJ do tomador', value: formatCnpj(documentNumber) })
     list.push({ key: 'holder-name', label: 'Razão social do tomador', value: holder.name })
   }
   const insured = wizard.insured

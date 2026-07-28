@@ -12,6 +12,8 @@ type UpdateQuotationGroupResponse = components['schemas']['UpdateQuotationGroupR
 
 export interface QuotationGroupPayload {
   policyHolderId: string | null
+  /** Filial marcada na etapa 1 (RN-053); null = estabelecimento é a matriz. */
+  branchId: string | null
   insuredId: string | null
   scope: { mode: string, insurerIds: string[] }
   risk: {
@@ -53,10 +55,9 @@ function toRequestBody(payload: QuotationGroupPayload): QuotationGroupBody {
 
   return {
     policyHolderId: payload.policyHolderId ?? '',
-    // O contrato agora exige `branchId` (nullable) — a cotação por Filial (AB#0005) chega em
-    // tarefa própria que estende o wizard para escolher a Filial; até lá, `null` é o valor correto
-    // (matriz, sem Filial selecionada), não um placeholder que mascara uma regra.
-    branchId: null,
+    // Filial marcada na etapa 1 (RN-053) — `null` é a matriz (nenhuma Filial marcada), valor
+    // real e não mais um placeholder: o wizard passa a escolha feita pelo corretor.
+    branchId: payload.branchId,
     insuredId: payload.insuredId ?? '',
     modalityId: payload.risk.modalityId ?? '',
     insuredAmount,
