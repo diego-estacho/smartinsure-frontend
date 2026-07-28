@@ -94,7 +94,9 @@ export interface FetchQuotationsInput {
 }
 
 export function useQuotations() {
-  const api = useNuxtApp().$api as typeof $fetch
+  // Assinatura frouxa (interim): os endpoints de cotação ainda não estão no schema gerado, então o
+  // cliente tipado rejeitaria os métodos. Trocar por `useNuxtApp().$api` tipado após o types:gen.
+  const api = useNuxtApp().$api as <T = unknown>(url: string, options?: Record<string, unknown>) => Promise<T>
   const { listInsurers } = useInsurers()
 
   async function fetchQuotations(input: FetchQuotationsInput): Promise<QuotationsResult> {

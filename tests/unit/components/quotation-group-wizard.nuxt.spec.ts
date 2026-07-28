@@ -1,6 +1,6 @@
 // @vitest-environment nuxt
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mountSuspended } from '@nuxt/test-utils/runtime'
+import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import Wizard from '~/components/quotation-groups/Wizard.vue'
 import EntryStep from '~/components/quotation-groups/EntryStep.vue'
 import SummarySidebar from '~/components/quotation-groups/SummarySidebar.vue'
@@ -267,12 +267,28 @@ describe('Etapa 4 — Cotações (exec-plan 0015, incremento 4)', () => {
     forceDesktopViewport()
   })
 
-  it('useQuotations (mock) retorna as fixtures do handoff', async () => {
+  it('useQuotations dispara o fan-out e mapeia o status para available/unavailable', async () => {
+    registerEndpoint('/api/quotation-groups/G1/quotations', () => ({
+      completed: true,
+      quotations: [
+        { id: 'q1', insurerId: 'ins-a', processingStatus: 'Obtained', result: 'Automatic', analysisTrack: null, premium: 300, commissionPercentage: 25, tax: 0.42, availableLimit: 1000, requiresCcg: false, reasons: [] },
+        { id: 'q2', insurerId: 'ins-b', processingStatus: 'Obtained', result: 'Analysis', analysisTrack: 'Underwriting', requiresCcg: true, reasons: [] },
+        { id: 'q3', insurerId: 'ins-c', processingStatus: 'Failed', result: 'Unavailable', requiresCcg: false, reasons: ['Produto indisponível para este tomador.'] },
+      ],
+    }))
+    registerEndpoint('/api/insurers', () => ({
+      items: [{ id: 'ins-a', corporateName: 'Seguradora A' }, { id: 'ins-b', corporateName: 'Seguradora B' }, { id: 'ins-c', corporateName: 'Seguradora C' }],
+    }))
+
     const { fetchQuotations } = useQuotations()
-    const result = await fetchQuotations({ delayMs: 0 })
-    expect(result.available.length).toBe(3)
-    expect(result.unavailable.length).toBe(4)
-    expect(result.available[0]).toHaveProperty('premio')
+    const result = await fetchQuotations({ groupId: 'G1', brokerageId: 'B1', pollIntervalMs: 0 })
+
+    expect(result.available).toHaveLength(2)
+    expect(result.available[0]!.name).toBe('Seguradora A')
+    expect(result.available.find(q => q.id === 'q2')!.statusLabel).toContain('subscrição')
+    expect(result.available.find(q => q.id === 'q2')!.requiresCcg).toBe(true)
+    expect(result.unavailable).toHaveLength(1)
+    expect(result.unavailable[0]!.reason).toContain('indisponível')
   })
 
   it('validateCurrentStep exige cotação selecionada no passo de cotações', () => {
@@ -299,8 +315,13 @@ describe('Etapa 4 — Cotações (exec-plan 0015, incremento 4)', () => {
     expect(w.text()).toContain('Newe Seguros')
   })
 
-  it('a etapa 4 exibe o estado de carregamento ("espera → lote") ao montar', async () => {
-    useQuotationGroupWizardStore().startOffer()
+  it('a etapa 4 exibe o estado de carregamento ao disparar o fan-out ao montar', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.startOffer()
+    store.setQuotationGroupId('G1')
+    registerEndpoint('/api/quotation-groups/G1/quotations', () => ({ completed: true, quotations: [] }))
+    registerEndpoint('/api/insurers', () => ({ items: [] }))
+
     const w = await mountSuspended(Step4Quotations)
     expect(w.text()).toContain('Consultando seguradoras')
   })
