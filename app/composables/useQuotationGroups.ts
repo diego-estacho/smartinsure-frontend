@@ -53,6 +53,10 @@ function toRequestBody(payload: QuotationGroupPayload): QuotationGroupBody {
 
   return {
     policyHolderId: payload.policyHolderId ?? '',
+    // O contrato agora exige `branchId` (nullable) — a cotação por Filial (AB#0005) chega em
+    // tarefa própria que estende o wizard para escolher a Filial; até lá, `null` é o valor correto
+    // (matriz, sem Filial selecionada), não um placeholder que mascara uma regra.
+    branchId: null,
     insuredId: payload.insuredId ?? '',
     modalityId: payload.risk.modalityId ?? '',
     insuredAmount,

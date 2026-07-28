@@ -481,6 +481,7 @@ describe('Salvar QuotationGroup + recálculo inteligente (exec-plan 0015)', () =
       method: 'POST',
       body: {
         policyHolderId: 'p',
+        branchId: null,
         insuredId: 'i',
         modalityId: 'm',
         insuredAmount: 1000,
