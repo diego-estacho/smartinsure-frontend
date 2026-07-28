@@ -1,7 +1,7 @@
 // @vitest-environment nuxt
 import { describe, it, expect, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
-import { createError } from 'h3'
+import { createError, setResponseStatus } from 'h3'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import PolicyHolderDetailPage from '~/pages/tomadores/[id].vue'
 import { formatCnpj } from '~/lib/documents'
@@ -170,6 +170,68 @@ describe('Ficha do Tomador — registrar Filial por CNPJ, três desfechos (RN-05
       once: true,
       handler: () => {
         throw createError({ statusCode: 500, statusMessage: 'Erro interno simulado' })
+      },
+    })
+
+    const w = await mountSuspended(PolicyHolderDetailPage, { route: `/tomadores/${POLICY_HOLDER_ID}` })
+    await flushPromises()
+    await openFillAndSubmitBranchModal(w, '11222333000262')
+
+    const errorAlert = await vi.waitFor(() => {
+      const alert = w.findAllComponents({ name: 'VAlert' }).find(a => a.classes().includes('si-alert--error'))
+      expect(alert).toBeTruthy()
+      return alert!
+    })
+    expect(errorAlert.text()).toContain('Não foi possível registrar a filial.')
+  })
+
+  it('422 com detail (RN-052): mostra o motivo do backend em vez da mensagem genérica', async () => {
+    registerEndpoint('/api/auth/session', { method: 'GET', handler: () => ({ authenticated: true }) })
+    registerEndpoint(`/api/policy-holders/${POLICY_HOLDER_ID}`, {
+      method: 'GET',
+      handler: () => detailJson(),
+    })
+    registerEndpoint(`/api/policy-holders/${POLICY_HOLDER_ID}/branches`, {
+      method: 'POST',
+      once: true,
+      // Reproduz o contrato do BFF (`proxyBackend`): na via de erro ele NÃO lança — define o status
+      // original do backend via `setResponseStatus` e devolve o corpo (ProblemDetails) tal como veio,
+      // então `detail` chega intacto na raiz de `err.data` do cliente (sem o envelope `{data: ...}`
+      // que `createError`/`sendError` do h3 produziriam).
+      handler: (event) => {
+        setResponseStatus(event, 422)
+        return {
+          title: 'CNPJ inválido para Filial',
+          status: 422,
+          detail: 'O CNPJ /0001 informado é a matriz — a matriz não pode ser filial de si mesma.',
+        }
+      },
+    })
+
+    const w = await mountSuspended(PolicyHolderDetailPage, { route: `/tomadores/${POLICY_HOLDER_ID}` })
+    await flushPromises()
+    await openFillAndSubmitBranchModal(w, '11222333000190')
+
+    const errorAlert = await vi.waitFor(() => {
+      const alert = w.findAllComponents({ name: 'VAlert' }).find(a => a.classes().includes('si-alert--error'))
+      expect(alert).toBeTruthy()
+      return alert!
+    })
+    expect(errorAlert.text()).toContain('O CNPJ /0001 informado é a matriz — a matriz não pode ser filial de si mesma.')
+  })
+
+  it('422 sem detail no corpo: cai na mensagem genérica (RN-052, corpo sem o campo esperado)', async () => {
+    registerEndpoint('/api/auth/session', { method: 'GET', handler: () => ({ authenticated: true }) })
+    registerEndpoint(`/api/policy-holders/${POLICY_HOLDER_ID}`, {
+      method: 'GET',
+      handler: () => detailJson(),
+    })
+    registerEndpoint(`/api/policy-holders/${POLICY_HOLDER_ID}/branches`, {
+      method: 'POST',
+      once: true,
+      handler: (event) => {
+        setResponseStatus(event, 422)
+        return { title: 'Unprocessable Entity', status: 422 }
       },
     })
 

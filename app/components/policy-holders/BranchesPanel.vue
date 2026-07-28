@@ -72,8 +72,15 @@ async function submitForm() {
       notice.value = result.notice ?? 'Não foi possível registrar a filial: resposta inesperada do servidor.'
     }
   }
-  catch {
-    error.value = 'Não foi possível registrar a filial.'
+  catch (err) {
+    // 422 é o Backend rejeitando por RN-052 (raiz de CNPJ diferente da do tomador, ou `/0001` como
+    // Filial) com o motivo em `detail` — mostramos o texto do servidor, sem reimplementar a checagem
+    // aqui (ADR-004). Sem `detail` (ou erro de outra natureza — rede, 500, corpo malformado), cai na
+    // mensagem genérica.
+    const errorObj = err as { status?: number, data?: { detail?: string } }
+    error.value = typeof err === 'object' && err !== null && 'status' in err && errorObj.status === 422
+      ? errorObj.data?.detail || 'Não foi possível registrar a filial.'
+      : 'Não foi possível registrar a filial.'
   }
   finally {
     saving.value = false

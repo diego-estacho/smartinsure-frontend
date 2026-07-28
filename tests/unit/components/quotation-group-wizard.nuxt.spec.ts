@@ -1,7 +1,7 @@
 // @vitest-environment nuxt
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
-import { createError } from 'h3'
+import { createError, setResponseStatus } from 'h3'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import Wizard from '~/components/quotation-groups/Wizard.vue'
 import EntryStep from '~/components/quotation-groups/EntryStep.vue'
@@ -526,6 +526,62 @@ describe('Etapa 1 — addBranch() e seus três desfechos (Task 9/10, RN-053)', (
 
     const w = await mountSuspended(Step1PolicyHolder)
     await openFillAndSubmitBranchModal(w, '11222333000262')
+
+    const errorAlert = await vi.waitFor(() => {
+      const alert = w.findAllComponents({ name: 'VAlert' }).find(a => a.classes().includes('si-alert--error'))
+      expect(alert).toBeTruthy()
+      return alert!
+    })
+    expect(errorAlert.text()).toContain('Não foi possível registrar a filial.')
+    expect(store.selectedBranchId).toBeNull()
+  })
+
+  it('422 com detail (RN-052): mostra o motivo do backend em vez da mensagem genérica', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER_FOR_MODAL)
+    registerEndpoint(`/api/policy-holders/${HOLDER_FOR_MODAL.id}/branches`, {
+      method: 'POST',
+      once: true,
+      // Reproduz o contrato do BFF (`proxyBackend`): na via de erro ele NÃO lança — define o status
+      // original do backend via `setResponseStatus` e devolve o corpo (ProblemDetails) tal como veio,
+      // então `detail` chega intacto na raiz de `err.data` do cliente (sem o envelope `{data: ...}`
+      // que `createError`/`sendError` do h3 produziriam).
+      handler: (event) => {
+        setResponseStatus(event, 422)
+        return {
+          title: 'CNPJ inválido para Filial',
+          status: 422,
+          detail: 'O CNPJ informado pertence a uma raiz diferente da do tomador.',
+        }
+      },
+    })
+
+    const w = await mountSuspended(Step1PolicyHolder)
+    await openFillAndSubmitBranchModal(w, '99888777000199')
+
+    const errorAlert = await vi.waitFor(() => {
+      const alert = w.findAllComponents({ name: 'VAlert' }).find(a => a.classes().includes('si-alert--error'))
+      expect(alert).toBeTruthy()
+      return alert!
+    })
+    expect(errorAlert.text()).toContain('O CNPJ informado pertence a uma raiz diferente da do tomador.')
+    expect(store.selectedBranchId).toBeNull()
+  })
+
+  it('422 sem detail no corpo: cai na mensagem genérica (RN-052, corpo sem o campo esperado)', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER_FOR_MODAL)
+    registerEndpoint(`/api/policy-holders/${HOLDER_FOR_MODAL.id}/branches`, {
+      method: 'POST',
+      once: true,
+      handler: (event) => {
+        setResponseStatus(event, 422)
+        return { title: 'Unprocessable Entity', status: 422 }
+      },
+    })
+
+    const w = await mountSuspended(Step1PolicyHolder)
+    await openFillAndSubmitBranchModal(w, '99888777000199')
 
     const errorAlert = await vi.waitFor(() => {
       const alert = w.findAllComponents({ name: 'VAlert' }).find(a => a.classes().includes('si-alert--error'))
