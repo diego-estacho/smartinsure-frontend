@@ -283,6 +283,22 @@ function closeBranchModal(): void {
         {{ selected.mainAddress }}
       </p>
 
+      <!-- Limite de Crédito e taxa são SEMPRE da matriz: a Seguradora não consulta limite pelo CNPJ
+      da Filial, porque o risco é calculado sobre a matriz mesmo quando a emissão é para a Filial
+      (decisão do dono em 2026-07-28, ver OPEN-17). Por isso a ação fica junto dos dados da matriz,
+      ACIMA da seção de Filiais — a escolha da Filial não muda o que este botão mostra. -->
+      <div class="si-qg-step1__card-actions">
+        <SiButton
+          variant="outlined"
+          color="secondary"
+          size="small"
+          :prepend-icon="'barChart'"
+          @click="limitsModalOpen = true"
+        >
+          Ver limites e taxas
+        </SiButton>
+      </div>
+
       <!-- Falha ao listar Filiais nunca é silenciosa (Finding 2 da revisão final): mostrada sempre,
       mesmo quando não há Filial marcada para preservar. -->
       <SiAlert
@@ -292,11 +308,9 @@ function closeBranchModal(): void {
         :text="branchesError"
       />
 
-      <!-- Filiais do tomador (RN-053): marcação exclusiva — no máx. uma; desmarcar volta à matriz. -->
-      <div
-        v-if="selected.branches?.length"
-        class="si-qg-step1__branches"
-      >
+      <!-- Filiais do tomador (RN-053): marcação exclusiva — no máx. uma; desmarcar volta à matriz.
+      A seção aparece mesmo sem Filial cadastrada, senão não haveria por onde adicionar a primeira. -->
+      <div class="si-qg-step1__branches">
         <span class="si-qg-step1__branches-label">Filial da cotação</span>
         <p class="si-qg-step1__branches-hint">
           Caso deseje utilizar uma filial, selecione abaixo ou adicione uma.
@@ -310,27 +324,17 @@ function closeBranchModal(): void {
           hide-details
           @update:model-value="toggleBranch(branch.id, $event as boolean | null)"
         />
-      </div>
-
-      <div class="si-qg-step1__card-actions">
-        <SiButton
-          variant="outlined"
-          color="secondary"
-          size="small"
-          :prepend-icon="'barChart'"
-          @click="limitsModalOpen = true"
-        >
-          Ver limites e taxas
-        </SiButton>
-        <SiButton
-          variant="outlined"
-          color="secondary"
-          size="small"
-          :prepend-icon="'plus'"
-          @click="openBranchModal"
-        >
-          Adicionar filial
-        </SiButton>
+        <div class="si-qg-step1__branches-actions">
+          <SiButton
+            variant="outlined"
+            color="secondary"
+            size="small"
+            :prepend-icon="'plus'"
+            @click="openBranchModal"
+          >
+            Adicionar filial
+          </SiButton>
+        </div>
       </div>
     </SiCard>
 
@@ -503,6 +507,11 @@ function closeBranchModal(): void {
 .si-qg-step1__branches-label {
   font-size: var(--si-fs-small);
   font-weight: var(--si-font-weight-semibold);
+}
+
+.si-qg-step1__branches-actions {
+  display: flex;
+  margin-top: var(--si-space-3);
 }
 
 .si-qg-step1__branches-hint {
