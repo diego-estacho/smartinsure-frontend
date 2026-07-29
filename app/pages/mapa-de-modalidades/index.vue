@@ -12,6 +12,7 @@
  */
 import type { ModalityListItem } from '~/composables/useModalities'
 import type { ModalityMapEntry, PendingImportedModality } from '~/composables/useModalityMap'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 definePageMeta({ layout: 'shell' })
 
@@ -59,11 +60,11 @@ async function refresh() {
     entries.value = [...map.modalities]
     pending.value = [...map.pending]
   }
-  catch {
+  catch (err) {
     // Sucesso e erro são mutuamente exclusivos: uma falha na recarga encerra o sucesso anterior
     // (ex.: ação bem-sucedida seguida de refresh com erro não mostra os dois banners juntos).
     success.value = null
-    error.value = 'Não foi possível carregar o Mapa de Modalidades.'
+    error.value = extractApiErrorMessage(err, 'Não foi possível carregar o Mapa de Modalidades.')
   }
   finally {
     loading.value = false
@@ -94,9 +95,9 @@ async function loadReassignModalities(force = false): Promise<void> {
     modalities.value = all
     modalitiesLoaded.value = true
   }
-  catch {
+  catch (err) {
     success.value = null
-    error.value = 'Não foi possível carregar as Modalidades para reatribuição.'
+    error.value = extractApiErrorMessage(err, 'Não foi possível carregar as Modalidades para reatribuição.')
   }
   finally {
     modalitiesLoading.value = false
@@ -131,8 +132,8 @@ async function confirmReassign(modalityId: string) {
     reassignDialogOpen.value = false
     await refresh()
   }
-  catch {
-    error.value = 'Não foi possível reatribuir a Modalidade Importada.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível reatribuir a Modalidade Importada.')
   }
   finally {
     saving.value = false
@@ -153,8 +154,8 @@ async function confirmIgnore() {
     ignoreDialogOpen.value = false
     await refresh()
   }
-  catch {
-    error.value = 'Não foi possível ignorar a Modalidade Importada.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível ignorar a Modalidade Importada.')
   }
   finally {
     saving.value = false
@@ -172,8 +173,8 @@ async function restore(item: PendingImportedModality) {
     success.value = 'Modalidade Importada reativada.'
     await refresh()
   }
-  catch {
-    error.value = 'Não foi possível reativar a Modalidade Importada.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível reativar a Modalidade Importada.')
   }
   finally {
     saving.value = false

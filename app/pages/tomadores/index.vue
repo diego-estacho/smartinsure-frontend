@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { PolicyHolderListItem } from '~/composables/usePolicyHolders'
 import { formatCnpj } from '~/lib/documents'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 definePageMeta({ layout: 'shell' })
 
@@ -37,8 +38,8 @@ async function refresh() {
     items.value = response.items
     totalCount.value = Number(response.totalCount)
   }
-  catch {
-    error.value = 'Não foi possível carregar os tomadores.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível carregar os tomadores.')
   }
   finally {
     loading.value = false

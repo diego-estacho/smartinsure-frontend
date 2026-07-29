@@ -2,6 +2,7 @@
 import type { PolicyHolderAddress, AddPolicyHolderAddressBody, UpdatePolicyHolderAddressBody } from '~/composables/usePolicyHolders'
 import { MASK_CEP } from '~/lib/masks'
 import { required } from '~/lib/rules'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 const props = withDefaults(defineProps<{ policyHolderId: string, addresses: PolicyHolderAddress[], hideToolbar?: boolean }>(), {
   hideToolbar: false,
@@ -112,10 +113,10 @@ async function submitForm() {
     formOpen.value = false
     emit('changed')
   }
-  catch {
-    error.value = isEditing.value
+  catch (err) {
+    error.value = extractApiErrorMessage(err, isEditing.value
       ? 'Não foi possível atualizar o endereço.'
-      : 'Não foi possível adicionar o endereço.'
+      : 'Não foi possível adicionar o endereço.')
   }
   finally {
     loading.value = false
@@ -132,8 +133,8 @@ async function removeAddress(address: PolicyHolderAddress) {
     success.value = 'Endereço removido.'
     emit('changed')
   }
-  catch {
-    error.value = 'Não foi possível remover o endereço.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível remover o endereço.')
   }
   finally {
     loading.value = false

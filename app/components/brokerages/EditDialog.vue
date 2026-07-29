@@ -4,6 +4,7 @@
  * Não toca os dados da Receita (razão social, natureza jurídica, endereço), que são import-once.
  */
 import type { GetBrokerageResponse } from '~/composables/useBrokerages'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 const props = defineProps<{ brokerage: GetBrokerageResponse }>()
 const open = defineModel<boolean>({ default: false })
@@ -42,8 +43,8 @@ async function save() {
     emit('updated', updated)
     open.value = false
   }
-  catch {
-    error.value = 'Não foi possível salvar os dados. Confira o e-mail informado.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível salvar os dados. Confira o e-mail informado.')
   }
   finally {
     saving.value = false

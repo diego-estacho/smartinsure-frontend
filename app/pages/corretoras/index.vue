@@ -11,6 +11,7 @@ import {
   brokerageSectorOptions,
   getBrokerageSituationAction,
 } from '~/lib/status/brokerages'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 definePageMeta({ layout: 'shell' })
 
@@ -184,7 +185,7 @@ async function confirmInactivate() {
     inactivateTarget.value = null
     await refresh()
   }
-  catch { toast.value = 'Não foi possível alterar a situação da corretora.' }
+  catch (err) { toast.value = extractApiErrorMessage(err, 'Não foi possível alterar a situação da corretora.') }
   finally { busy.value = false }
 }
 
@@ -210,8 +211,8 @@ async function exportList() {
     anchor.click()
     URL.revokeObjectURL(url)
   }
-  catch {
-    toast.value = 'Não foi possível exportar a lista.'
+  catch (err) {
+    toast.value = extractApiErrorMessage(err, 'Não foi possível exportar a lista.')
   }
 }
 

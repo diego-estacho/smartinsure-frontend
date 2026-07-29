@@ -8,6 +8,7 @@
  */
 import type { ModalityListItem } from '~/composables/useModalities'
 import { getModalityStatusAction } from '~/lib/status/modalities'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 definePageMeta({ layout: 'shell' })
 
@@ -49,11 +50,11 @@ async function refresh() {
     items.value = [...modalitiesPage.items]
     totalCount.value = Number(modalitiesPage.totalCount)
   }
-  catch {
+  catch (err) {
     // Sucesso e erro são mutuamente exclusivos: uma falha na recarga encerra o sucesso anterior
     // (ex.: ação bem-sucedida seguida de refresh com erro não mostra os dois banners juntos).
     success.value = null
-    error.value = 'Não foi possível carregar as Modalidades.'
+    error.value = extractApiErrorMessage(err, 'Não foi possível carregar as Modalidades.')
   }
   finally {
     loading.value = false
@@ -110,10 +111,10 @@ async function submitForm(payload: { name: string, description: string | null })
     formOpen.value = false
     await refresh()
   }
-  catch {
-    error.value = editing
+  catch (err) {
+    error.value = extractApiErrorMessage(err, editing
       ? 'Não foi possível atualizar a Modalidade.'
-      : 'Não foi possível cadastrar a Modalidade.'
+      : 'Não foi possível cadastrar a Modalidade.')
   }
   finally {
     saving.value = false
@@ -143,8 +144,8 @@ async function confirmStatusChange() {
     statusDialogOpen.value = false
     await refresh()
   }
-  catch {
-    error.value = 'Não foi possível alterar a situação da Modalidade.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível alterar a situação da Modalidade.')
   }
   finally {
     saving.value = false

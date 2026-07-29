@@ -3,6 +3,7 @@ import type { EnablementListItemResponse, CalculationEngineListItemResponse } fr
 import type { InsurerListItemResponse } from '~/composables/useInsurers'
 import { maxLength, required, url } from '~/lib/rules'
 import { getEnablementStatusAction, getEnablementStatusView } from '~/lib/status/insurer-enablements'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 const props = withDefaults(defineProps<{ brokerageId: string, hideToolbar?: boolean }>(), {
   hideToolbar: false,
@@ -83,8 +84,8 @@ async function refresh() {
     insurers.value = [...insurersPage.items]
     engines.value = engineList
   }
-  catch {
-    error.value = 'Não foi possível carregar as habilitações da corretora.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível carregar as habilitações da corretora.')
   }
   finally {
     loading.value = false
@@ -116,8 +117,8 @@ async function openEditDialog(item: EnablementListItemResponse) {
     const details = await getEnablement(item.id)
     applyConnectionParameters(details.connectionParameters)
   }
-  catch {
-    error.value = 'Não foi possível carregar os parâmetros da habilitação.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível carregar os parâmetros da habilitação.')
     formOpen.value = false
   }
 }
@@ -176,10 +177,10 @@ async function submitForm() {
     formOpen.value = false
     await refresh()
   }
-  catch {
-    error.value = isEditing.value
+  catch (err) {
+    error.value = extractApiErrorMessage(err, isEditing.value
       ? 'Não foi possível atualizar a habilitação.'
-      : 'Não foi possível habilitar a seguradora.'
+      : 'Não foi possível habilitar a seguradora.')
   }
   finally {
     saving.value = false
@@ -210,8 +211,8 @@ async function confirmStatusChange() {
     confirmOpen.value = false
     await refresh()
   }
-  catch {
-    error.value = 'Não foi possível alterar a situação da habilitação.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível alterar a situação da habilitação.')
   }
   finally {
     saving.value = false

@@ -4,6 +4,7 @@
  * evento (nome estável) vira rótulo pt-BR aqui; a cor do ponto segue o tipo (DS).
  */
 import type { BrokerageHistoryEvent } from '~/composables/useBrokerages'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 const props = defineProps<{ brokerageId: string }>()
 
@@ -20,8 +21,8 @@ async function load() {
     const response = await getBrokerageHistory(props.brokerageId)
     events.value = response.events
   }
-  catch {
-    error.value = 'Não foi possível carregar o histórico.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível carregar o histórico.')
   }
 }
 
