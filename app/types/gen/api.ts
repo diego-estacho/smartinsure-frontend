@@ -96,8 +96,8 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description OK */
-                200: {
+                /** @description Created */
+                201: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -559,6 +559,47 @@ export interface paths {
                     content: {
                         "application/json": components["schemas"]["BrokeragePreviewResponse"];
                     };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/brokerages/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    q?: string;
+                    situation?: string;
+                    insurerId?: string;
+                    calculationEngine?: string;
+                    sector?: string;
+                    registeredFrom?: string;
+                    registeredTo?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -1806,7 +1847,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GetQuotationGroupResponse"];
+                    };
+                };
+            };
+        };
         put: {
             parameters: {
                 query?: never;
@@ -1834,6 +1896,186 @@ export interface paths {
             };
         };
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotation-groups/{groupId}/quotations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    groupId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ListQuotationsResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    groupId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["RunQuotationsBody"];
+                };
+            };
+            responses: {
+                /** @description Accepted */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RunQuotationsResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotation-groups/{groupId}/quotations/{quotationId}/select": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    groupId: string;
+                    quotationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SelectQuotationResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotation-groups/{groupId}/quotations/{quotationId}/minuta": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    groupId: string;
+                    quotationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["QuotationMinutaResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotation-groups/{groupId}/quotations/{quotationId}/minuta/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    groupId: string;
+                    quotationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SubmitQuotationMinutaBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SubmitQuotationTermsResponse"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -2418,6 +2660,32 @@ export interface components {
             addresses: components["schemas"]["PolicyHolderAddressResponse"][];
             appointments: components["schemas"]["PolicyHolderAppointmentResponse"][];
         };
+        GetQuotationGroupResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            policyHolderId: string;
+            /** Format: uuid */
+            insuredId: string;
+            /** Format: uuid */
+            modalityId: string;
+            modalityName: string;
+            /** Format: double */
+            insuredAmount: number | string;
+            /** Format: date */
+            coverageStartDate: string;
+            /** Format: date */
+            coverageEndDate: string;
+            scopeMode: string;
+            insurerIds: string[];
+            includesPenaltyCoverage: boolean;
+            includesLaborCoverage: boolean;
+            status: string;
+            /** Format: uuid */
+            selectedQuotationId: null | string;
+            policyHolder: components["schemas"]["QuotationGroupPersonResponse"];
+            insured: components["schemas"]["QuotationGroupPersonResponse"];
+        };
         IgnoreImportedAdditionalCoverageResponse: {
             /** Format: uuid */
             importedCoverageId: string;
@@ -2488,6 +2756,13 @@ export interface components {
             counts: components["schemas"]["BrokerageSituationCountsResponse"];
             /** Format: int64 */
             totalPages?: number | string;
+        };
+        ListQuotationsResponse: {
+            /** Format: uuid */
+            quotationGroupId: string;
+            /** Format: uuid */
+            selectedQuotationId: null | string;
+            quotations: components["schemas"]["QuotationListItemResponse"][];
         };
         MapInsurerResponse: {
             /** Format: uuid */
@@ -2659,6 +2934,68 @@ export interface components {
             socialName: null | string;
             isPrivateSector: null | boolean;
         };
+        QuotationClauseInput: {
+            particularClauseExternalId: string;
+            tags: components["schemas"]["QuotationTermInput"][];
+        };
+        QuotationGroupPersonAddressResponse: {
+            zipCode: null | string;
+            street: null | string;
+            number: null | string;
+            complement: null | string;
+            neighborhood: null | string;
+            city: null | string;
+            state: null | string;
+        };
+        QuotationGroupPersonResponse: {
+            /** Format: uuid */
+            id: string;
+            documentNumber: string;
+            name: string;
+            socialName: null | string;
+            mainAddress: null | components["schemas"]["QuotationGroupPersonAddressResponse"];
+        };
+        QuotationListItemResponse: {
+            /** Format: uuid */
+            quotationId: string;
+            /** Format: uuid */
+            insurerId: string;
+            insurerName: string;
+            insurerLogoUrl: null | string;
+            processingStatus: string;
+            result: null | string;
+            analysisTrack: null | string;
+            isFollowable: boolean;
+            /** Format: double */
+            premium: null | number | string;
+            /** Format: double */
+            commissionPercentage: null | number | string;
+            /** Format: double */
+            commissionValue: null | number | string;
+            /** Format: double */
+            tax: null | number | string;
+            /** Format: double */
+            availableLimit: null | number | string;
+            requiresCcg: boolean;
+            /** Format: double */
+            ccgMaxLimitWithoutNeed: null | number | string;
+            ccgSigned: boolean;
+            reasons: string[];
+        };
+        QuotationMinutaClauseResponse: {
+            externalId: string;
+            name: string;
+            clauseText: null | string;
+            jsonTag: null | string;
+        };
+        QuotationMinutaResponse: {
+            tagJson: null | string;
+            clauses: components["schemas"]["QuotationMinutaClauseResponse"][];
+        };
+        QuotationTermInput: {
+            name: string;
+            value: string;
+        };
         ReassignImportedModalityBody: {
             /** Format: uuid */
             modalityId: string;
@@ -2680,9 +3017,25 @@ export interface components {
             importedModalityId: string;
             ignored: boolean;
         };
+        RunQuotationsBody: {
+            /** Format: uuid */
+            brokerageId: string;
+        };
+        RunQuotationsResponse: {
+            /** Format: uuid */
+            quotationGroupId: string;
+            /** Format: int32 */
+            requestedCount: number | string;
+        };
         SearchPersonsResponse: {
             items: components["schemas"]["PersonSearchItemResponse"][];
             notice?: null | string;
+        };
+        SelectQuotationResponse: {
+            /** Format: uuid */
+            quotationGroupId: string;
+            /** Format: uuid */
+            selectedQuotationId: string;
         };
         SetUserProfileBody: {
             profile: null | string;
@@ -2691,6 +3044,18 @@ export interface components {
             /** Format: uuid */
             id: string;
             profile: null | string;
+        };
+        SubmitQuotationMinutaBody: {
+            /** Format: uuid */
+            brokerageId: string;
+            terms: components["schemas"]["QuotationTermInput"][];
+            particularClauses: components["schemas"]["QuotationClauseInput"][];
+        };
+        SubmitQuotationTermsResponse: {
+            draftUrl: null | string;
+            draftExternalId: null | string;
+            /** Format: date-time */
+            draftCreatedAt: null | string;
         };
         UnlinkImportedAdditionalCoverageResponse: {
             /** Format: uuid */

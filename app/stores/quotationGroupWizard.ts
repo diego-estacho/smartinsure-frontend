@@ -108,9 +108,15 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
   const quotationsGenerated = ref(false)
   const quotationSignature = ref<string | null>(null)
   const quotationGroupId = ref<string | null>(null)
+  // Corretora dona das Habilitações (RN-023/OPEN-03) — origem do fan-out/seleção/minuta. Ainda não há
+  // seleção de corretora no wizard (pendência OPEN-03); populável quando essa decisão for tomada.
+  const brokerageId = ref<string | null>(null)
   // Minuta (valores das tags) e cláusulas selecionadas — sincronizados entre as etapas 4 e 5.
   const minuta = ref<Record<string, string>>({})
   const clauses = ref<Record<string, boolean>>({})
+  // Valores das tags próprias de cada cláusula particular (RN-062): externalId → (nome da tag → valor).
+  // As cláusulas trazem placeholders [TAG_X] no texto; o corretor preenche e o valor entra na minuta.
+  const clauseTags = ref<Record<string, Record<string, string>>>({})
   // Emissão (etapa 5): dados do formulário, estado do processo, apólice e o termo de aceite.
   const issuance = ref<IssuanceData>(emptyIssuance())
   const issuanceState = ref<IssuanceState>('form')
@@ -165,6 +171,10 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
 
   function setQuotationGroupId(id: string | null): void {
     quotationGroupId.value = id
+  }
+
+  function setBrokerageId(id: string | null): void {
+    brokerageId.value = id
   }
 
   /** Assinatura dos dados que alimentam o motor de cotação (base do recálculo inteligente). */
@@ -242,8 +252,10 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     quotationsGenerated.value = false
     quotationSignature.value = null
     quotationGroupId.value = null
+    brokerageId.value = null
     minuta.value = {}
     clauses.value = {}
+    clauseTags.value = {}
     issuance.value = emptyIssuance()
     issuanceState.value = 'form'
     policyId.value = null
@@ -262,9 +274,11 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     quotations,
     quotationsGenerated,
     quotationGroupId,
+    brokerageId,
     signatureChanged,
     minuta,
     clauses,
+    clauseTags,
     issuance,
     issuanceState,
     policyId,
@@ -282,6 +296,7 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     setSelectedQuotation,
     setQuotations,
     setQuotationGroupId,
+    setBrokerageId,
     markQuotationsGenerated,
     validateCurrentStep,
     reset,

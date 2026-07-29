@@ -61,6 +61,10 @@ export default defineNuxtConfig({
       // a implementação permanece; reexibir (NUXT_PUBLIC_MODALITY_REVIEW_QUEUE=true) se o cadastro
       // manual de Modalidades / tratamento de exceções for decidido.
       modalityReviewQueue: false,
+      // Contorno TEMPORÁRIO (OPEN-03): brokerageId da oferta enquanto não há feature de usuário→corretora.
+      // O usuário logado É uma corretora; quando a sessão trouxer esse id, isto sai. Env:
+      // NUXT_PUBLIC_DEV_BROKERAGE_ID (id da Corretora no banco local, com Habilitação ativa + PlugKey).
+      devBrokerageId: '',
     },
   },
 

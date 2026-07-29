@@ -29,6 +29,11 @@ function onForgotPassword() {
 }
 
 async function submit() {
+  // Guarda de reentrada: cliques repetidos / Enter durante o envio não disparam logins sobrepostos.
+  if (submitting.value) {
+    return
+  }
+
   error.value = null
 
   const validation = await form.value?.validate()
@@ -147,11 +152,18 @@ async function submit() {
             :text="notice"
           />
 
+          <!--
+            type="button" + @click (não type="submit"): evita o submit NATIVO do <form> disparado por
+            um clique ANTES da hidratação concluir — que recarregava a página (/login?) e cancelava o
+            POST de login em voo (bug intermitente do login). O @submit.prevent do form cobre o Enter
+            depois de hidratar.
+          -->
           <SiButton
-            type="submit"
+            type="button"
             block
             size="large"
             :loading="submitting"
+            @click="submit"
           >
             Entrar
           </SiButton>
