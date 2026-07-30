@@ -11,7 +11,7 @@ import MinutaClauses from '~/components/quotation-groups/MinutaClauses.vue'
 import Step5Issuance from '~/components/quotation-groups/Step5Issuance.vue'
 import Step2Insured from '~/components/quotation-groups/Step2Insured.vue'
 import Step1PolicyHolder from '~/components/quotation-groups/Step1PolicyHolder.vue'
-import { useQuotations, type Quotation } from '~/composables/useQuotations'
+import type { Quotation } from '~/composables/useQuotations'
 import { useIssuance } from '~/composables/useIssuance'
 import { usePersons } from '~/composables/usePersons'
 import { useQuotationGroups } from '~/composables/useQuotationGroups'
@@ -367,9 +367,12 @@ describe('Etapa 1 — select() nasce marcada/desmarcada conforme preSelectedBran
   async function searchAndSelectFirstResult(w: Awaited<ReturnType<typeof mountSuspended>>, term: string) {
     await w.find('input').setValue(term)
     await w.find('form').trigger('submit')
-    await flushPromises()
-    const item = w.findComponent({ name: 'SiListItem' })
-    await item.trigger('click')
+    // Espera a lista aparecer em vez de contar ticks: o `$api` tem interceptors (`onRequest`
+    // encaminha o cookie no SSR, `onResponseError` trata 401 — plugins/api.ts), então a resposta
+    // chega alguns microtasks depois do submit. Um `flushPromises()` fixo já bastou um dia e
+    // parou de bastar quando o `onRequest` entrou; condição não quebra de novo nesse caso.
+    await vi.waitFor(() => expect(w.findComponent({ name: 'SiListItem' }).exists()).toBe(true))
+    await w.findComponent({ name: 'SiListItem' }).trigger('click')
     await flushPromises()
   }
 
