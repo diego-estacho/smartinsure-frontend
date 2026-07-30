@@ -6,7 +6,7 @@ import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import PolicyHolderDetailPage from '~/pages/tomadores/[id].vue'
 import { formatCnpj } from '~/lib/documents'
 
-// RN-025/RN-052 — a ficha do Tomador ganha uma seção de Filiais ao lado de Endereços e
+// RN-025/RN-101 — a ficha do Tomador ganha uma seção de Filiais ao lado de Endereços e
 // Nomeações. `GET /policy-holders/{id}` já traz `branches[]` (Task 6) especificamente para a
 // ficha renderizar sem chamada extra — por isso a seção lê da prop vinda do detalhe, nunca de
 // `listBranches` (esse composable é do wizard de cotação, Task 9/10).
@@ -36,7 +36,7 @@ async function openBranchesTab(w: Awaited<ReturnType<typeof mountSuspended>>) {
   await flushPromises()
 }
 
-describe('Ficha do Tomador — seção Filiais (RN-025/RN-052)', () => {
+describe('Ficha do Tomador — seção Filiais (RN-025/RN-101)', () => {
   it('renderiza as Filiais vindas do detalhe, sem chamar o endpoint de listagem', async () => {
     // Middleware global de auth (ADR-007): sem sessão, a navegação para a ficha redireciona pro
     // login — precisa "logar" o teste antes de montar a página.
@@ -85,7 +85,7 @@ describe('Ficha do Tomador — seção Filiais (RN-025/RN-052)', () => {
   })
 })
 
-describe('Ficha do Tomador — registrar Filial por CNPJ, três desfechos (RN-052)', () => {
+describe('Ficha do Tomador — registrar Filial por CNPJ, três desfechos (RN-101)', () => {
   /** Abre a aba Filiais, clica "Nova filial" (botão da área de ações da aba, distinto do botão
    * homônimo dentro do dialog), preenche o CNPJ e submete — mesmo três-desfechos do
    * `Step1PolicyHolder.vue`, só que aqui pela ficha. */
@@ -185,7 +185,7 @@ describe('Ficha do Tomador — registrar Filial por CNPJ, três desfechos (RN-05
     expect(errorAlert.text()).toContain('Não foi possível registrar a filial.')
   })
 
-  it('422 com detail (RN-052): mostra o motivo do backend em vez da mensagem genérica', async () => {
+  it('422 com detail (RN-101): mostra o motivo do backend em vez da mensagem genérica', async () => {
     registerEndpoint('/api/auth/session', { method: 'GET', handler: () => ({ authenticated: true }) })
     registerEndpoint(`/api/policy-holders/${POLICY_HOLDER_ID}`, {
       method: 'GET',
@@ -220,7 +220,7 @@ describe('Ficha do Tomador — registrar Filial por CNPJ, três desfechos (RN-05
     expect(errorAlert.text()).toContain('O CNPJ /0001 informado é a matriz — a matriz não pode ser filial de si mesma.')
   })
 
-  it('422 sem detail no corpo: cai na mensagem genérica (RN-052, corpo sem o campo esperado)', async () => {
+  it('422 sem detail no corpo: cai na mensagem genérica (RN-101, corpo sem o campo esperado)', async () => {
     registerEndpoint('/api/auth/session', { method: 'GET', handler: () => ({ authenticated: true }) })
     registerEndpoint(`/api/policy-holders/${POLICY_HOLDER_ID}`, {
       method: 'GET',

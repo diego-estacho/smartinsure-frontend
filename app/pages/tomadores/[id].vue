@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { GetPolicyHolderResponse } from '~/composables/usePolicyHolders'
 import { formatCnpj } from '~/lib/documents'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 definePageMeta({ layout: 'shell' })
 
@@ -36,8 +37,8 @@ async function refresh() {
   try {
     policyHolder.value = await getPolicyHolder(String(route.params.id))
   }
-  catch {
-    error.value = 'Não foi possível carregar o tomador.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível carregar o tomador.')
   }
   finally {
     loading.value = false

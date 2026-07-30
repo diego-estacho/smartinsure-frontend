@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Filiais do Tomador (RN-025/RN-052): a lista vem por prop, do detalhe do Tomador
+ * Filiais do Tomador (RN-025/RN-101): a lista vem por prop, do detalhe do Tomador
  * (`GET /policy-holders/{id}` já traz `branches[]` — Task 6) — este painel nunca chama
  * `listBranches` (esse composable serve a etapa 1 do wizard de cotação, Task 9/10); ler daqui
  * evita a ficha e o wizard discordarem sobre o que é uma Filial registrada.
@@ -73,7 +73,7 @@ async function submitForm() {
     }
   }
   catch (err) {
-    // 422 é o Backend rejeitando por RN-052 (raiz de CNPJ diferente da do tomador, ou `/0001` como
+    // 422 é o Backend rejeitando por RN-101 (raiz de CNPJ diferente da do tomador, ou `/0001` como
     // Filial) com o motivo em `detail` — mostramos o texto do servidor, sem reimplementar a checagem
     // aqui (ADR-004). Sem `detail` (ou erro de outra natureza — rede, 500, corpo malformado), cai na
     // mensagem genérica.

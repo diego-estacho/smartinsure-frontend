@@ -9,10 +9,11 @@ import type { components } from '~/types/gen/api'
 type QuotationGroupBody = components['schemas']['CreateQuotationGroupRequest']
 type CreateQuotationGroupResponse = components['schemas']['CreateQuotationGroupResponse']
 type UpdateQuotationGroupResponse = components['schemas']['UpdateQuotationGroupResponse']
+export type GetQuotationGroupResponse = components['schemas']['GetQuotationGroupResponse']
 
 export interface QuotationGroupPayload {
   policyHolderId: string | null
-  /** Filial marcada na etapa 1 (RN-053); null = estabelecimento é a matriz. */
+  /** Filial marcada na etapa 1 (RN-102); null = estabelecimento é a matriz. */
   branchId: string | null
   insuredId: string | null
   scope: { mode: string, insurerIds: string[] }
@@ -55,7 +56,7 @@ function toRequestBody(payload: QuotationGroupPayload): QuotationGroupBody {
 
   return {
     policyHolderId: payload.policyHolderId ?? '',
-    // Filial marcada na etapa 1 (RN-053) — `null` é a matriz (nenhuma Filial marcada), valor
+    // Filial marcada na etapa 1 (RN-102) — `null` é a matriz (nenhuma Filial marcada), valor
     // real e não mais um placeholder: o wizard passa a escolha feita pelo corretor.
     branchId: payload.branchId,
     insuredId: payload.insuredId ?? '',
@@ -88,5 +89,13 @@ export function useQuotationGroups(api: typeof $fetch = useNuxtApp().$api as typ
     return { id: result.id }
   }
 
-  return { saveQuotationGroup }
+  /**
+   * Lê o Grupo de Cotação salvo (GET), para reidratar o wizard ao atualizar a página com o id na rota.
+   * Traz os escalares do pedido, a Cotação escolhida e o Tomador/Segurado/Modalidade já resolvidos.
+   */
+  async function getQuotationGroup(id: string): Promise<GetQuotationGroupResponse> {
+    return await api<GetQuotationGroupResponse>(`/api/quotation-groups/${id}`, { method: 'GET' })
+  }
+
+  return { saveQuotationGroup, getQuotationGroup }
 }

@@ -23,14 +23,14 @@ export interface QuotationScope {
 /**
  * Tomador selecionado na etapa 1 (subset consumido pela UI: card + resumo). `branches` e
  * `selectedBranchId` são opcionais na entrada (quem chama `setPolicyHolder` pode omiti-los — ex.:
- * literais de teste já existentes) — a store normaliza para `[]`/`null` (matriz), RN-053.
+ * literais de teste já existentes) — a store normaliza para `[]`/`null` (matriz), RN-102.
  */
 export interface SelectedPolicyHolder {
   id: string
   name: string
   documentNumber: string
   mainAddress: string | null
-  /** Filiais já registradas para este tomador — carregada ao selecioná-lo (Task 9/RN-053). */
+  /** Filiais já registradas para este tomador — carregada ao selecioná-lo (Task 9/RN-102). */
   branches?: PolicyHolderBranch[]
   /** Filial marcada nesta oferta (no máx. uma); null/ausente = estabelecimento é a matriz. */
   selectedBranchId?: string | null
@@ -117,9 +117,15 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
   const quotationsGenerated = ref(false)
   const quotationSignature = ref<string | null>(null)
   const quotationGroupId = ref<string | null>(null)
+  // Corretora dona das Habilitações (RN-023/OPEN-03) — origem do fan-out/seleção/minuta. Ainda não há
+  // seleção de corretora no wizard (pendência OPEN-03); populável quando essa decisão for tomada.
+  const brokerageId = ref<string | null>(null)
   // Minuta (valores das tags) e cláusulas selecionadas — sincronizados entre as etapas 4 e 5.
   const minuta = ref<Record<string, string>>({})
   const clauses = ref<Record<string, boolean>>({})
+  // Valores das tags próprias de cada cláusula particular (RN-062): externalId → (nome da tag → valor).
+  // As cláusulas trazem placeholders [TAG_X] no texto; o corretor preenche e o valor entra na minuta.
+  const clauseTags = ref<Record<string, Record<string, string>>>({})
   // Emissão (etapa 5): dados do formulário, estado do processo, apólice e o termo de aceite.
   const issuance = ref<IssuanceData>(emptyIssuance())
   const issuanceState = ref<IssuanceState>('form')
@@ -159,7 +165,7 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
   /**
    * Substitui o tomador selecionado. Normaliza `branches`/`selectedBranchId` (default `[]`/`null`
    * — matriz) quando o chamador não os informa; como este método sempre troca o objeto inteiro
-   * (nunca funde com o anterior), trocar de tomador já limpa a Filial marcada de saída (RN-053).
+   * (nunca funde com o anterior), trocar de tomador já limpa a Filial marcada de saída (RN-102).
    */
   function setPolicyHolder(value: SelectedPolicyHolder | null): void {
     policyHolder.value = value
@@ -167,7 +173,7 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
       : null
   }
 
-  /** Filial marcada (no máx. uma) — RN-053; null = estabelecimento é a matriz. */
+  /** Filial marcada (no máx. uma) — RN-102; null = estabelecimento é a matriz. */
   const selectedBranchId = computed(() => policyHolder.value?.selectedBranchId ?? null)
 
   /** Filiais do tomador selecionado, para a lista de marcação da etapa 1. */
@@ -175,14 +181,14 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
 
   /**
    * Marca a Filial `id` como estabelecimento da oferta — substitui qualquer marcação anterior
-   * (exclusividade: no máx. uma, RN-053). Não-op sem tomador selecionado.
+   * (exclusividade: no máx. uma, RN-102). Não-op sem tomador selecionado.
    */
   function setBranch(id: string): void {
     if (!policyHolder.value) return
     policyHolder.value.selectedBranchId = id
   }
 
-  /** Desmarca a Filial — o estabelecimento volta a ser a matriz (RN-053). */
+  /** Desmarca a Filial — o estabelecimento volta a ser a matriz (RN-102). */
   function clearBranch(): void {
     if (!policyHolder.value) return
     policyHolder.value.selectedBranchId = null
@@ -199,6 +205,13 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
   }
 
   function setSelectedQuotation(value: Quotation | null): void {
+    // Trocar (ou limpar) a Cotação escolhida descarta o preenchimento da minuta da anterior: cada
+    // seguradora tem a sua (RN-062); sem isso, termos/cláusulas de uma seguradora vazariam para outra.
+    if (value?.id !== selectedQuotation.value?.id) {
+      minuta.value = {}
+      clauses.value = {}
+      clauseTags.value = {}
+    }
     selectedQuotation.value = value
   }
 
@@ -208,6 +221,10 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
 
   function setQuotationGroupId(id: string | null): void {
     quotationGroupId.value = id
+  }
+
+  function setBrokerageId(id: string | null): void {
+    brokerageId.value = id
   }
 
   /** Assinatura dos dados que alimentam o motor de cotação (base do recálculo inteligente). */
@@ -287,8 +304,10 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     quotationsGenerated.value = false
     quotationSignature.value = null
     quotationGroupId.value = null
+    brokerageId.value = null
     minuta.value = {}
     clauses.value = {}
+    clauseTags.value = {}
     issuance.value = emptyIssuance()
     issuanceState.value = 'form'
     policyId.value = null
@@ -309,9 +328,11 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     quotations,
     quotationsGenerated,
     quotationGroupId,
+    brokerageId,
     signatureChanged,
     minuta,
     clauses,
+    clauseTags,
     issuance,
     issuanceState,
     policyId,
@@ -332,6 +353,7 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     setSelectedQuotation,
     setQuotations,
     setQuotationGroupId,
+    setBrokerageId,
     markQuotationsGenerated,
     validateCurrentStep,
     reset,

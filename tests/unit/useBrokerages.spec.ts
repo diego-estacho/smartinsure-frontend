@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useBrokerages } from '../../app/composables/useBrokerages'
-import { brokerageStatuses, getBrokerageStatusAction } from '../../app/lib/status/brokerages'
+import { brokerageSituations, brokerageStatuses, getBrokerageStatusAction } from '../../app/lib/status/brokerages'
 
 const fetchMock = vi.fn()
 const api = fetchMock as unknown as typeof $fetch
@@ -20,14 +20,14 @@ describe('RN-018 listagem de Corretoras - composable useBrokerages', () => {
     })
 
     const { listBrokerages } = useBrokerages(api)
-    await listBrokerages({ status: brokerageStatuses.active })
+    await listBrokerages({ situation: brokerageSituations.active })
 
     expect(fetchMock).toHaveBeenCalledWith('/api/brokerages', {
       method: 'GET',
       query: {
         page: 1,
         pageSize: 20,
-        status: brokerageStatuses.active,
+        situation: brokerageSituations.active,
       },
     })
   })

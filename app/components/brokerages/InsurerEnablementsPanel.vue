@@ -3,6 +3,7 @@ import type { EnablementListItemResponse, CalculationEngineListItemResponse } fr
 import type { InsurerListItemResponse } from '~/composables/useInsurers'
 import { maxLength, required, url } from '~/lib/rules'
 import { getEnablementStatusAction, getEnablementStatusView } from '~/lib/status/insurer-enablements'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 const props = withDefaults(defineProps<{ brokerageId: string, hideToolbar?: boolean }>(), {
   hideToolbar: false,
@@ -26,11 +27,15 @@ const saving = ref(false)
 const error = ref<string | null>(null)
 const success = ref<string | null>(null)
 
+const { isMobile } = useIsMobile()
+
+// Larguras curadas na mesma linguagem da listagem de Corretoras (DS): a Seguradora domina e as
+// demais colunas ficam compactas; `table-layout: fixed` (skin abaixo) trunca nome longo com elipse.
 const headers = [
-  { title: 'Seguradora', key: 'insurerCorporateName' },
-  { title: 'Motor de cálculo', key: 'calculationEngine' },
-  { title: 'Situação', key: 'status' },
-  { title: 'Ações', key: 'actions', sortable: false, align: 'end' as const },
+  { title: 'Seguradora', key: 'insurerCorporateName', width: '52%' },
+  { title: 'Motor de cálculo', key: 'calculationEngine', width: '18%' },
+  { title: 'Situação', key: 'status', width: '15%' },
+  { title: 'Ações', key: 'actions', sortable: false, align: 'end' as const, width: '15%' },
 ]
 
 /** Formulário do dialog (criar/editar). Campos do PlugV2 viram JSON só no envio. */
@@ -46,17 +51,11 @@ const form = reactive({
 
 const isEditing = computed(() => editingId.value !== null)
 
-/** Resumo com dados reais da listagem (direção C aprovada). */
-const summary = computed(() => {
-  const active = enablements.value.filter(item => item.status === 'Active').length
-  const distinctEngines = [...new Set(enablements.value.map(item => item.calculationEngine))]
-
-  return {
-    total: enablements.value.length,
-    active,
-    engines: distinctEngines.length ? distinctEngines.join(', ') : '—',
-  }
-})
+// RN-022 / README §5: no cadastro só aparecem Seguradoras ainda não habilitadas. Na edição, a
+// lista completa (o select fica desabilitado mostrando a atual).
+const availableInsurers = computed(() =>
+  insurers.value.filter(insurer => !enablements.value.some(item => item.insurerId === insurer.id)))
+const insurerOptions = computed(() => (isEditing.value ? insurers.value : availableInsurers.value))
 const isPlugV2 = computed(() => form.calculationEngine === 'PlugV2')
 const formTitle = computed(() => (isEditing.value ? 'Editar habilitação' : 'Habilitar seguradora'))
 
@@ -85,8 +84,8 @@ async function refresh() {
     insurers.value = [...insurersPage.items]
     engines.value = engineList
   }
-  catch {
-    error.value = 'Não foi possível carregar as habilitações da corretora.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível carregar as habilitações da corretora.')
   }
   finally {
     loading.value = false
@@ -96,7 +95,9 @@ async function refresh() {
 function openCreateDialog() {
   editingId.value = null
   form.insurerId = null
-  form.calculationEngine = engines.value.length === 1 ? (engines.value[0]?.name ?? null) : null
+  // Default do motor = PlugV2 (glossário: único motor desta fase), robusto a corrida de carga
+  // dos engines. Garante que Base URL + Key apareçam já na abertura (RN-022, todos obrigatórios).
+  form.calculationEngine = engines.value[0]?.name ?? 'PlugV2'
   form.plugV2BaseUrl = ''
   form.plugV2Key = ''
   success.value = null
@@ -116,8 +117,8 @@ async function openEditDialog(item: EnablementListItemResponse) {
     const details = await getEnablement(item.id)
     applyConnectionParameters(details.connectionParameters)
   }
-  catch {
-    error.value = 'Não foi possível carregar os parâmetros da habilitação.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível carregar os parâmetros da habilitação.')
     formOpen.value = false
   }
 }
@@ -176,10 +177,10 @@ async function submitForm() {
     formOpen.value = false
     await refresh()
   }
-  catch {
-    error.value = isEditing.value
+  catch (err) {
+    error.value = extractApiErrorMessage(err, isEditing.value
       ? 'Não foi possível atualizar a habilitação.'
-      : 'Não foi possível habilitar a seguradora.'
+      : 'Não foi possível habilitar a seguradora.')
   }
   finally {
     saving.value = false
@@ -210,8 +211,8 @@ async function confirmStatusChange() {
     confirmOpen.value = false
     await refresh()
   }
-  catch {
-    error.value = 'Não foi possível alterar a situação da habilitação.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível alterar a situação da habilitação.')
   }
   finally {
     saving.value = false
@@ -233,23 +234,6 @@ async function confirmStatusChange() {
       </SiButton>
     </div>
 
-    <div class="si-enablements__summary">
-      <SiCard class="si-enablements__summary-card pa-4">
-        <span class="si-enablements__summary-label">Seguradoras habilitadas</span>
-        <strong class="si-enablements__summary-value">{{ summary.total }}</strong>
-      </SiCard>
-
-      <SiCard class="si-enablements__summary-card pa-4">
-        <span class="si-enablements__summary-label">Habilitações ativas</span>
-        <strong class="si-enablements__summary-value">{{ summary.active }}</strong>
-      </SiCard>
-
-      <SiCard class="si-enablements__summary-card pa-4">
-        <span class="si-enablements__summary-label">Motor de cálculo</span>
-        <strong class="si-enablements__summary-value">{{ summary.engines }}</strong>
-      </SiCard>
-    </div>
-
     <SiAlert
       v-if="error"
       type="error"
@@ -264,7 +248,84 @@ async function confirmStatusChange() {
       :text="success"
     />
 
-    <div class="si-enablements__table">
+    <!-- Mobile (< 1024px): cards, mesma linguagem da listagem de Corretoras; a tabela é desktop-only. -->
+    <template v-if="isMobile">
+      <SiProgressLinear
+        v-if="loading"
+        indeterminate
+        class="si-enablements-cards__progress"
+      />
+      <ul
+        v-if="enablements.length"
+        class="si-enablements-cards"
+      >
+        <li
+          v-for="item in enablements"
+          :key="item.id"
+          class="si-enablements-cards__item"
+        >
+          <div class="si-enablements-cards__main">
+            <SiAvatar
+              size="sm"
+              color="surface"
+              class="si-enablements__insurer-logo"
+            >
+              <VImg
+                v-if="item.insurerLogoUrl"
+                :src="item.insurerLogoUrl"
+                :alt="`Logo ${item.insurerCorporateName}`"
+                contain
+              />
+              <span
+                v-else
+                class="si-enablements__insurer-initials"
+              >{{ insurerInitials(item.insurerCorporateName) }}</span>
+            </SiAvatar>
+            <div class="si-enablements-cards__identity">
+              <span class="si-cell-strong">{{ item.insurerCorporateName }}</span>
+              <span class="si-enablements__meta">{{ item.calculationEngine }}</span>
+            </div>
+            <SiChip
+              :color="getEnablementStatusView(item.status).color"
+              size="small"
+            >
+              {{ getEnablementStatusView(item.status).label }}
+            </SiChip>
+          </div>
+          <div class="si-enablements-cards__actions">
+            <SiButton
+              variant="text"
+              size="small"
+              :prepend-icon="'pencil'"
+              @click="openEditDialog(item)"
+            >
+              Editar
+            </SiButton>
+            <SiButton
+              variant="text"
+              size="small"
+              :color="getEnablementStatusAction(item.status).color"
+              :prepend-icon="getEnablementStatusAction(item.status).icon"
+              :disabled="getEnablementStatusAction(item.status).disabled"
+              @click="openStatusDialog(item)"
+            >
+              {{ getEnablementStatusAction(item.status).shortLabel }}
+            </SiButton>
+          </div>
+        </li>
+      </ul>
+      <div
+        v-else-if="!loading"
+        class="si-enablements__empty"
+      >
+        Nenhuma seguradora habilitada para esta corretora.
+      </div>
+    </template>
+
+    <div
+      v-else
+      class="si-enablements__table"
+    >
       <SiDataTable
         :headers="headers"
         :items="enablements"
@@ -288,7 +349,7 @@ async function confirmStatusChange() {
               class="si-enablements__insurer-initials"
             >{{ insurerInitials(item.insurerCorporateName) }}</span>
           </SiAvatar>
-          <span>{{ item.insurerCorporateName }}</span>
+          <span class="si-cell-strong">{{ item.insurerCorporateName }}</span>
         </div>
       </template>
 
@@ -303,25 +364,41 @@ async function confirmStatusChange() {
 
       <template #[`item.actions`]="{ item }">
         <div class="si-enablements__row-actions">
-          <SiButton
-            variant="text"
-            size="small"
-            :prepend-icon="'pencil'"
-            @click="openEditDialog(item)"
-          >
-            Editar
-          </SiButton>
+          <SiTooltip text="Editar habilitação">
+            <template #activator="{ props: tip }">
+              <SiIconButton
+                v-bind="tip"
+                icon="pencil"
+                aria-label="Editar habilitação"
+                @click="openEditDialog(item)"
+              />
+            </template>
+          </SiTooltip>
 
-          <SiButton
-            variant="text"
-            size="small"
-            :color="getEnablementStatusAction(item.status).color"
-            :prepend-icon="getEnablementStatusAction(item.status).icon"
-            :disabled="getEnablementStatusAction(item.status).disabled"
-            @click="openStatusDialog(item)"
-          >
-            {{ getEnablementStatusAction(item.status).shortLabel }}
-          </SiButton>
+          <SiMenu location="bottom end">
+            <template #activator="{ props: menu }">
+              <SiIconButton
+                v-bind="menu"
+                icon="dotsHorizontal"
+                aria-label="Mais ações"
+              />
+            </template>
+            <SiList
+              density="compact"
+              class="si-rowmenu"
+            >
+              <SiListItem
+                title="Editar habilitação"
+                @click="openEditDialog(item)"
+              />
+              <SiListItem
+                :title="getEnablementStatusAction(item.status).label"
+                :disabled="getEnablementStatusAction(item.status).disabled"
+                :class="getEnablementStatusAction(item.status).color === 'error' ? 'si-rowmenu__danger' : undefined"
+                @click="openStatusDialog(item)"
+              />
+            </SiList>
+          </SiMenu>
         </div>
       </template>
 
@@ -341,7 +418,7 @@ async function confirmStatusChange() {
           <SiSelect
             v-model="form.insurerId"
             label="Seguradora"
-            :items="insurers"
+            :items="insurerOptions"
             item-title="corporateName"
             item-value="id"
             :rules="[required('Selecione a seguradora')]"
@@ -437,15 +514,34 @@ async function confirmStatusChange() {
   margin-bottom: var(--si-space-3);
 }
 
+/* ─── Desktop: tabela DS (mesma linguagem da listagem de Corretoras) ───────── */
+.si-enablements__table :deep(table) {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.si-enablements__table :deep(td),
+.si-enablements__table :deep(th) {
+  overflow: hidden;
+}
+
 .si-enablements__insurer {
   display: flex;
   align-items: center;
   gap: var(--si-space-3);
+  min-width: 0;
+}
+
+.si-enablements__insurer .si-cell-strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .si-enablements__insurer-logo {
   border: 1px solid var(--si-cinza-claro);
   background: rgb(var(--v-theme-surface));
+  flex-shrink: 0;
 }
 
 .si-enablements__insurer-logo :deep(.v-img__img) {
@@ -459,32 +555,12 @@ async function confirmStatusChange() {
   color: var(--si-cinza);
 }
 
-.si-enablements__summary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: var(--si-space-3);
-  margin-bottom: var(--si-space-4);
-}
-
-.si-enablements__summary-card {
-  display: grid;
-  gap: var(--si-space-1);
-}
-
-.si-enablements__summary-label {
+.si-enablements__meta {
   color: var(--si-cinza);
   font-size: var(--si-fs-caption);
-}
-
-.si-enablements__summary-value {
-  font-size: var(--si-fs-h3);
-  font-weight: var(--si-font-weight-bold);
-  line-height: 1.2;
-}
-
-/* Mobile: tabela rola horizontal dentro do próprio painel. */
-.si-enablements__table {
-  overflow-x: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .si-enablements__row-actions,
@@ -493,5 +569,61 @@ async function confirmStatusChange() {
   align-items: center;
   justify-content: flex-end;
   gap: var(--si-space-2);
+}
+
+.si-rowmenu__danger :deep(.v-list-item-title) {
+  color: rgb(var(--v-theme-error));
+}
+
+/* ─── Mobile: cards (mesma primitiva visual da listagem de Corretoras) ─────── */
+.si-enablements-cards__progress {
+  margin-bottom: var(--si-space-2);
+}
+
+.si-enablements-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--si-space-3);
+}
+
+.si-enablements-cards__item {
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid var(--si-cinza-claro);
+  border-radius: var(--si-radius-lg);
+  padding: var(--si-space-3) var(--si-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--si-space-2);
+}
+
+.si-enablements-cards__main {
+  display: flex;
+  align-items: center;
+  gap: var(--si-space-3);
+}
+
+.si-enablements-cards__identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.si-enablements-cards__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--si-space-2);
+  border-top: 1px solid var(--si-cinza-claro);
+  padding-top: var(--si-space-2);
+}
+
+.si-enablements__empty {
+  padding: var(--si-space-8) var(--si-space-4);
+  text-align: center;
+  color: var(--si-cinza);
+  font-size: var(--si-fs-small);
 }
 </style>

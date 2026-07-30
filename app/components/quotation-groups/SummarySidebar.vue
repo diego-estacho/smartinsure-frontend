@@ -29,7 +29,7 @@ const rows = computed(() => {
   const holder = wizard.policyHolder
   if (holder) {
     // Com Filial marcada, o resumo mostra o CNPJ DELA; sem marcação, o estabelecimento é a matriz
-    // e mostra o CNPJ do tomador (RN-053). O rótulo é FIXO — "CNPJ do tomador" nos dois casos: no
+    // e mostra o CNPJ do tomador (RN-102). O rótulo é FIXO — "CNPJ do tomador" nos dois casos: no
     // contexto da oferta o estabelecimento cotado é o tomador, então o rótulo não muda com o tipo
     // da empresa (decisão do dono em 2026-07-28). A razão social exibida é sempre a do tomador —
     // ele É a matriz (RN-016) — e não a da Filial, embora `PolicyHolderBranchResponse` traga

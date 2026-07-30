@@ -477,7 +477,13 @@ export interface paths {
                 query?: {
                     page?: number | string;
                     pageSize?: number | string;
-                    status?: string;
+                    q?: string;
+                    situation?: string;
+                    insurerId?: string;
+                    calculationEngine?: string;
+                    sector?: string;
+                    registeredFrom?: string;
+                    registeredTo?: string;
                 };
                 header?: never;
                 path?: never;
@@ -491,7 +497,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["PagedResponseOfBrokerageListItemResponse"];
+                        "application/json": components["schemas"]["ListBrokeragesResponse"];
                     };
                 };
             };
@@ -527,6 +533,84 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/brokerages/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cnpj?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BrokeragePreviewResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/brokerages/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    q?: string;
+                    situation?: string;
+                    insurerId?: string;
+                    calculationEngine?: string;
+                    sector?: string;
+                    registeredFrom?: string;
+                    registeredTo?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/brokerages/{id}": {
         parameters: {
             query?: never;
@@ -552,6 +636,68 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["GetBrokerageResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateBrokerageBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GetBrokerageResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/brokerages/{id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GetBrokerageHistoryResponse"];
                     };
                 };
             };
@@ -1107,6 +1253,80 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GetCurrentUserContextResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/active-scope": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SwitchActiveScopeBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SwitchActiveScopeResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/modalities": {
         parameters: {
             query?: never;
@@ -1330,6 +1550,41 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["ModalityMapResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PermissionResponse"][];
                     };
                 };
             };
@@ -1655,7 +1910,105 @@ export interface paths {
         };
         trace?: never;
     };
-    "/api/v1/policy-holders/{id}/branches": {
+    "/api/v1/profiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                    search?: string;
+                    scope?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PagedResponseOfProfileListItemResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ScopedProfileBody"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CreateScopedProfileResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiles/assignable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AssignableProfileResponse"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiles/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1679,13 +2032,12 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ListPolicyHolderBranchesResponse"];
+                        "application/json": components["schemas"]["GetProfileResponse"];
                     };
                 };
             };
         };
-        put?: never;
-        post: {
+        put: {
             parameters: {
                 query?: never;
                 header?: never;
@@ -1696,7 +2048,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["CreatePolicyHolderBranchBody"];
+                    "application/json": components["schemas"]["ScopedProfileBody"];
                 };
             };
             responses: {
@@ -1706,20 +2058,72 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["CreatePolicyHolderBranchResponse"];
-                    };
-                };
-                /** @description Created */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["CreatePolicyHolderBranchResponse"];
+                        "application/json": components["schemas"]["UpdateScopedProfileResponse"];
                     };
                 };
             };
         };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiles/{id}/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["FixedProfilePermissionsBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UpdateFixedProfilePermissionsResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1772,7 +2176,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GetQuotationGroupResponse"];
+                    };
+                };
+            };
+        };
         put: {
             parameters: {
                 query?: never;
@@ -1806,7 +2231,69 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/users": {
+    "/api/v1/quotation-groups/{groupId}/quotations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    groupId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ListQuotationsResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    groupId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["RunQuotationsBody"];
+                };
+            };
+            responses: {
+                /** @description Accepted */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RunQuotationsResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotation-groups/{groupId}/quotations/{quotationId}/select": {
         parameters: {
             query?: never;
             header?: never;
@@ -1814,6 +2301,148 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    groupId: string;
+                    quotationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SelectQuotationResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotation-groups/{groupId}/quotations/{quotationId}/minuta": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    groupId: string;
+                    quotationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["QuotationMinutaResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotation-groups/{groupId}/quotations/{quotationId}/minuta/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    groupId: string;
+                    quotationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SubmitQuotationMinutaBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SubmitQuotationTermsResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                    search?: string;
+                    status?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PagedResponseOfUserListItemResponse"];
+                    };
+                };
+            };
+        };
         put?: never;
         post: {
             parameters: {
@@ -1845,7 +2474,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/users/activation": {
+    "/api/v1/users/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GetUserResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/invitations/accept": {
         parameters: {
             query?: never;
             header?: never;
@@ -1861,6 +2527,47 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AcceptInvitationRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AcceptInvitationResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{id}/invitations/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
             requestBody?: never;
             responses: {
                 /** @description OK */
@@ -1869,7 +2576,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ActivateUserResponse"];
+                        "application/json": components["schemas"]["ResendInvitationResponse"];
                     };
                 };
             };
@@ -1921,16 +2628,252 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/brokerage-administrators": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["InviteBrokerageAdministratorRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["InviteBrokerageAdministratorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/policy-holder-administrators": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["InvitePolicyHolderAdministratorBody"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["InvitePolicyHolderAdministratorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/brokerage-users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["InviteBrokerageUserBody"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["InviteBrokerageUserResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/policy-holder-users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["InvitePolicyHolderUserBody"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["InvitePolicyHolderUserResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{id}/inactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChangeUserActivationResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{id}/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChangeUserActivationResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        ActivateAdditionalCoverageResponse: {
+        AcceptInvitationRequest: {
+            token: string;
+            password: string;
+        };
+        AcceptInvitationResponse: {
             /** Format: uuid */
-            id: string;
+            userId: string;
+            name: string;
+            email: string;
             status: string;
         };
-        ActivateUserResponse: {
+        ActivateAdditionalCoverageResponse: {
             /** Format: uuid */
             id: string;
             status: string;
@@ -1960,6 +2903,17 @@ export interface components {
             city: null | string;
             state: null | string;
         };
+        AssignableProfileResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            scope: string;
+            isFixed: boolean;
+            /** Format: uuid */
+            brokerageId: null | string;
+            /** Format: uuid */
+            policyHolderId: null | string;
+        };
         AuthenticateUserRequest: {
             email: string;
             password: string;
@@ -1977,6 +2931,13 @@ export interface components {
             neighborhood: null | string;
             city: null | string;
             state: null | string;
+        };
+        BrokerageHistoryEventResponse: {
+            type: string;
+            subject: null | string;
+            /** Format: date-time */
+            occurredAt: string;
+            author: string;
         };
         BrokerageInsurerEnablementListItemResponse: {
             /** Format: uuid */
@@ -1999,6 +2960,44 @@ export interface components {
             socialName: null | string;
             isPrivateSector: null | boolean;
             status: string;
+            situation: string;
+            /** Format: date-time */
+            registeredAt: string;
+            /** Format: int32 */
+            enabledInsurerCount: number | string;
+            enabledInsurerNames: string[];
+            calculationEngines: string[];
+        };
+        BrokeragePreviewAddressResponse: {
+            zipCode: null | string;
+            street: null | string;
+            number: null | string;
+            complement: null | string;
+            neighborhood: null | string;
+            city: null | string;
+            state: null | string;
+        };
+        BrokeragePreviewResponse: {
+            documentNumber: string;
+            name: string;
+            socialName: null | string;
+            legalNatureCode: null | string;
+            legalNatureName: null | string;
+            isPrivateSector: null | boolean;
+            alreadyRegistered: boolean;
+            /** Format: uuid */
+            existingBrokerageId: null | string;
+            mainAddress: null | components["schemas"]["BrokeragePreviewAddressResponse"];
+        };
+        BrokerageSituationCountsResponse: {
+            /** Format: int64 */
+            all: number | string;
+            /** Format: int64 */
+            active: number | string;
+            /** Format: int64 */
+            incomplete: number | string;
+            /** Format: int64 */
+            inactive: number | string;
         };
         CalculationEngineListItemResponse: {
             name: string;
@@ -2042,6 +3041,11 @@ export interface components {
             id: string;
             status: string;
         };
+        ChangeUserActivationResponse: {
+            /** Format: uuid */
+            id: string;
+            status: string;
+        };
         CreateAdditionalCoverageResponse: {
             /** Format: uuid */
             id: string;
@@ -2068,7 +3072,12 @@ export interface components {
             status: string;
         };
         CreateBrokerageRequest: {
-            cnpj: string;
+            cnpj?: string;
+            socialName?: null | string;
+            contactEmail?: null | string;
+            contactPhone?: null | string;
+            responsibleName?: null | string;
+            activateOnSave?: boolean;
         };
         CreateBrokerageResponse: {
             /** Format: uuid */
@@ -2080,6 +3089,14 @@ export interface components {
             legalNatureName: null | string;
             isPrivateSector: null | boolean;
             status: string;
+            situation: string;
+            contactEmail: null | string;
+            contactPhone: null | string;
+            responsibleName: null | string;
+            /** Format: date-time */
+            registeredAt: string;
+            /** Format: int32 */
+            enabledInsurerCount: number | string;
             mainAddress: null | components["schemas"]["ImportedBrokerageAddressResponse"];
         };
         CreateInsurerRequest: {
@@ -2133,16 +3150,6 @@ export interface components {
             /** Format: date-time */
             endedAt: null | string;
         };
-        CreatePolicyHolderBranchBody: {
-            documentNumber: string;
-        };
-        CreatePolicyHolderBranchResponse: {
-            /** Format: uuid */
-            headquartersId: string;
-            /** Format: uuid */
-            branchId: null | string;
-            notice: null | string;
-        };
         CreatePolicyHolderRequest: {
             cnpj: string;
         };
@@ -2160,8 +3167,6 @@ export interface components {
         CreateQuotationGroupRequest: {
             /** Format: uuid */
             policyHolderId: string;
-            /** Format: uuid */
-            branchId: null | string;
             /** Format: uuid */
             insuredId: string;
             /** Format: uuid */
@@ -2197,6 +3202,18 @@ export interface components {
             includesPenaltyCoverage: boolean;
             includesLaborCoverage: boolean;
             status: string;
+        };
+        CreateScopedProfileResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            scope: string;
+            /** Format: uuid */
+            brokerageId: null | string;
+            /** Format: uuid */
+            policyHolderId: null | string;
+            /** Format: int32 */
+            permissionCount: number | string;
         };
         CreateUserRequest: {
             name: string;
@@ -2263,6 +3280,12 @@ export interface components {
             summary: components["schemas"]["CreditInquirySummary"];
             results: components["schemas"]["CreditInquiryResultResponse"][];
         };
+        FixedProfilePermissionsBody: {
+            permissionCodes: null | string[];
+        };
+        GetBrokerageHistoryResponse: {
+            events: components["schemas"]["BrokerageHistoryEventResponse"][];
+        };
         GetBrokerageInsurerEnablementResponse: {
             /** Format: uuid */
             id: string;
@@ -2286,6 +3309,14 @@ export interface components {
             legalNatureName: null | string;
             isPrivateSector: null | boolean;
             status: string;
+            situation: string;
+            contactEmail: null | string;
+            contactPhone: null | string;
+            responsibleName: null | string;
+            /** Format: date-time */
+            registeredAt: string;
+            /** Format: int32 */
+            enabledInsurerCount: number | string;
             mainAddress: null | components["schemas"]["BrokerageAddressResponse"];
         };
         GetCreditInquiryResponse: {
@@ -2297,6 +3328,20 @@ export interface components {
             policyHolderName: null | string;
             summary: components["schemas"]["CreditInquirySummary"];
             results: components["schemas"]["CreditInquiryResultResponse"][];
+        };
+        GetCurrentUserContextResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            email: string;
+            status: string;
+            systemProfileName: null | string;
+            /** Format: uuid */
+            activeBrokerageId: null | string;
+            /** Format: uuid */
+            activePolicyHolderId: null | string;
+            brokerages: components["schemas"]["UserScopeResponse"][];
+            policyHolders: components["schemas"]["UserScopeResponse"][];
         };
         GetInsurerResponse: {
             /** Format: uuid */
@@ -2326,7 +3371,58 @@ export interface components {
             isPrivateSector: null | boolean;
             addresses: components["schemas"]["PolicyHolderAddressResponse"][];
             appointments: components["schemas"]["PolicyHolderAppointmentResponse"][];
-            branches: components["schemas"]["PolicyHolderBranchResponse"][];
+        };
+        GetProfileResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            scope: string;
+            isFixed: boolean;
+            /** Format: uuid */
+            brokerageId: null | string;
+            /** Format: uuid */
+            policyHolderId: null | string;
+            permissions: components["schemas"]["ProfilePermissionResponse"][];
+        };
+        GetQuotationGroupResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            policyHolderId: string;
+            /** Format: uuid */
+            insuredId: string;
+            /** Format: uuid */
+            modalityId: string;
+            modalityName: string;
+            /** Format: double */
+            insuredAmount: number | string;
+            /** Format: date */
+            coverageStartDate: string;
+            /** Format: date */
+            coverageEndDate: string;
+            scopeMode: string;
+            insurerIds: string[];
+            includesPenaltyCoverage: boolean;
+            includesLaborCoverage: boolean;
+            status: string;
+            /** Format: uuid */
+            selectedQuotationId: null | string;
+            policyHolder: components["schemas"]["QuotationGroupPersonResponse"];
+            insured: components["schemas"]["QuotationGroupPersonResponse"];
+        };
+        GetUserResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            email: string;
+            status: string;
+            /** Format: uuid */
+            profileId: null | string;
+            profileName: null | string;
+            /** Format: date-time */
+            createdAt: string;
+            brokerageMemberships: components["schemas"]["UserMembershipResponse"][];
+            policyHolderMemberships: components["schemas"]["UserMembershipResponse"][];
         };
         IgnoreImportedAdditionalCoverageResponse: {
             /** Format: uuid */
@@ -2370,6 +3466,69 @@ export interface components {
             logoUrl: null | string;
             status: string;
         };
+        InviteBrokerageAdministratorRequest: {
+            name: string;
+            email: string;
+            brokerageIds: string[];
+        };
+        InviteBrokerageAdministratorResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            email: string;
+            status: string;
+        };
+        InviteBrokerageUserBody: {
+            name: string;
+            email: string;
+            /** Format: uuid */
+            profileId: string;
+        };
+        InviteBrokerageUserResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            email: string;
+            status: string;
+            /** Format: uuid */
+            brokerageId: string;
+            /** Format: uuid */
+            profileId: string;
+            profileName: string;
+        };
+        InvitePolicyHolderAdministratorBody: {
+            name: string;
+            email: string;
+            /** Format: uuid */
+            policyHolderId: string;
+        };
+        InvitePolicyHolderAdministratorResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            email: string;
+            status: string;
+            /** Format: uuid */
+            policyHolderId: string;
+        };
+        InvitePolicyHolderUserBody: {
+            name: string;
+            email: string;
+            /** Format: uuid */
+            profileId: string;
+        };
+        InvitePolicyHolderUserResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            email: string;
+            status: string;
+            /** Format: uuid */
+            policyHolderId: string;
+            /** Format: uuid */
+            profileId: string;
+            profileName: string;
+        };
         LinkedCoverageItem: {
             /** Format: uuid */
             importedCoverageId: string;
@@ -2387,8 +3546,24 @@ export interface components {
             /** Format: uuid */
             additionalCoverageId: string;
         };
-        ListPolicyHolderBranchesResponse: {
-            branches: components["schemas"]["PolicyHolderBranchResponse"][];
+        ListBrokeragesResponse: {
+            items: components["schemas"]["BrokerageListItemResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int64 */
+            totalCount: number | string;
+            counts: components["schemas"]["BrokerageSituationCountsResponse"];
+            /** Format: int64 */
+            totalPages?: number | string;
+        };
+        ListQuotationsResponse: {
+            /** Format: uuid */
+            quotationGroupId: string;
+            /** Format: uuid */
+            selectedQuotationId: null | string;
+            quotations: components["schemas"]["QuotationListItemResponse"][];
         };
         MapInsurerResponse: {
             /** Format: uuid */
@@ -2429,17 +3604,6 @@ export interface components {
         };
         PagedResponseOfBrokerageInsurerEnablementListItemResponse: {
             items: components["schemas"]["BrokerageInsurerEnablementListItemResponse"][];
-            /** Format: int32 */
-            page: number | string;
-            /** Format: int32 */
-            pageSize: number | string;
-            /** Format: int64 */
-            totalCount: number | string;
-            /** Format: int64 */
-            totalPages?: number | string;
-        };
-        PagedResponseOfBrokerageListItemResponse: {
-            items: components["schemas"]["BrokerageListItemResponse"][];
             /** Format: int32 */
             page: number | string;
             /** Format: int32 */
@@ -2493,6 +3657,28 @@ export interface components {
             /** Format: int64 */
             totalPages?: number | string;
         };
+        PagedResponseOfProfileListItemResponse: {
+            items: components["schemas"]["ProfileListItemResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int64 */
+            totalCount: number | string;
+            /** Format: int64 */
+            totalPages?: number | string;
+        };
+        PagedResponseOfUserListItemResponse: {
+            items: components["schemas"]["UserListItemResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int64 */
+            totalCount: number | string;
+            /** Format: int64 */
+            totalPages?: number | string;
+        };
         PendingCoverageItem: {
             /** Format: uuid */
             id: string;
@@ -2512,6 +3698,13 @@ export interface components {
             branch: string;
             engineModalityName: null | string;
             groupName: string;
+        };
+        PermissionResponse: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            description: null | string;
+            isSystem: boolean;
         };
         PersonAddressResponse: {
             zipCode: null | string;
@@ -2533,8 +3726,6 @@ export interface components {
             roles: string[];
             mainAddress: null | components["schemas"]["PersonAddressResponse"];
             preSelectedBranchDocumentNumber?: null | string;
-            /** Format: uuid */
-            preSelectedBranchId?: null | string;
         };
         PolicyHolderAddressResponse: {
             /** Format: uuid */
@@ -2565,13 +3756,6 @@ export interface components {
             /** Format: date-time */
             endedAt: null | string;
         };
-        PolicyHolderBranchResponse: {
-            /** Format: uuid */
-            id: string;
-            documentNumber: string;
-            name: string;
-            socialName: null | string;
-        };
         PolicyHolderListItemResponse: {
             /** Format: uuid */
             id: string;
@@ -2579,6 +3763,90 @@ export interface components {
             name: string;
             socialName: null | string;
             isPrivateSector: null | boolean;
+        };
+        ProfileListItemResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            scope: string;
+            isFixed: boolean;
+            /** Format: uuid */
+            brokerageId: null | string;
+            /** Format: uuid */
+            policyHolderId: null | string;
+            /** Format: int32 */
+            permissionCount: number | string;
+        };
+        ProfilePermissionResponse: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            description: null | string;
+            isSystem: boolean;
+        };
+        QuotationClauseInput: {
+            particularClauseExternalId: string;
+            tags: components["schemas"]["QuotationTermInput"][];
+        };
+        QuotationGroupPersonAddressResponse: {
+            zipCode: null | string;
+            street: null | string;
+            number: null | string;
+            complement: null | string;
+            neighborhood: null | string;
+            city: null | string;
+            state: null | string;
+        };
+        QuotationGroupPersonResponse: {
+            /** Format: uuid */
+            id: string;
+            documentNumber: string;
+            name: string;
+            socialName: null | string;
+            mainAddress: null | components["schemas"]["QuotationGroupPersonAddressResponse"];
+        };
+        QuotationListItemResponse: {
+            /** Format: uuid */
+            quotationId: string;
+            /** Format: uuid */
+            insurerId: string;
+            insurerName: string;
+            insurerLogoUrl: null | string;
+            processingStatus: string;
+            result: null | string;
+            analysisTrack: null | string;
+            isFollowable: boolean;
+            /** Format: double */
+            premium: null | number | string;
+            /** Format: double */
+            commissionPercentage: null | number | string;
+            /** Format: double */
+            commissionValue: null | number | string;
+            /** Format: double */
+            tax: null | number | string;
+            /** Format: double */
+            availableLimit: null | number | string;
+            requiresCcg: boolean;
+            /** Format: double */
+            ccgMaxLimitWithoutNeed: null | number | string;
+            ccgSigned: boolean;
+            reasons: string[];
+        };
+        QuotationMinutaClauseResponse: {
+            externalId: string;
+            name: string;
+            clauseText: null | string;
+            jsonTag: null | string;
+        };
+        QuotationMinutaResponse: {
+            tagJson: null | string;
+            clauses: components["schemas"]["QuotationMinutaClauseResponse"][];
+            filledTagsJson?: null | string;
+            filledClausesJson?: null | string;
+        };
+        QuotationTermInput: {
+            name: string;
+            value: string;
         };
         ReassignImportedModalityBody: {
             /** Format: uuid */
@@ -2591,6 +3859,11 @@ export interface components {
             modalityId: string;
             linkSource: string;
         };
+        ResendInvitationResponse: {
+            /** Format: uuid */
+            userId: string;
+            email: string;
+        };
         RestoreImportedAdditionalCoverageResponse: {
             /** Format: uuid */
             importedCoverageId: string;
@@ -2601,9 +3874,29 @@ export interface components {
             importedModalityId: string;
             ignored: boolean;
         };
+        RunQuotationsBody: {
+            /** Format: uuid */
+            brokerageId: string;
+        };
+        RunQuotationsResponse: {
+            /** Format: uuid */
+            quotationGroupId: string;
+            /** Format: int32 */
+            requestedCount: number | string;
+        };
+        ScopedProfileBody: {
+            name: string;
+            permissionCodes: null | string[];
+        };
         SearchPersonsResponse: {
             items: components["schemas"]["PersonSearchItemResponse"][];
             notice?: null | string;
+        };
+        SelectQuotationResponse: {
+            /** Format: uuid */
+            quotationGroupId: string;
+            /** Format: uuid */
+            selectedQuotationId: string;
         };
         SetUserProfileBody: {
             profile: null | string;
@@ -2612,6 +3905,33 @@ export interface components {
             /** Format: uuid */
             id: string;
             profile: null | string;
+        };
+        SubmitQuotationMinutaBody: {
+            /** Format: uuid */
+            brokerageId: string;
+            terms: components["schemas"]["QuotationTermInput"][];
+            particularClauses: components["schemas"]["QuotationClauseInput"][];
+        };
+        SubmitQuotationTermsResponse: {
+            draftUrl: null | string;
+            draftExternalId: null | string;
+            /** Format: date-time */
+            draftCreatedAt: null | string;
+        };
+        SwitchActiveScopeBody: {
+            /** Format: uuid */
+            brokerageId: null | string;
+            /** Format: uuid */
+            policyHolderId: null | string;
+        };
+        SwitchActiveScopeResponse: {
+            accessToken: string;
+            /** Format: date-time */
+            expiresAtUtc: string;
+            /** Format: uuid */
+            activeBrokerageId: null | string;
+            /** Format: uuid */
+            activePolicyHolderId: null | string;
         };
         UnlinkImportedAdditionalCoverageResponse: {
             /** Format: uuid */
@@ -2622,6 +3942,12 @@ export interface components {
             id: string;
             name: string;
             status: string;
+        };
+        UpdateBrokerageBody: {
+            socialName: null | string;
+            contactEmail: null | string;
+            contactPhone: null | string;
+            responsibleName: null | string;
         };
         UpdateBrokerageInsurerEnablementBody: {
             calculationEngine: string;
@@ -2637,6 +3963,14 @@ export interface components {
             calculationEngine: string;
             connectionParameters: null | string;
             status: string;
+        };
+        UpdateFixedProfilePermissionsResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            scope: string;
+            /** Format: int32 */
+            permissionCount: number | string;
         };
         UpdateInsurerBody: {
             cnpj: string;
@@ -2679,8 +4013,6 @@ export interface components {
             /** Format: uuid */
             policyHolderId: string;
             /** Format: uuid */
-            branchId: null | string;
-            /** Format: uuid */
             insuredId: string;
             /** Format: uuid */
             modalityId: string;
@@ -2715,6 +4047,43 @@ export interface components {
             includesPenaltyCoverage: boolean;
             includesLaborCoverage: boolean;
             status: string;
+        };
+        UpdateScopedProfileResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            scope: string;
+            /** Format: int32 */
+            permissionCount: number | string;
+        };
+        UserListItemResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            email: string;
+            status: string;
+            profileName: null | string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        UserMembershipResponse: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            scopeId: string;
+            scopeDocumentNumber: string;
+            scopeName: string;
+            /** Format: uuid */
+            profileId: string;
+            profileName: string;
+        };
+        UserScopeResponse: {
+            /** Format: uuid */
+            id: string;
+            documentNumber: string;
+            name: string;
+            profileName: string;
+            isActive: boolean;
         };
     };
     responses: never;

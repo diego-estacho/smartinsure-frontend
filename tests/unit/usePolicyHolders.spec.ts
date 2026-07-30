@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { usePolicyHolders } from './usePolicyHolders'
+import { usePolicyHolders } from '../../app/composables/usePolicyHolders'
 
 const fetchMock = vi.fn()
 const api = fetchMock as unknown as typeof $fetch

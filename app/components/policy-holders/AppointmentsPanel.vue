@@ -4,6 +4,7 @@ import type { InsurerListItemResponse } from '~/composables/useInsurers'
 import type { PolicyHolderAppointment } from '~/composables/usePolicyHolders'
 import { required } from '~/lib/rules'
 import { getPolicyHolderAppointmentStatusView, canEndPolicyHolderAppointment } from '~/lib/status/policyHolderAppointments'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 const props = withDefaults(defineProps<{ policyHolderId: string, appointments: PolicyHolderAppointment[], hideToolbar?: boolean }>(), {
   hideToolbar: false,
@@ -64,14 +65,14 @@ function openCreateDialog() {
 async function loadFormData() {
   try {
     const [brokeragesPage, insurersPage] = await Promise.all([
-      listBrokerages({ status: 'Active', pageSize: 100 }),
+      listBrokerages({ situation: 'Active', pageSize: 100 }),
       listInsurers({ status: 'Active', pageSize: 100 }),
     ])
     brokerages.value = brokeragesPage.items
     insurers.value = insurersPage.items
   }
-  catch {
-    error.value = 'Não foi possível carregar dados para a nomeação.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível carregar dados para a nomeação.')
   }
 }
 
@@ -114,15 +115,8 @@ async function createNewAppointment() {
     emit('changed')
   }
   catch (err) {
-    // Check if it's a 409 conflict (same broker already appointed)
-    const errorObj = err as { status?: number, data?: { detail?: string } }
-    if (typeof err === 'object' && err !== null && 'status' in err && errorObj.status === 409) {
-      // Show message from ProblemDetails
-      error.value = errorObj.data?.detail || 'Esta corretora já possui uma nomeação vigente para esta seguradora.'
-    }
-    else {
-      error.value = 'Não foi possível criar a nomeação.'
-    }
+    // Mensagem tratada do backend (ex.: 409 "corretora já nomeada"); genérica só quando não vier nada.
+    error.value = extractApiErrorMessage(err, 'Não foi possível criar a nomeação.')
   }
   finally {
     saving.value = false
@@ -140,8 +134,8 @@ async function confirmReplaceAppointment() {
     existingAppointment.value = null
     await createNewAppointment()
   }
-  catch {
-    error.value = 'Não foi possível executar a ação.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível executar a ação.')
   }
   finally {
     confirmSubmitting.value = false
@@ -170,8 +164,8 @@ async function confirmEndAppointment() {
     appointmentToEnd.value = null
     emit('changed')
   }
-  catch {
-    error.value = 'Não foi possível encerrar a nomeação.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível encerrar a nomeação.')
   }
   finally {
     saving.value = false

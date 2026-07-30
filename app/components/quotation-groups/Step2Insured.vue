@@ -11,6 +11,7 @@
 import type { PersonAddress, PersonSearchItem } from '~/composables/usePersons'
 import type { SelectedInsured } from '~/stores/quotationGroupWizard'
 import { formatCnpj } from '~/lib/documents'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 interface InsuredAddress {
   id: string
@@ -84,8 +85,8 @@ async function search(): Promise<void> {
     results.value = response.items
     notice.value = response.notice ?? null
   }
-  catch {
-    error.value = 'Não foi possível buscar o segurado.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível buscar o segurado.')
     results.value = []
   }
   finally {
@@ -143,8 +144,8 @@ async function lookupCep(): Promise<void> {
     newAddress.city = data.city || newAddress.city
     newAddress.state = data.state || newAddress.state
   }
-  catch {
-    cepError.value = 'Não foi possível consultar o CEP.'
+  catch (err) {
+    cepError.value = extractApiErrorMessage(err, 'Não foi possível consultar o CEP.')
   }
   finally {
     cepLoading.value = false

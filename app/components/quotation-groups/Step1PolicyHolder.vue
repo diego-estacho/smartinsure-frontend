@@ -8,7 +8,7 @@
  * recálculo. A busca fica SEMPRE visível — trocar o tomador é só buscar de novo (sem botão "Trocar").
  *
  * "Ver limites e taxas" abre um modal placeholder (tela à parte). O card também lista as Filiais do
- * tomador (RN-053) com marcação exclusiva (no máx. uma) via `usePolicyHolderBranches`; "Adicionar
+ * tomador (RN-102) com marcação exclusiva (no máx. uma) via `usePolicyHolderBranches`; "Adicionar
  * filial" abre um modal que registra uma nova por CNPJ via Birô (`createBranch`) e mostra o aviso do
  * backend quando o CNPJ não é localizado (a matriz continua usável — não é erro).
  */
@@ -16,6 +16,7 @@ import type { PersonAddress, PersonSearchItem } from '~/composables/usePersons'
 import type { CreatePolicyHolderBranchResponse, PolicyHolderBranch } from '~/composables/usePolicyHolderBranches'
 import type { SelectedPolicyHolder } from '~/stores/quotationGroupWizard'
 import { formatCnpj } from '~/lib/documents'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 const wizard = useQuotationGroupWizardStore()
 const { searchPersons } = usePersons()
@@ -70,8 +71,8 @@ async function search(): Promise<void> {
     results.value = response.items
     notice.value = response.notice ?? null
   }
-  catch {
-    error.value = 'Não foi possível buscar o tomador.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível buscar o tomador.')
     results.value = []
   }
   finally {
@@ -81,7 +82,7 @@ async function search(): Promise<void> {
 
 // Cada item da busca de Pessoas já traz o endereço principal — não há endpoint de detalhe (igual à
 // etapa 2). Monta o tomador direto do item selecionado. `preSelectedBranchId`: quando o corretor
-// chegou digitando o CNPJ de uma Filial, ela já nasce marcada (RN-053); nos demais casos, a lista
+// chegou digitando o CNPJ de uma Filial, ela já nasce marcada (RN-102); nos demais casos, a lista
 // abre desmarcada (matriz). A lista de Filiais é buscada em seguida via BFF.
 function select(item: PersonSearchItem): void {
   const chosen: SelectedPolicyHolder = {
@@ -115,7 +116,7 @@ function fallbackBranch(id: string, documentNumber: string, name: string): Polic
 }
 
 /**
- * Busca as Filiais já registradas do tomador (RN-053). Falha na listagem NÃO é silenciosa (aviso
+ * Busca as Filiais já registradas do tomador (RN-102). Falha na listagem NÃO é silenciosa (aviso
  * visível, `branchesError`) e nunca apaga uma Filial já marcada da tela: `selectedBranchId` pode já
  * estar apontando pra uma Filial (marcação síncrona em `select()`, ou a recém-criada em
  * `addBranch()`) que só existiria como checkbox através da lista que este GET traria — se ele
@@ -136,7 +137,7 @@ async function loadBranches(policyHolderId: string, fallback: PolicyHolderBranch
 
 /** Marca/desmarca a Filial clicada. O v-model do SiCheckbox já garante a exclusividade: como cada
  * clique substitui `selectedBranchId` por inteiro (nunca acumula), marcar uma Filial desmarca
- * qualquer outra automaticamente (RN-053). */
+ * qualquer outra automaticamente (RN-102). */
 function toggleBranch(branchId: string, checked: boolean | null): void {
   if (checked) wizard.setBranch(branchId)
   else wizard.clearBranch()
@@ -172,7 +173,7 @@ async function addBranch(): Promise<void> {
     }
   }
   catch (err) {
-    // 422 é o Backend rejeitando por RN-052 (raiz de CNPJ diferente da do tomador, ou `/0001` como
+    // 422 é o Backend rejeitando por RN-101 (raiz de CNPJ diferente da do tomador, ou `/0001` como
     // Filial) com o motivo em `detail` — mostramos o texto do servidor, sem reimplementar a checagem
     // aqui (ADR-004). Sem `detail` (ou erro de outra natureza — rede, 500, corpo malformado), cai na
     // mensagem genérica.
@@ -284,7 +285,7 @@ function closeBranchModal(): void {
       </p>
 
       <!-- Limite de Crédito e taxa são SEMPRE da matriz — a Seguradora não consulta limite pelo CNPJ
-      da Filial (decisão do dono em 2026-07-28, ver OPEN-17). Por isso a ação fica junto dos dados da
+      da Filial (decisão do dono em 2026-07-28, ver OPEN-90). Por isso a ação fica junto dos dados da
       matriz, ACIMA da seção de Filiais: a escolha da Filial não muda o que este botão mostra.
       Não confundir com o cotar/emitir, que usam o CNPJ do estabelecimento cotado — que a Seguradora
       avalie o risco pela matriz é funcionamento interno dela, não comportamento da plataforma. -->
@@ -309,7 +310,7 @@ function closeBranchModal(): void {
         :text="branchesError"
       />
 
-      <!-- Filiais do tomador (RN-053): marcação exclusiva — no máx. uma; desmarcar volta à matriz.
+      <!-- Filiais do tomador (RN-102): marcação exclusiva — no máx. uma; desmarcar volta à matriz.
       A seção aparece mesmo sem Filial cadastrada, senão não haveria por onde adicionar a primeira. -->
       <div class="si-qg-step1__branches">
         <span class="si-qg-step1__branches-label">Filial da cotação</span>

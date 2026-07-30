@@ -16,12 +16,13 @@
  * `.si-shell-*` (ADR-015); o popover do switcher (teleportado pelo SiMenu) é estilizado no
  * skin.css sob `.si-shell-ws-overlay`.
  *
- * Dado de domínio fica com placeholder honesto (sem inventar): a identidade real do usuário e
- * a lista/ativa de corretoras do switcher dependem de contrato e estão em **OPEN-03**
- * (`../smartinsure-backend/docs/product-specs/open-decisions.md`). Itens de menu sem rota ainda
- * implementada ficam desabilitados; nascem quando a rota + glossário existirem.
+ * Identidade e escopo: o switcher e o rodapé de conta consomem `/api/me` (RN-064) — vínculos de
+ * Corretora e Escopo ativo vêm do servidor, e a troca reemite o acesso (ADR-065). Itens de menu
+ * sem rota ainda implementada ficam desabilitados; nascem quando a rota + glossário existirem.
  */
 import type { AppIconName } from '~/lib/icons'
+import { extractApiErrorMessage } from '~/lib/apiError'
+import { getProfileLabel } from '~/lib/status/profiles'
 
 interface NavItem {
   key: string
@@ -37,7 +38,34 @@ const { logout } = useAuth()
 // (useIsMobile) — o useDisplay do Vuetify não reconcilia a largura no SSR deste módulo.
 const { isMobile: mobile } = useIsMobile()
 const { collapsed, loadCollapsed, toggleCollapsed } = useShellPreferences()
-const { workspaces, activeWorkspace, hasWorkspaces, selectWorkspace } = useWorkspaces()
+// RN-064: vínculos e Escopo ativo vêm do servidor (`/api/me`); a troca reemite o acesso.
+const {
+  context,
+  workspaces,
+  activeWorkspace,
+  hasWorkspaces,
+  selectWorkspace,
+  loadContext,
+} = useWorkspaces()
+
+const workspaceError = ref<string | null>(null)
+
+await loadContext()
+
+/**
+ * Legenda da conta: o Perfil de Escopo Sistema (RN-012) quando houver, senão o Perfil na
+ * Corretora ativa (RN-064). Sem contexto, mantém o rótulo neutro do 0014.
+ */
+const accountSubtitle = computed(() => {
+  const systemProfile = context.value?.systemProfileName
+  if (systemProfile) {
+    return getProfileLabel(systemProfile)
+  }
+
+  return activeWorkspace.value
+    ? getProfileLabel(activeWorkspace.value.profileName)
+    : 'Sair da conta'
+})
 
 const drawerOpen = ref(true)
 const wsMenuOpen = ref(false)
@@ -57,8 +85,8 @@ const secondaryNav: NavItem[] = [
   { key: 'modalidades', title: 'Modalidades', icon: 'tag', to: '/modalidades' },
   { key: 'mapaModalidades', title: 'Mapa de Modalidades', icon: 'sitemap', to: '/mapa-de-modalidades' },
   { key: 'coberturasAdicionais', title: 'Coberturas Adicionais', icon: 'shieldCheck', to: '/coberturas-adicionais' },
-  { key: 'usuarios', title: 'Usuários', icon: 'userRound' },
-  { key: 'perfis', title: 'Perfis de acesso', icon: 'keyRound' },
+  { key: 'usuarios', title: 'Usuários', icon: 'userRound', to: '/usuarios' },
+  { key: 'perfis', title: 'Perfis de acesso', icon: 'keyRound', to: '/perfis' },
   { key: 'relatorios', title: 'Relatórios', icon: 'barChart' },
   { key: 'config', title: 'Configurações', icon: 'settings' },
 ]
@@ -89,9 +117,18 @@ function closeDrawerOnMobile() {
   if (mobile.value) drawerOpen.value = false
 }
 
-function onSelectWorkspace(id: string) {
-  selectWorkspace(id)
+async function onSelectWorkspace(id: string) {
+  workspaceError.value = null
   wsMenuOpen.value = false
+
+  try {
+    await selectWorkspace(id)
+    // O acesso foi reemitido com o novo Escopo: recarrega os dados da rota no contexto novo.
+    await refreshNuxtData()
+  }
+  catch (error) {
+    workspaceError.value = extractApiErrorMessage(error, 'Não foi possível trocar de corretora.')
+  }
 }
 
 async function onLogout() {
@@ -210,7 +247,7 @@ onBeforeUnmount(() => {
         </span>
       </div>
 
-      <!-- Seletor de corretora (workspace switcher) — moldura visual; dado real em OPEN-03. -->
+      <!-- Seletor de corretora (workspace switcher) — RN-064: vínculos e ativa vêm do servidor. -->
       <div class="si-shell-ws">
         <SiMenu
           v-model="wsMenuOpen"
@@ -257,6 +294,12 @@ onBeforeUnmount(() => {
               class="si-shell-ws-empty"
             >
               Nenhuma corretora vinculada ainda.
+            </p>
+            <p
+              v-if="workspaceError"
+              class="si-shell-ws-empty"
+            >
+              {{ workspaceError }}
             </p>
             <button
               v-for="w in workspaces"
@@ -385,8 +428,9 @@ onBeforeUnmount(() => {
                   v-if="!rail"
                   class="si-shell-user-info"
                 >
-                  <span class="si-shell-user-name">Minha conta</span>
-                  <span class="si-shell-user-role">Sair da conta</span>
+                  <!-- Identidade real do Usuário autenticado (RN-064); rótulo neutro sem contexto. -->
+                  <span class="si-shell-user-name">{{ context?.name ?? 'Minha conta' }}</span>
+                  <span class="si-shell-user-role">{{ accountSubtitle }}</span>
                 </span>
                 <SiIcon
                   v-if="!rail"

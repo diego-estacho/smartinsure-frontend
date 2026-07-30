@@ -327,6 +327,21 @@ const items = [
         </VCardText>
       </SiCard>
 
+      <!-- Skeleton -->
+      <SiCard class="mb-6">
+        <VCardTitle>SiSkeleton</VCardTitle>
+        <VCardText class="d-flex flex-column" style="gap: var(--si-space-3)">
+          <SiSkeleton height="76px" radius="var(--si-radius-lg)" />
+          <div class="d-flex align-center" style="gap: var(--si-space-3)">
+            <SiSkeleton circle width="40px" height="40px" />
+            <div class="d-flex flex-column" style="gap: var(--si-space-2); flex: 1">
+              <SiSkeleton width="40%" height="12px" />
+              <SiSkeleton width="70%" height="10px" radius="999px" />
+            </div>
+          </div>
+        </VCardText>
+      </SiCard>
+
       <!-- Feedback -->
       <SiCard class="mb-6">
         <VCardTitle>SiAlert · SiSnackbar</VCardTitle>
@@ -344,6 +359,26 @@ const items = [
               <SiButton variant="text" @click="snackbar = false">Desfazer</SiButton>
             </template>
           </SiSnackbar>
+        </VCardText>
+      </SiCard>
+
+      <!-- SiMetric — card de indicador (eyebrow + valor tabular + hint); `empty` = estado honesto -->
+      <SiCard class="mb-6">
+        <VCardTitle>SiMetric</VCardTitle>
+        <VCardText>
+          <VRow>
+            <VCol cols="12" md="4"><SiMetric label="Seguradoras" :value="8" hint="habilitadas" /></VCol>
+            <VCol cols="12" md="4"><SiMetric label="Prêmio emitido" empty hint="sem dados ainda" /></VCol>
+            <VCol cols="12" md="4"><SiMetric label="Cotações (30d)" :value="124" /></VCol>
+          </VRow>
+        </VCardText>
+      </SiCard>
+
+      <!-- SiPageBack — voltar das telas de detalhe: seta (histórico) + breadcrumb (rota-pai) -->
+      <SiCard class="mb-6">
+        <VCardTitle>SiPageBack</VCardTitle>
+        <VCardText>
+          <SiPageBack to="/dev/ui" parent-label="Vitrine" current="Detalhe do item" />
         </VCardText>
       </SiCard>
     </VContainer>

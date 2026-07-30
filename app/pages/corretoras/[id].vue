@@ -1,7 +1,14 @@
 <script setup lang="ts">
+/**
+ * Detalhe da Corretora (RN-020). Página fina (ADR-018): hero com identidade + situação + ações,
+ * alerta de cadastro incompleto (RN-053) e abas Visão geral / Habilitações / Produção / Histórico.
+ * Produção fica em estado vazio honesto (TD-006); Histórico é real (RN-055).
+ */
 import type { GetBrokerageResponse } from '~/composables/useBrokerages'
 import { formatCnpj } from '~/lib/documents'
-import { getBrokerageStatusAction, getBrokerageStatusView } from '~/lib/status/brokerages'
+import { formatAddress, initials } from '~/lib/format'
+import { getBrokerageSituationAction, getBrokerageSituationView } from '~/lib/status/brokerages'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 definePageMeta({ layout: 'shell' })
 
@@ -9,180 +16,164 @@ const route = useRoute()
 const { getBrokerage, changeBrokerageStatus } = useBrokerages()
 
 const brokerage = ref<GetBrokerageResponse | null>(null)
-const loading = ref(false)
 const error = ref<string | null>(null)
-const success = ref<string | null>(null)
-const confirmOpen = ref(false)
-const tab = ref('habilitacoes')
+const tab = ref('visao-geral')
+const editOpen = ref(false)
+const inactivateOpen = ref(false)
+const busy = ref(false)
+const toast = ref('')
 const enablementsPanel = ref<{ openCreateDialog: () => void } | null>(null)
 
-const statusAction = computed(() =>
-  brokerage.value ? getBrokerageStatusAction(brokerage.value.status) : null,
-)
+const situation = computed(() => brokerage.value?.situation ?? '')
+const situationView = computed(() => getBrokerageSituationView(situation.value))
+const situationAction = computed(() => getBrokerageSituationAction(situation.value))
+const isIncomplete = computed(() => situation.value === 'Incomplete')
 
-const statusActionLabel = computed(() =>
-  statusAction.value?.label ?? 'Alterar situação da corretora',
-)
-
-/** Fatos rápidos da faixa de contexto — só o que existe no cadastro. */
-const quickFacts = computed(() => {
+const meta = computed(() => {
   if (!brokerage.value) return []
-
   return [
     `CNPJ ${formatCnpj(brokerage.value.documentNumber)}`,
-    sectorLabel(brokerage.value.isPrivateSector) !== '-'
+    sectorLabel(brokerage.value.isPrivateSector) !== '—'
       ? `Setor ${sectorLabel(brokerage.value.isPrivateSector).toLowerCase()}`
       : null,
     brokerage.value.legalNatureName,
-  ].filter((fact): fact is string => Boolean(fact))
+  ].filter((v): v is string => Boolean(v))
 })
+
+const productionMetrics = [
+  { label: 'Taxa de conversão' },
+  { label: 'Prêmio médio' },
+  { label: 'Tempo médio' },
+  { label: 'Cotações abertas' },
+]
 
 await refresh()
 
 async function refresh() {
-  loading.value = true
   error.value = null
-
   try {
     brokerage.value = await getBrokerage(String(route.params.id))
   }
-  catch {
-    error.value = 'Não foi possível carregar a corretora.'
-  }
-  finally {
-    loading.value = false
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível carregar a corretora.')
   }
 }
 
-function openEnablementDialog() {
+function openHabilitar() {
   tab.value = 'habilitacoes'
-  enablementsPanel.value?.openCreateDialog()
+  nextTick(() => enablementsPanel.value?.openCreateDialog())
 }
 
-function openStatusDialog() {
+function onEdited(updated: GetBrokerageResponse) {
+  brokerage.value = updated
+  toast.value = 'Dados atualizados.'
+}
+
+async function confirmInactivate() {
   if (!brokerage.value) return
-  if (statusAction.value?.disabled) return
-
-  confirmOpen.value = true
-}
-
-async function confirmStatusChange() {
-  const action = statusAction.value
-  if (!brokerage.value || !action?.targetStatus) return
-
-  loading.value = true
-  error.value = null
-  success.value = null
-
+  busy.value = true
   try {
-    await changeBrokerageStatus(brokerage.value.id, action.targetStatus)
-    success.value = action.successMessage
-    confirmOpen.value = false
+    await changeBrokerageStatus(brokerage.value.id, situationAction.value.targetStatus)
+    toast.value = situationAction.value.successMessage
+    inactivateOpen.value = false
     await refresh()
   }
-  catch {
-    error.value = 'Não foi possível alterar a situação da corretora.'
+  catch (err) {
+    toast.value = extractApiErrorMessage(err, 'Não foi possível alterar a situação da corretora.')
   }
   finally {
-    loading.value = false
+    busy.value = false
   }
 }
 
 function sectorLabel(value: boolean | null) {
-  if (value === null) return '-'
+  if (value === null) return '—'
   return value ? 'Privado' : 'Público'
 }
 
-function formatAddress(address: GetBrokerageResponse['mainAddress']) {
-  if (!address) return '-'
-  return [
-    [address.street, address.number].filter(Boolean).join(', '),
-    address.complement,
-    address.neighborhood,
-    [address.city, address.state].filter(Boolean).join(' - '),
-    address.zipCode,
-  ].filter(Boolean).join(' · ')
+function dash(value: string | null | undefined) {
+  return value || '—'
 }
 </script>
 
 <template>
-  <div class="si-brokerage-detail">
-    <header class="si-brokerage-detail__hero">
-      <VContainer class="si-brokerage-detail__hero-inner">
-        <nav
-          class="si-brokerage-detail__breadcrumb"
-          aria-label="Trilha de navegação"
-        >
-          <NuxtLink to="/corretoras">
-            Corretoras
-          </NuxtLink>
-          <span aria-hidden="true">/</span>
-          <span>Detalhe</span>
-        </nav>
+  <div class="si-detail">
+    <header class="si-detail__hero">
+      <VContainer class="si-detail__hero-inner">
+        <SiPageBack
+          to="/corretoras"
+          parent-label="Corretoras"
+          :current="brokerage?.name ?? 'Detalhe'"
+          class="mb-3"
+        />
 
-        <div class="si-brokerage-detail__hero-row">
-          <div class="si-brokerage-detail__identity">
-            <div class="si-brokerage-detail__title">
-              <h1 class="text-h5">
-                {{ brokerage?.name ?? 'Corretora' }}
-              </h1>
-
-              <SiChip
-                v-if="brokerage"
-                :color="getBrokerageStatusView(brokerage.status).color"
-                size="small"
-              >
-                {{ getBrokerageStatusView(brokerage.status).label }}
-              </SiChip>
-            </div>
-
-            <p
-              v-if="quickFacts.length"
-              class="si-brokerage-detail__facts"
+        <div class="si-detail__hero-row">
+          <div class="si-detail__identity">
+            <SiAvatar
+              size="lg"
+              rounded="lg"
+              color="charcoal"
+              class="si-detail__avatar"
             >
-              <template
-                v-for="(fact, index) in quickFacts"
-                :key="fact"
+              {{ initials(brokerage?.name) }}
+            </SiAvatar>
+            <div>
+              <div class="si-detail__title">
+                <h1 class="si-detail__name">
+                  {{ brokerage?.name ?? 'Corretora' }}
+                </h1>
+                <SiChip
+                  v-if="brokerage"
+                  :color="situationView.color"
+                  size="small"
+                >
+                  {{ situationView.label }}
+                </SiChip>
+              </div>
+              <p
+                v-if="meta.length"
+                class="si-detail__meta"
               >
-                <span
-                  v-if="index > 0"
-                  aria-hidden="true"
-                  class="si-brokerage-detail__facts-separator"
-                >·</span>
-                <span>{{ fact }}</span>
-              </template>
-            </p>
+                {{ meta.join(' · ') }}
+              </p>
+            </div>
           </div>
 
-          <div class="si-brokerage-detail__hero-actions">
+          <div class="si-detail__actions">
+            <SiButton
+              variant="outlined"
+              color="secondary"
+              :prepend-icon="'pencil'"
+              @click="editOpen = true"
+            >
+              Editar dados
+            </SiButton>
             <SiButton
               :prepend-icon="'plus'"
-              @click="openEnablementDialog"
+              @click="openHabilitar"
             >
               Habilitar seguradora
             </SiButton>
-
             <SiMenu location="bottom end">
               <template #activator="{ props: menuProps }">
-                <SiButton
+                <SiIconButton
                   v-bind="menuProps"
-                  variant="outlined"
-                  color="secondary"
-                  icon
+                  icon="dotsVertical"
                   aria-label="Mais ações"
-                >
-                  <SiIcon :icon="'dotsVertical'" />
-                </SiButton>
+                />
               </template>
-
               <SiList
                 density="compact"
                 class="si-rowmenu"
               >
                 <SiListItem
-                  :title="statusAction?.label"
-                  :disabled="statusAction?.disabled"
-                  @click="openStatusDialog"
+                  title="Editar dados cadastrais"
+                  @click="editOpen = true"
+                />
+                <SiListItem
+                  title="Inativar corretora"
+                  class="si-rowmenu__danger"
+                  @click="inactivateOpen = true"
                 />
               </SiList>
             </SiMenu>
@@ -191,7 +182,7 @@ function formatAddress(address: GetBrokerageResponse['mainAddress']) {
 
         <SiTabs
           v-model="tab"
-          class="si-brokerage-detail__tabs"
+          class="si-detail__tabs"
         >
           <SiTab
             value="visao-geral"
@@ -199,13 +190,22 @@ function formatAddress(address: GetBrokerageResponse['mainAddress']) {
           />
           <SiTab
             value="habilitacoes"
-            text="Habilitações de Seguradora"
+            text="Habilitações"
+            :count="brokerage?.enabledInsurerCount ?? 0"
+          />
+          <SiTab
+            value="producao"
+            text="Produção"
+          />
+          <SiTab
+            value="historico"
+            text="Histórico"
           />
         </SiTabs>
       </VContainer>
     </header>
 
-    <VContainer class="si-brokerage-detail__content">
+    <VContainer class="si-detail__content">
       <SiAlert
         v-if="error"
         type="error"
@@ -214,230 +214,380 @@ function formatAddress(address: GetBrokerageResponse['mainAddress']) {
       />
 
       <SiAlert
-        v-if="success"
-        type="success"
-        class="mb-4"
-        :text="success"
+        v-if="isIncomplete"
+        type="warning"
+        title="Cadastro incompleto"
+        text="Faltam nome fantasia e contato. Complete os dados para liberar a corretora para cotação."
+        class="mb-5"
       />
 
-      <VTabsWindow v-model="tab">
+      <VTabsWindow
+        v-if="brokerage"
+        v-model="tab"
+      >
+        <!-- Visão geral -->
         <VTabsWindowItem value="visao-geral">
-          <SiCard
-            v-if="brokerage"
-            class="pa-5"
-          >
-            <dl class="si-brokerage-detail__grid">
-              <div>
-                <dt>CNPJ</dt>
-                <dd>{{ formatCnpj(brokerage.documentNumber) }}</dd>
+          <div class="si-detail__metrics">
+            <SiMetric
+              label="Seguradoras"
+              :value="brokerage.enabledInsurerCount"
+              hint="habilitadas"
+            />
+            <SiMetric
+              label="Cotações (30d)"
+              empty
+              hint="sem dados ainda"
+            />
+            <SiMetric
+              label="Apólices ativas"
+              empty
+              hint="sem dados ainda"
+            />
+            <SiMetric
+              label="Prêmio emitido"
+              empty
+              hint="sem dados ainda"
+            />
+          </div>
+
+          <div class="si-detail__cards">
+            <SiCard variant="flat">
+              <div class="si-detail__card-header">
+                Dados cadastrais
               </div>
-              <div>
-                <dt>Razão social</dt>
-                <dd>{{ brokerage.name }}</dd>
+              <dl class="si-detail__grid">
+                <div>
+                  <dt>CNPJ</dt>
+                  <dd>{{ formatCnpj(brokerage.documentNumber) }}</dd>
+                </div>
+                <div>
+                  <dt>Razão social</dt>
+                  <dd>{{ brokerage.name }}</dd>
+                </div>
+                <div>
+                  <dt>Nome fantasia</dt>
+                  <dd>{{ dash(brokerage.socialName) }}</dd>
+                </div>
+                <div>
+                  <dt>Natureza jurídica</dt>
+                  <dd>{{ dash(brokerage.legalNatureName) }}</dd>
+                </div>
+                <div>
+                  <dt>Setor</dt>
+                  <dd>{{ sectorLabel(brokerage.isPrivateSector) }}</dd>
+                </div>
+                <div class="si-detail__span-all">
+                  <dt>Endereço principal</dt>
+                  <dd>{{ formatAddress(brokerage.mainAddress) }}</dd>
+                </div>
+              </dl>
+            </SiCard>
+
+            <SiCard variant="flat">
+              <div class="si-detail__card-header">
+                Contato e responsável
               </div>
-              <div>
-                <dt>Nome fantasia</dt>
-                <dd>{{ brokerage.socialName ?? '-' }}</dd>
-              </div>
-              <div>
-                <dt>Natureza Jurídica</dt>
-                <dd>{{ brokerage.legalNatureName ?? '-' }}</dd>
-              </div>
-              <div>
-                <dt>Código da Natureza Jurídica</dt>
-                <dd>{{ brokerage.legalNatureCode ?? '-' }}</dd>
-              </div>
-              <div>
-                <dt>Setor</dt>
-                <dd>{{ sectorLabel(brokerage.isPrivateSector) }}</dd>
-              </div>
-              <div class="si-brokerage-detail__address">
-                <dt>Endereço principal</dt>
-                <dd>{{ formatAddress(brokerage.mainAddress) }}</dd>
-              </div>
-            </dl>
-          </SiCard>
+              <dl class="si-detail__grid si-detail__grid--single">
+                <div>
+                  <dt>E-mail</dt>
+                  <dd>{{ dash(brokerage.contactEmail) }}</dd>
+                </div>
+                <div>
+                  <dt>Telefone</dt>
+                  <dd>{{ dash(brokerage.contactPhone) }}</dd>
+                </div>
+                <div>
+                  <dt>Responsável</dt>
+                  <dd>{{ dash(brokerage.responsibleName) }}</dd>
+                </div>
+              </dl>
+            </SiCard>
+          </div>
         </VTabsWindowItem>
 
+        <!-- Habilitações -->
         <VTabsWindowItem value="habilitacoes">
           <BrokeragesInsurerEnablementsPanel
-            v-if="brokerage"
             ref="enablementsPanel"
             :brokerage-id="brokerage.id"
             hide-toolbar
           />
         </VTabsWindowItem>
+
+        <!-- Produção: estado vazio honesto (TD-006) -->
+        <VTabsWindowItem value="producao">
+          <div class="si-detail__metrics">
+            <SiMetric
+              v-for="metric in productionMetrics"
+              :key="metric.label"
+              :label="metric.label"
+              empty
+            />
+          </div>
+          <SiCard
+            variant="flat"
+            class="si-detail__empty-production"
+          >
+            <div class="si-detail__empty-icon">
+              <SiIcon :icon="'barChart'" />
+            </div>
+            <h2 class="si-detail__empty-title">
+              Sem dados de produção ainda
+            </h2>
+            <p class="si-detail__empty-text">
+              Os indicadores de produção aparecem aqui quando a corretora começar a cotar e emitir
+              pela plataforma.
+            </p>
+          </SiCard>
+        </VTabsWindowItem>
+
+        <!-- Histórico: real (RN-055) -->
+        <VTabsWindowItem value="historico">
+          <SiCard
+            variant="flat"
+            class="pa-5"
+          >
+            <BrokeragesHistoryTab :brokerage-id="brokerage.id" />
+          </SiCard>
+        </VTabsWindowItem>
       </VTabsWindow>
     </VContainer>
 
-    <SiDialog v-model="confirmOpen">
+    <BrokeragesEditDialog
+      v-if="brokerage"
+      v-model="editOpen"
+      :brokerage="brokerage"
+      @updated="onEdited"
+    />
+
+    <SiDialog
+      v-model="inactivateOpen"
+      :max-width="440"
+    >
       <SiCard class="pa-5">
         <h2 class="text-h6 mb-3">
-          {{ statusActionLabel }}
+          {{ situationAction.confirmTitle }}
         </h2>
-
         <p class="mb-5">
-          {{ brokerage?.name }}
+          {{ situationAction.confirmText }}
         </p>
-
-        <div class="si-brokerage-detail__dialog-actions">
+        <div class="si-detail__dialog-actions">
           <SiButton
             variant="text"
-            @click="confirmOpen = false"
+            @click="inactivateOpen = false"
           >
             Cancelar
           </SiButton>
-
           <SiButton
-            :prepend-icon="statusAction?.icon"
-            :color="statusAction?.color"
-            :loading="loading"
-            :disabled="statusAction?.disabled"
-            @click="confirmStatusChange"
+            :color="situationAction.color"
+            :loading="busy"
+            @click="confirmInactivate"
           >
-            Confirmar
+            {{ situationAction.label.split(' ')[0] }}
           </SiButton>
         </div>
       </SiCard>
     </SiDialog>
+
+    <SiSnackbar
+      :model-value="Boolean(toast)"
+      @update:model-value="(v) => { if (!v) toast = '' }"
+    >
+      {{ toast }}
+    </SiSnackbar>
   </div>
 </template>
 
 <style scoped>
-/* Faixa de contexto (direção C): fundo de superfície + hairline inferior. */
-.si-brokerage-detail__hero {
+.si-detail__hero {
   background: rgb(var(--v-theme-surface));
   border-bottom: 1px solid var(--si-cinza-claro);
 }
 
-.si-brokerage-detail__hero-inner,
-.si-brokerage-detail__content {
+.si-detail__hero-inner,
+.si-detail__content {
   max-width: var(--si-container-wide);
 }
 
-.si-brokerage-detail__hero-inner {
+.si-detail__hero-inner {
   padding-block: var(--si-space-4) 0;
 }
 
-.si-brokerage-detail__breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: var(--si-space-2);
-  font-size: var(--si-fs-caption);
-  color: var(--si-cinza);
-  margin-bottom: var(--si-space-3);
-}
-
-.si-brokerage-detail__breadcrumb a {
-  color: rgb(var(--v-theme-primary));
-  text-decoration: none;
-}
-
-.si-brokerage-detail__breadcrumb a:hover {
-  text-decoration: underline;
-}
-
-.si-brokerage-detail__hero-row {
+.si-detail__hero-row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--si-space-4);
+  margin-top: var(--si-space-3);
 }
 
-.si-brokerage-detail__title {
+.si-detail__identity {
+  display: flex;
+  gap: var(--si-space-4);
+  min-width: 0;
+}
+
+.si-detail__avatar {
+  color: rgb(var(--v-theme-primary));
+  font-weight: var(--si-font-weight-bold);
+  flex-shrink: 0;
+}
+
+.si-detail__title {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: var(--si-space-3);
 }
 
-.si-brokerage-detail__title h1 {
+.si-detail__name {
   margin: 0;
+  font-size: 24px;
+  letter-spacing: -0.02em;
+  font-weight: var(--si-font-weight-semibold);
 }
 
-.si-brokerage-detail__facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--si-space-2);
-  margin: var(--si-space-2) 0 0;
+.si-detail__meta {
+  margin: var(--si-space-1) 0 0;
   color: var(--si-cinza);
   font-size: var(--si-fs-body-2);
 }
 
-.si-brokerage-detail__facts-separator {
-  color: var(--si-cinza-claro);
-}
-
-.si-brokerage-detail__hero-actions {
+.si-detail__actions {
   display: flex;
   align-items: center;
   gap: var(--si-space-2);
   flex-shrink: 0;
 }
 
-.si-brokerage-detail__tabs {
+.si-detail__tabs {
   margin-top: var(--si-space-4);
 }
 
-.si-brokerage-detail__content {
+.si-detail__content {
   padding-block: var(--si-space-5);
 }
 
-.si-brokerage-detail__grid {
+.si-detail__metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--si-space-4);
-  margin: 0;
+  margin-bottom: var(--si-space-4);
 }
 
-.si-brokerage-detail__grid div {
+.si-detail__cards {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: var(--si-space-4);
+}
+
+.si-detail__card-header {
+  padding: var(--si-space-4) var(--si-space-5);
+  border-bottom: 1px solid var(--si-cinza-claro);
+  font-size: var(--si-fs-h4);
+  font-weight: var(--si-font-weight-semibold);
+}
+
+.si-detail__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--si-space-4);
+  margin: 0;
+  padding: var(--si-space-5);
+}
+
+.si-detail__grid--single {
+  grid-template-columns: 1fr;
+}
+
+.si-detail__grid div {
   display: grid;
   gap: var(--si-space-1);
 }
 
-.si-brokerage-detail__grid dt {
-  color: rgba(var(--v-theme-on-surface), 0.64);
+.si-detail__grid dt {
+  color: var(--si-cinza);
   font-size: var(--si-fs-caption);
 }
 
-.si-brokerage-detail__grid dd {
+.si-detail__grid dd {
   margin: 0;
   font-weight: var(--si-font-weight-semibold);
 }
 
-.si-brokerage-detail__address {
+.si-detail__span-all {
   grid-column: 1 / -1;
 }
 
-.si-brokerage-detail__dialog-actions {
+.si-detail__empty-production {
   display: flex;
+  flex-direction: column;
   align-items: center;
+  text-align: center;
+  gap: var(--si-space-2);
+  padding: 48px 24px;
+}
+
+.si-detail__empty-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--si-radius-pill);
+  background: var(--si-cinza-claro);
+  color: var(--si-cinza);
+}
+
+.si-detail__empty-title {
+  margin: 0;
+  font-size: var(--si-fs-h4);
+  font-weight: var(--si-font-weight-semibold);
+}
+
+.si-detail__empty-text {
+  margin: 0;
+  max-width: 420px;
+  color: var(--si-cinza);
+  font-size: var(--si-fs-body-2);
+}
+
+.si-detail__dialog-actions {
+  display: flex;
   justify-content: flex-end;
   gap: var(--si-space-2);
 }
 
-/* Mobile: hero empilha, ações viram linha própria, grid vira coluna única. */
+.si-rowmenu__danger :deep(.v-list-item-title) {
+  color: rgb(var(--v-theme-error));
+}
+
 @media (max-width: 900px) {
-  .si-brokerage-detail__grid {
+  .si-detail__metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .si-detail__cards {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 700px) {
-  .si-brokerage-detail__hero-row {
+  .si-detail__hero-row {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .si-brokerage-detail__hero-actions {
-    justify-content: stretch;
+  /* Ações do hero ocupam a largura no mobile; os dois CTAs crescem e o menu "…"
+   * mantém o tamanho tátil. */
+  .si-detail__actions {
+    flex-wrap: wrap;
   }
 
-  .si-brokerage-detail__hero-actions > :first-child {
-    flex: 1;
+  .si-detail__actions > .si-button {
+    flex: 1 1 0;
   }
 
-  .si-brokerage-detail__grid {
+  .si-detail__grid {
     grid-template-columns: 1fr;
   }
 }

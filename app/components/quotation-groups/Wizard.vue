@@ -7,6 +7,7 @@
  * colapsável no topo e stepper compacto. Etapas 1–5 entram nos próximos incrementos (placeholder).
  */
 import { WIZARD_STEPS } from '~/stores/quotationGroupWizard'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 const wizard = useQuotationGroupWizardStore()
 const { isMobile } = useIsMobile()
@@ -28,14 +29,6 @@ const showFooter = computed(() => !(wizard.isLastStep && wizard.issuanceState !=
 const { saveQuotationGroup } = useQuotationGroups()
 const stepError = ref<string | null>(null)
 const saving = ref(false)
-
-/** Extrai a mensagem real do erro do backend (ProblemDetails via BFF) para mostrar na tela. */
-function saveErrorMessage(err: unknown): string {
-  const data = (err as { data?: { errors?: Record<string, string[]>, detail?: string, title?: string } }).data
-  const firstFieldError = data?.errors ? Object.values(data.errors).flat()[0] : undefined
-  return firstFieldError ?? data?.detail ?? data?.title
-    ?? 'Não foi possível salvar a oferta. Tente novamente.'
-}
 
 async function onPrimary(): Promise<void> {
   // Validação de FORMA da etapa atual (a de negócio é do servidor — ADR-004).
@@ -71,7 +64,7 @@ async function onPrimary(): Promise<void> {
       wizard.setQuotationGroupId(result.id)
     }
     catch (err) {
-      stepError.value = saveErrorMessage(err)
+      stepError.value = extractApiErrorMessage(err, 'Não foi possível salvar a oferta. Tente novamente.')
       return
     }
     finally {

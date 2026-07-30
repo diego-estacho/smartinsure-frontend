@@ -7,6 +7,7 @@ import { getBrokerageStatusView } from '~/lib/status/brokerages'
 import { getCreditInquiryInsurerStatusView } from '~/lib/status/creditInquiries'
 import { toBrDateTime } from '~/lib/dates'
 import { formatCurrencyBRL } from '~/lib/currency'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 definePageMeta({ layout: 'shell' })
 
@@ -87,11 +88,11 @@ const headers = computed(() => {
 onMounted(async () => {
   brokeragesLoading.value = true
   try {
-    const response = await listBrokerages({ pageSize: 100, status: 'Active' })
+    const response = await listBrokerages({ pageSize: 100, situation: 'Active' })
     brokerages.value = response.items
   }
-  catch {
-    error.value = 'Não foi possível carregar as corretoras.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível carregar as corretoras.')
   }
   finally {
     brokeragesLoading.value = false

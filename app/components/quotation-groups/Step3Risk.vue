@@ -11,6 +11,7 @@
  */
 import type { ModalityListItem } from '~/composables/useModalities'
 import { fromIsoDate, toIsoDate } from '~/lib/dates'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 const wizard = useQuotationGroupWizardStore()
 const { listModalities } = useModalities()
@@ -69,8 +70,8 @@ onMounted(async () => {
     const response = await listModalities()
     modalities.value = response.items
   }
-  catch {
-    modalitiesError.value = 'Não foi possível carregar as modalidades.'
+  catch (err) {
+    modalitiesError.value = extractApiErrorMessage(err, 'Não foi possível carregar as modalidades.')
   }
   finally {
     loadingModalities.value = false
