@@ -54,35 +54,8 @@ async function submit() {
 
 <template>
   <div class="si-login">
-    <!-- Painel de marca (esquerda) -->
-    <aside class="si-login__hero">
-      <div class="si-login__brand">
-        <img
-          src="/brand/symbol.png"
-          alt="SmartInsure"
-          class="si-login__symbol"
-          width="44"
-          height="44"
-        >
-        <span class="si-login__wordmark">
-          <span class="si-login__wordmark-smart">smart</span><span class="si-login__wordmark-insure">insure</span>
-        </span>
-      </div>
-
-      <div class="si-login__hero-content">
-        <h2 class="si-login__hero-title">
-          Seguro garantia,<br>
-          do jeito que o corretor precisa.
-        </h2>
-        <p class="si-login__hero-subtitle">
-          Cotação multi-seguradora, emissão e gestão de apólices numa só plataforma.
-        </p>
-      </div>
-
-      <p class="si-login__hero-footer">
-        © SmartInsure
-      </p>
-    </aside>
+    <!-- Painel de marca (esquerda) — compartilhado com o primeiro acesso (RN-065). -->
+    <AuthBrandPanel />
 
     <!-- Formulário (direita) -->
     <main class="si-login__panel">
@@ -177,92 +150,6 @@ async function submit() {
   min-height: 100dvh;
 }
 
-/* ---------- Painel de marca (esquerda) — espelha o hero do QA ---------- */
-.si-login__hero {
-  position: relative;
-  flex: 0 0 44%;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: var(--si-space-12) var(--si-space-10);
-  overflow: hidden;
-  color: rgb(var(--v-theme-on-charcoal));
-  background:
-    radial-gradient(120% 90% at 85% 8%, rgba(var(--v-theme-primary), 0.22), transparent 55%),
-    radial-gradient(80% 70% at 10% 100%, rgba(var(--v-theme-primary), 0.10), transparent 60%),
-    rgb(var(--v-theme-charcoal));
-}
-
-/* Marca-d'água sutil do símbolo no canto (identidade da marca) — igual ao QA. */
-.si-login__hero::after {
-  content: '';
-  position: absolute;
-  right: -120px;
-  bottom: -120px;
-  width: 420px;
-  height: 420px;
-  background: url('/brand/symbol.png') no-repeat center / contain;
-  opacity: 0.05;
-  pointer-events: none;
-}
-
-.si-login__hero > * {
-  position: relative;
-  z-index: 1;
-}
-
-.si-login__brand {
-  display: flex;
-  align-items: center;
-  gap: var(--si-space-3);
-}
-
-.si-login__symbol {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-}
-
-.si-login__wordmark {
-  font-weight: var(--si-font-weight-semibold);
-  font-size: var(--si-fs-h3);
-  letter-spacing: var(--si-ls-h2);
-}
-
-.si-login__wordmark-smart {
-  color: rgb(var(--v-theme-primary));
-}
-
-.si-login__wordmark-insure {
-  color: rgb(var(--v-theme-on-charcoal));
-}
-
-.si-login__hero-content {
-  max-width: 460px;
-}
-
-.si-login__hero-title {
-  font-size: var(--si-fs-h1);
-  line-height: var(--si-lh-h1);
-  letter-spacing: var(--si-ls-h1);
-  font-weight: var(--si-font-weight-semibold);
-  margin-bottom: var(--si-space-5);
-}
-
-.si-login__hero-subtitle {
-  font-size: var(--si-fs-h4);
-  line-height: var(--si-lh-h4);
-  color: rgba(var(--v-theme-on-charcoal), 0.7);
-  margin-bottom: 0;
-}
-
-.si-login__hero-footer {
-  font-size: var(--si-fs-caption);
-  color: rgba(var(--v-theme-on-charcoal), 0.45);
-  margin-bottom: 0;
-}
-
 /* ---------- Formulário (direita) ---------- */
 .si-login__panel {
   flex: 1 1 auto;
@@ -330,10 +217,4 @@ async function submit() {
   text-decoration: underline;
 }
 
-/* ---------- Responsivo: painel de marca some no mobile (igual ao QA) ---------- */
-@media (max-width: 960px) {
-  .si-login__hero {
-    display: none;
-  }
-}
 </style>

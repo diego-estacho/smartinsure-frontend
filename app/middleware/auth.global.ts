@@ -2,7 +2,8 @@
  * Guarda de rota global (ADR-007): sem sessão local, toda página exige login.
  * Cortesia de UI — a garantia de autorização é do backend a cada chamada.
  */
-const publicPaths = ['/login']
+// RN-065: o primeiro acesso por Convite acontece sem sessão — o link do e-mail leva a /invite.
+const publicPaths = ['/login', '/invite']
 
 export default defineNuxtRouteMiddleware(async (to) => {
   if (publicPaths.includes(to.path) || to.path === '/dev' || to.path.startsWith('/dev/')) {
