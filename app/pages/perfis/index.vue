@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ProfileListItem } from '~/composables/useProfiles'
-import { describeRequestError } from '~/lib/errors'
+import { extractApiErrorMessage } from '~/lib/apiError'
 import { getProfileLabel, getProfileScopeView, profileScopeOptions } from '~/lib/status/profiles'
 
 definePageMeta({ layout: 'shell' })
@@ -64,7 +64,7 @@ async function refresh() {
     totalCount.value = Number(response.totalCount)
   }
   catch (requestError) {
-    error.value = describeRequestError(requestError, 'Não foi possível carregar os perfis de acesso.')
+    error.value = extractApiErrorMessage(requestError, 'Não foi possível carregar os perfis de acesso.')
     items.value = []
     totalCount.value = 0
   }
@@ -114,7 +114,7 @@ async function openEdit(profileId: string, isFixed: boolean) {
     formOpen.value = true
   }
   catch (requestError) {
-    error.value = describeRequestError(requestError, 'Não foi possível carregar o perfil.')
+    error.value = extractApiErrorMessage(requestError, 'Não foi possível carregar o perfil.')
   }
 }
 
@@ -144,7 +144,7 @@ async function confirmForm(payload: { name: string, permissionCodes: string[] })
     await refresh()
   }
   catch (requestError) {
-    error.value = describeRequestError(requestError, 'Não foi possível salvar o perfil.')
+    error.value = extractApiErrorMessage(requestError, 'Não foi possível salvar o perfil.')
   }
   finally {
     saving.value = false
@@ -162,7 +162,7 @@ async function removeProfile(profileId: string, profileName: string) {
     await refresh()
   }
   catch (requestError) {
-    error.value = describeRequestError(requestError, 'Não foi possível remover o perfil.')
+    error.value = extractApiErrorMessage(requestError, 'Não foi possível remover o perfil.')
   }
 }
 </script>

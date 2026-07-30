@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { GetProfileResponse } from '~/composables/useProfiles'
-import { describeRequestError } from '~/lib/errors'
+import { extractApiErrorMessage } from '~/lib/apiError'
 import { getProfileLabel, getProfileScopeView } from '~/lib/status/profiles'
 
 definePageMeta({ layout: 'shell' })
@@ -24,7 +24,7 @@ async function refresh() {
     profile.value = await getProfile(String(route.params.id))
   }
   catch (requestError) {
-    error.value = describeRequestError(requestError, 'Não foi possível carregar o perfil de acesso.')
+    error.value = extractApiErrorMessage(requestError, 'Não foi possível carregar o perfil de acesso.')
     profile.value = null
   }
   finally {

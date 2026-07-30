@@ -13,6 +13,7 @@
 import type { PersonAddress, PersonSearchItem } from '~/composables/usePersons'
 import type { SelectedPolicyHolder } from '~/stores/quotationGroupWizard'
 import { formatCnpj } from '~/lib/documents'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 const wizard = useQuotationGroupWizardStore()
 const { searchPersons } = usePersons()
@@ -61,8 +62,8 @@ async function search(): Promise<void> {
     results.value = response.items
     notice.value = response.notice ?? null
   }
-  catch {
-    error.value = 'Não foi possível buscar o tomador.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível buscar o tomador.')
     results.value = []
   }
   finally {

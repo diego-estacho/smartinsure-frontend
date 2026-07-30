@@ -2,7 +2,7 @@
 import type { GetUserResponse } from '~/composables/useUsers'
 import { toBrDateTime } from '~/lib/dates'
 import { formatCnpj } from '~/lib/documents'
-import { describeRequestError } from '~/lib/errors'
+import { extractApiErrorMessage } from '~/lib/apiError'
 import { getProfileLabel } from '~/lib/status/profiles'
 import { getUserStatusView } from '~/lib/status/users'
 
@@ -27,7 +27,7 @@ async function refresh() {
     user.value = await getUser(String(route.params.id))
   }
   catch (requestError) {
-    error.value = describeRequestError(requestError, 'Não foi possível carregar o usuário.')
+    error.value = extractApiErrorMessage(requestError, 'Não foi possível carregar o usuário.')
     user.value = null
   }
   finally {

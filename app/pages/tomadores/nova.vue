@@ -2,6 +2,7 @@
 import type { CreatePolicyHolderResponse } from '~/composables/usePolicyHolders'
 import { formatCnpj } from '~/lib/documents'
 import { cnpj, required } from '~/lib/rules'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 definePageMeta({ layout: 'shell' })
 
@@ -26,33 +27,11 @@ async function submit() {
     cnpjInput.value = ''
   }
   catch (err) {
-    error.value = getPolicyHolderCreateErrorMessage(err)
+    error.value = extractApiErrorMessage(err, 'Não foi possível buscar o CNPJ.')
   }
   finally {
     submitting.value = false
   }
-}
-
-function getPolicyHolderCreateErrorMessage(err: unknown) {
-  if (typeof err === 'object' && err !== null && 'data' in err) {
-    const data = (err as {
-      data?: {
-        detail?: unknown
-        message?: unknown
-        data?: { detail?: unknown, message?: unknown }
-      }
-    }).data
-    const detail = typeof data?.detail === 'string'
-      ? data.detail
-      : typeof data?.data?.detail === 'string'
-        ? data.data.detail
-        : null
-    const message = typeof data?.message === 'string' ? data.message : null
-    const nestedMessage = typeof data?.data?.message === 'string' ? data.data.message : null
-    return detail ?? nestedMessage ?? message ?? 'Não foi possível buscar o CNPJ.'
-  }
-
-  return 'Não foi possível buscar o CNPJ.'
 }
 
 function sectorLabel(value: boolean | null) {

@@ -8,6 +8,7 @@ import type { GetBrokerageResponse } from '~/composables/useBrokerages'
 import { formatCnpj } from '~/lib/documents'
 import { formatAddress, initials } from '~/lib/format'
 import { getBrokerageSituationAction, getBrokerageSituationView } from '~/lib/status/brokerages'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 definePageMeta({ layout: 'shell' })
 
@@ -53,8 +54,8 @@ async function refresh() {
   try {
     brokerage.value = await getBrokerage(String(route.params.id))
   }
-  catch {
-    error.value = 'Não foi possível carregar a corretora.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível carregar a corretora.')
   }
 }
 
@@ -77,8 +78,8 @@ async function confirmInactivate() {
     inactivateOpen.value = false
     await refresh()
   }
-  catch {
-    toast.value = 'Não foi possível alterar a situação da corretora.'
+  catch (err) {
+    toast.value = extractApiErrorMessage(err, 'Não foi possível alterar a situação da corretora.')
   }
   finally {
     busy.value = false

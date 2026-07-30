@@ -29,4 +29,22 @@ describe('extractApiErrorMessage — mensagem tratada do backend, fallback só q
     const err = { data: { detail: '   ', title: 'Categoria.' } }
     expect(extractApiErrorMessage(err, FALLBACK)).toBe('Categoria.')
   })
+
+  it('403 sem corpo (recusa da policy de rota) usa texto genérico de permissão, não o fallback da tela', () => {
+    expect(extractApiErrorMessage({ response: { status: 403 } }, FALLBACK))
+      .toBe('Você não tem permissão para esta operação.')
+  })
+
+  it('403 com ProblemDetails mostra o motivo do servidor, não o genérico de permissão', () => {
+    const err = {
+      response: { status: 403 },
+      data: { title: 'Acesso negado.', detail: 'Somente o Corretor Administrador da corretora ativa executa esta operação.' },
+    }
+    expect(extractApiErrorMessage(err, FALLBACK))
+      .toBe('Somente o Corretor Administrador da corretora ativa executa esta operação.')
+  })
+
+  it('lê o status tanto de error.status quanto de error.response.status', () => {
+    expect(extractApiErrorMessage({ status: 403 }, FALLBACK)).toBe('Você não tem permissão para esta operação.')
+  })
 })

@@ -7,6 +7,8 @@
  * A emissão real depende de contrato inexistente — `useIssuance` é mock isolado. TODO(backend):
  * `POST emissao { ofertaId, contrato, clausulas, minuta, pagamento, aceite }`.
  */
+import { extractApiErrorMessage } from '~/lib/apiError'
+
 const wizard = useQuotationGroupWizardStore()
 const { issue } = useIssuance()
 
@@ -43,9 +45,9 @@ async function confirmIssue(): Promise<void> {
     wizard.policyId = result.policyId
     wizard.issuanceState = 'success'
   }
-  catch {
+  catch (err) {
     wizard.issuanceState = 'form'
-    error.value = 'Não foi possível emitir a apólice agora. Tente novamente em alguns minutos.'
+    error.value = extractApiErrorMessage(err, 'Não foi possível emitir a apólice agora. Tente novamente em alguns minutos.')
   }
 }
 </script>

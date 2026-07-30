@@ -7,7 +7,7 @@
  * O catálogo vem de `/api/permissions`; perfil sem permissão é válido (RN-062).
  */
 import type { Permission } from '~/composables/useProfiles'
-import { describeRequestError } from '~/lib/errors'
+import { extractApiErrorMessage } from '~/lib/apiError'
 import { required } from '~/lib/rules'
 
 const open = defineModel<boolean>({ required: true })
@@ -74,7 +74,7 @@ async function load() {
     permissions.value = await listPermissions()
   }
   catch (error) {
-    loadError.value = describeRequestError(error, 'Não foi possível carregar o catálogo de permissões.')
+    loadError.value = extractApiErrorMessage(error, 'Não foi possível carregar o catálogo de permissões.')
     permissions.value = []
   }
   finally {

@@ -18,6 +18,7 @@ import type {
   PendingCoverageItem,
 } from '~/composables/useAdditionalCoverageMap'
 import { getAdditionalCoverageStatusAction } from '~/lib/status/additionalCoverages'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 definePageMeta({ layout: 'shell' })
 
@@ -62,11 +63,11 @@ async function refresh() {
     coverages.value = [...map.coverages]
     pending.value = [...map.pending]
   }
-  catch {
+  catch (err) {
     // Sucesso e erro são mutuamente exclusivos: uma falha na recarga encerra o sucesso anterior
     // (ex.: ação bem-sucedida seguida de refresh com erro não mostra os dois banners juntos).
     success.value = null
-    error.value = 'Não foi possível carregar as Coberturas Adicionais.'
+    error.value = extractApiErrorMessage(err, 'Não foi possível carregar as Coberturas Adicionais.')
   }
   finally {
     loading.value = false
@@ -107,10 +108,10 @@ async function submitForm(payload: { name: string }) {
     formOpen.value = false
     await refresh()
   }
-  catch {
-    error.value = editing
+  catch (err) {
+    error.value = extractApiErrorMessage(err, editing
       ? 'Não foi possível atualizar a Cobertura Adicional.'
-      : 'Não foi possível cadastrar a Cobertura Adicional.'
+      : 'Não foi possível cadastrar a Cobertura Adicional.')
   }
   finally {
     saving.value = false
@@ -140,8 +141,8 @@ async function confirmStatusChange() {
     statusDialogOpen.value = false
     await refresh()
   }
-  catch {
-    error.value = 'Não foi possível alterar a situação da Cobertura Adicional.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível alterar a situação da Cobertura Adicional.')
   }
   finally {
     saving.value = false
@@ -161,8 +162,8 @@ async function unlink(linked: LinkedCoverageItem) {
     success.value = 'Cobertura Adicional Importada desvinculada.'
     await refresh()
   }
-  catch {
-    error.value = 'Não foi possível desvincular a Cobertura Adicional Importada.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível desvincular a Cobertura Adicional Importada.')
   }
   finally {
     saving.value = false
@@ -195,8 +196,8 @@ async function confirmLink(additionalCoverageId: string) {
     linkDialogOpen.value = false
     await refresh()
   }
-  catch {
-    error.value = 'Não foi possível vincular a Cobertura Adicional Importada.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível vincular a Cobertura Adicional Importada.')
   }
   finally {
     saving.value = false
@@ -217,8 +218,8 @@ async function confirmIgnore() {
     ignoreDialogOpen.value = false
     await refresh()
   }
-  catch {
-    error.value = 'Não foi possível ignorar a Cobertura Adicional Importada.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível ignorar a Cobertura Adicional Importada.')
   }
   finally {
     saving.value = false
@@ -236,8 +237,8 @@ async function restore(item: PendingCoverageItem) {
     success.value = 'Cobertura Adicional Importada reativada.'
     await refresh()
   }
-  catch {
-    error.value = 'Não foi possível reativar a Cobertura Adicional Importada.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível reativar a Cobertura Adicional Importada.')
   }
   finally {
     saving.value = false

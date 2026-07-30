@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { UserListItem } from '~/composables/useUsers'
 import { toBrDateTime } from '~/lib/dates'
-import { describeRequestError } from '~/lib/errors'
+import { extractApiErrorMessage } from '~/lib/apiError'
 import { getProfileLabel, profileScopes } from '~/lib/status/profiles'
 import { getUserStatusView, userStatusOptions } from '~/lib/status/users'
 
@@ -61,7 +61,7 @@ async function refresh() {
     totalCount.value = Number(response.totalCount)
   }
   catch (requestError) {
-    error.value = describeRequestError(requestError, 'Não foi possível carregar os usuários.')
+    error.value = extractApiErrorMessage(requestError, 'Não foi possível carregar os usuários.')
     items.value = []
     totalCount.value = 0
   }
@@ -135,7 +135,7 @@ async function confirmScopedInvite(payload: {
     await refresh()
   }
   catch (requestError) {
-    inviteError.value = describeRequestError(requestError, 'Não foi possível criar o usuário.')
+    inviteError.value = extractApiErrorMessage(requestError, 'Não foi possível criar o usuário.')
   }
   finally {
     scopedInviting.value = false
@@ -159,7 +159,7 @@ async function confirmInvite(payload: { name: string, email: string, brokerageId
     await refresh()
   }
   catch (requestError) {
-    inviteError.value = describeRequestError(requestError, 'Não foi possível enviar o convite.')
+    inviteError.value = extractApiErrorMessage(requestError, 'Não foi possível enviar o convite.')
   }
   finally {
     inviting.value = false

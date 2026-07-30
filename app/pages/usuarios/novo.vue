@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { required, email as emailRule } from '~/lib/rules'
 import { userStatusLabels } from '~/lib/status/users'
+import { extractApiErrorMessage } from '~/lib/apiError'
 
 // RN-001: o front valida forma (obrigatório, formato); unicidade, identidade e
 // situação são decisão do servidor (SECURITY do produto).
@@ -24,8 +25,8 @@ async function submit() {
     name.value = ''
     email.value = ''
   }
-  catch {
-    error.value = 'Não foi possível criar o usuário. Verifique os dados e tente novamente.'
+  catch (err) {
+    error.value = extractApiErrorMessage(err, 'Não foi possível criar o usuário. Verifique os dados e tente novamente.')
   }
   finally {
     submitting.value = false

@@ -12,7 +12,7 @@
 import type { AssignableProfile } from '~/composables/useProfiles'
 import type { PolicyHolderListItem } from '~/composables/usePolicyHolders'
 import { formatCnpj } from '~/lib/documents'
-import { describeRequestError } from '~/lib/errors'
+import { extractApiErrorMessage } from '~/lib/apiError'
 import { email as emailRule, required } from '~/lib/rules'
 import { getProfileLabel, profileScopes } from '~/lib/status/profiles'
 
@@ -115,7 +115,7 @@ async function load() {
     policyHolders.value = holders.items
   }
   catch (error) {
-    loadError.value = describeRequestError(error, 'Não foi possível carregar perfis e tomadores.')
+    loadError.value = extractApiErrorMessage(error, 'Não foi possível carregar perfis e tomadores.')
     profiles.value = []
     policyHolders.value = []
   }
