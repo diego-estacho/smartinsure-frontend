@@ -283,10 +283,11 @@ function closeBranchModal(): void {
         {{ selected.mainAddress }}
       </p>
 
-      <!-- Limite de Crédito e taxa são SEMPRE da matriz: a Seguradora não consulta limite pelo CNPJ
-      da Filial, porque o risco é calculado sobre a matriz mesmo quando a emissão é para a Filial
-      (decisão do dono em 2026-07-28, ver OPEN-17). Por isso a ação fica junto dos dados da matriz,
-      ACIMA da seção de Filiais — a escolha da Filial não muda o que este botão mostra. -->
+      <!-- Limite de Crédito e taxa são SEMPRE da matriz — a Seguradora não consulta limite pelo CNPJ
+      da Filial (decisão do dono em 2026-07-28, ver OPEN-17). Por isso a ação fica junto dos dados da
+      matriz, ACIMA da seção de Filiais: a escolha da Filial não muda o que este botão mostra.
+      Não confundir com o cotar/emitir, que usam o CNPJ do estabelecimento cotado — que a Seguradora
+      avalie o risco pela matriz é funcionamento interno dela, não comportamento da plataforma. -->
       <div class="si-qg-step1__card-actions">
         <SiButton
           variant="outlined"
