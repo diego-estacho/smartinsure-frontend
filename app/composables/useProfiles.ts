@@ -72,7 +72,7 @@ export function useProfiles(api: typeof $fetch = useNuxtApp().$api as typeof $fe
 
   /** RN-074: remove perfil customizado — o servidor recusa se houver usuário com ele. */
   async function deleteProfile(id: string): Promise<void> {
-    await api(`/api/profiles/${id}`, { method: 'DELETE' })
+    await api<unknown>(`/api/profiles/${id}`, { method: 'DELETE' })
   }
 
   /**

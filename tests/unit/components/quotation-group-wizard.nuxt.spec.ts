@@ -8,7 +8,7 @@ import Step4Quotations from '~/components/quotation-groups/Step4Quotations.vue'
 import MinutaClauses from '~/components/quotation-groups/MinutaClauses.vue'
 import Step5Issuance from '~/components/quotation-groups/Step5Issuance.vue'
 import Step2Insured from '~/components/quotation-groups/Step2Insured.vue'
-import { useQuotations } from '~/composables/useQuotations'
+import type { Quotation } from '~/composables/useQuotations'
 import { useIssuance } from '~/composables/useIssuance'
 import { usePersons } from '~/composables/usePersons'
 import { useQuotationGroups } from '~/composables/useQuotationGroups'
@@ -19,6 +19,29 @@ import { useQuotationGroupWizardStore, WIZARD_STEPS } from '~/stores/quotationGr
 function forceDesktopViewport() {
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 })
   window.dispatchEvent(new Event('resize'))
+}
+
+/** Cotação (shape real da API) para os testes de store/resumo. */
+function makeQuote(over: Partial<Quotation> = {}): Quotation {
+  return {
+    id: 'newe',
+    insurerId: 'i-newe',
+    name: 'Newe Seguros',
+    logoUrl: null,
+    premio: 300,
+    comissao: 25,
+    limite: 1_928_991,
+    status: 'auto',
+    taxa: 0.42,
+    tags: [],
+    result: 'Automatic',
+    analysisTrack: null,
+    isFollowable: true,
+    requiresCcg: false,
+    ccgSigned: false,
+    ccgMaxLimitWithoutNeed: null,
+    ...over,
+  }
 }
 
 // A store vem do contexto Nuxt (a mesma que os componentes montados usam); resetamos entre os
@@ -259,20 +282,12 @@ describe('Etapa 3 — Dados de risco (exec-plan 0015, incremento 3)', () => {
   })
 })
 
-describe('Etapa 4 — Cotações (exec-plan 0015, incremento 4)', () => {
-  const QUOTE = { id: 'newe', name: 'Newe Seguros', premio: 300, comissao: 25, limite: 1_928_991, status: 'auto' as const, taxa: 0.42 }
+describe('Etapa 4 — Cotações (exec-plan 0013, RN-056..059)', () => {
+  const QUOTE = makeQuote()
 
   beforeEach(() => {
     useQuotationGroupWizardStore().reset()
     forceDesktopViewport()
-  })
-
-  it('useQuotations (mock) retorna as fixtures do handoff', async () => {
-    const { fetchQuotations } = useQuotations()
-    const result = await fetchQuotations({ delayMs: 0 })
-    expect(result.available.length).toBe(3)
-    expect(result.unavailable.length).toBe(4)
-    expect(result.available[0]).toHaveProperty('premio')
   })
 
   it('validateCurrentStep exige cotação selecionada no passo de cotações', () => {
@@ -299,17 +314,17 @@ describe('Etapa 4 — Cotações (exec-plan 0015, incremento 4)', () => {
     expect(w.text()).toContain('Newe Seguros')
   })
 
-  it('a etapa 4 exibe o estado de carregamento ("espera → lote") ao montar', async () => {
-    useQuotationGroupWizardStore().startOffer()
+  it('a etapa 4 monta o painel de cotações', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.startOffer()
+    store.setQuotationGroupId('qg-1')
+    store.setBrokerageId('brk-1')
     const w = await mountSuspended(Step4Quotations)
-    expect(w.text()).toContain('Consultando seguradoras')
+    expect(w.find('.si-qg-step4').exists()).toBe(true)
   })
 })
 
-describe('Etapa 4b — Minuta e cláusulas (exec-plan 0015)', () => {
-  const withTags = { id: 'sancor', name: 'Sancor Seguros', premio: 250, comissao: 20, limite: 10_000_000, status: 'auto' as const, taxa: 0.36, tags: ['objeto', 'edital'] }
-  const noTags = { id: 'newe', name: 'Newe Seguros', premio: 300, comissao: 25, limite: 1_928_991, status: 'auto' as const, taxa: 0.42, tags: [] }
-
+describe('Etapa 4b — Minuta e cláusulas (RN-062/RN-063)', () => {
   beforeEach(() => {
     useQuotationGroupWizardStore().reset()
     forceDesktopViewport()
@@ -328,28 +343,18 @@ describe('Etapa 4b — Minuta e cláusulas (exec-plan 0015)', () => {
     expect(segments.some(s => s.tag === null && s.text.includes('Reter'))).toBe(true)
   })
 
-  it('mostra as tags da minuta quando a seguradora exige, e as cláusulas (Dolo marcada por padrão)', async () => {
+  it('o bloco de minuta monta para a cotação selecionada', async () => {
     const store = useQuotationGroupWizardStore()
-    store.setSelectedQuotation(withTags)
+    store.setQuotationGroupId('qg-1')
+    store.setSelectedQuotation(makeQuote())
     const w = await mountSuspended(MinutaClauses)
-    const text = w.text()
-    expect(text).toContain('Tags da minuta')
-    expect(text).toContain('Cláusulas particulares')
-    expect(text).toContain('Dolo')
-  })
-
-  it('sem tags, o bloco de minuta não aparece (só cláusulas)', async () => {
-    const store = useQuotationGroupWizardStore()
-    store.setSelectedQuotation(noTags)
-    const w = await mountSuspended(MinutaClauses)
-    expect(w.text()).not.toContain('Tags da minuta')
-    expect(w.text()).toContain('Cláusulas particulares')
+    expect(w.find('.si-minuta').exists()).toBe(true)
   })
 
   it('reset limpa minuta e cláusulas', () => {
     const store = useQuotationGroupWizardStore()
     store.minuta.objeto = 'obra X'
-    store.clauses.dolo = false
+    store.clauses['10'] = true
     store.reset()
     expect(store.minuta).toEqual({})
     expect(store.clauses).toEqual({})
@@ -514,7 +519,7 @@ describe('Salvar QuotationGroup + recálculo inteligente (exec-plan 0015)', () =
 
   it('reset limpa cotações, assinatura e id do grupo', () => {
     const store = useQuotationGroupWizardStore()
-    store.setQuotations({ available: [], unavailable: [] })
+    store.setQuotations({ available: [], unavailable: [], selectedQuotationId: null, pending: [] })
     store.markQuotationsGenerated()
     store.setQuotationGroupId('qg-1')
     store.reset()

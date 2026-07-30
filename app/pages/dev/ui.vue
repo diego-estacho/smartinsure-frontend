@@ -327,6 +327,21 @@ const items = [
         </VCardText>
       </SiCard>
 
+      <!-- Skeleton -->
+      <SiCard class="mb-6">
+        <VCardTitle>SiSkeleton</VCardTitle>
+        <VCardText class="d-flex flex-column" style="gap: var(--si-space-3)">
+          <SiSkeleton height="76px" radius="var(--si-radius-lg)" />
+          <div class="d-flex align-center" style="gap: var(--si-space-3)">
+            <SiSkeleton circle width="40px" height="40px" />
+            <div class="d-flex flex-column" style="gap: var(--si-space-2); flex: 1">
+              <SiSkeleton width="40%" height="12px" />
+              <SiSkeleton width="70%" height="10px" radius="999px" />
+            </div>
+          </div>
+        </VCardText>
+      </SiCard>
+
       <!-- Feedback -->
       <SiCard class="mb-6">
         <VCardTitle>SiAlert · SiSnackbar</VCardTitle>
