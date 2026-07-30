@@ -162,6 +162,13 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
   }
 
   function setSelectedQuotation(value: Quotation | null): void {
+    // Trocar (ou limpar) a Cotação escolhida descarta o preenchimento da minuta da anterior: cada
+    // seguradora tem a sua (RN-062); sem isso, termos/cláusulas de uma seguradora vazariam para outra.
+    if (value?.id !== selectedQuotation.value?.id) {
+      minuta.value = {}
+      clauses.value = {}
+      clauseTags.value = {}
+    }
     selectedQuotation.value = value
   }
 

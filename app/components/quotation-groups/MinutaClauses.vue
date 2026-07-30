@@ -31,22 +31,53 @@ const loading = ref(false)
  * lemos os mais comuns e degradamos com segurança (lista vazia) se o formato não bater.
  */
 function parseTags(tagJson: string | null | undefined): MinutaTag[] {
-  if (!tagJson) return []
+  return safeParseArray(tagJson)
+    .map((tag) => {
+      const name = String(tag.Name ?? tag.name ?? tag.Key ?? tag.key ?? tag.Tag ?? tag.tag ?? '')
+      const label = String(tag.Label ?? tag.label ?? tag.Description ?? tag.description ?? name)
+      const rawType = tag.Type ?? tag.type ?? null
+      return { name, label, type: rawType == null ? null : String(rawType) }
+    })
+    .filter(tag => tag.name.length > 0)
+}
+
+function safeParseArray(json: string | null | undefined): Record<string, unknown>[] {
+  if (!json) return []
   try {
-    const parsed: unknown = JSON.parse(tagJson)
-    if (!Array.isArray(parsed)) return []
-    return parsed
-      .map((raw) => {
-        const tag = raw as Record<string, unknown>
-        const name = String(tag.Name ?? tag.name ?? tag.Key ?? tag.key ?? tag.Tag ?? tag.tag ?? '')
-        const label = String(tag.Label ?? tag.label ?? tag.Description ?? tag.description ?? name)
-        const rawType = tag.Type ?? tag.type ?? null
-        return { name, label, type: rawType == null ? null : String(rawType) }
-      })
-      .filter(tag => tag.name.length > 0)
+    const parsed: unknown = JSON.parse(json)
+    return Array.isArray(parsed) ? parsed as Record<string, unknown>[] : []
   }
   catch {
     return []
+  }
+}
+
+/**
+ * Reidrata o preenchimento salvo (RN-062, "Baixar minuta") na store: valores do objeto por nome de tag e
+ * cláusulas marcadas por id externo com suas tags. Só semeia o que ainda não foi preenchido nesta sessão —
+ * não sobrescreve edições em andamento. É o que faz o formulário sobreviver a um refresh (F5).
+ */
+function hydrateFilled(tagsJson: string | null | undefined, clausesJson: string | null | undefined): void {
+  for (const raw of safeParseArray(tagsJson)) {
+    const name = String(raw.name ?? raw.Name ?? '')
+    if (name && wizard.minuta[name] === undefined) {
+      wizard.minuta[name] = String(raw.value ?? raw.Value ?? '')
+    }
+  }
+  for (const raw of safeParseArray(clausesJson)) {
+    const externalId = String(raw.particularClauseExternalId ?? raw.ParticularClauseExternalId ?? '')
+    if (!externalId) continue
+    if (wizard.clauses[externalId] === undefined) wizard.clauses[externalId] = true
+    if (wizard.clauseTags[externalId] === undefined) {
+      const tagsRaw = raw.tags ?? raw.Tags
+      const tags = Array.isArray(tagsRaw) ? tagsRaw as Record<string, unknown>[] : []
+      const seed: Record<string, string> = {}
+      for (const tag of tags) {
+        const tagName = String(tag.name ?? tag.Name ?? '')
+        if (tagName) seed[tagName] = String(tag.value ?? tag.Value ?? '')
+      }
+      wizard.clauseTags[externalId] = seed
+    }
   }
 }
 
@@ -60,13 +91,20 @@ async function load(): Promise<void> {
     return
   }
   loading.value = true
+  const requestedId = quotation.id
   try {
     const minuta = await getMinuta(groupId, quotation.id)
+    // A seleção mudou enquanto o GET estava em voo: descarta este resultado — senão hidrataríamos a store
+    // da seguradora ANTIGA sob a nova seleção (vazamento entre seguradoras que o reset foi evitar, RN-062).
+    if (wizard.selectedQuotation?.id !== requestedId) return
     clauses.value = minuta.clauses
-    objectTags.value = parseTags(minuta.tagJson)
+    // Repeater é lista dinâmica (fora do formulário simples) — filtrado aqui igual às tags de cláusula.
+    objectTags.value = parseTags(minuta.tagJson).filter(tag => (tag.type ?? '').toLowerCase() !== 'repeater')
     clauseTagDefs.value = Object.fromEntries(
       minuta.clauses.map(clause => [clause.externalId, parseTags(clause.jsonTag)]),
     )
+    // RN-062: reidrata o preenchimento salvo (sobrevive a um F5); roda após o reset por troca de seguradora.
+    hydrateFilled(minuta.filledTagsJson, minuta.filledClausesJson)
   }
   catch {
     clauses.value = []

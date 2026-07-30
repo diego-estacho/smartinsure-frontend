@@ -12,29 +12,27 @@
  */
 import type { Quotation } from '~/composables/useQuotations'
 import { analysisTrackLabel, quotationStatusView } from '~/composables/useQuotations'
-import { extractApiErrorMessage } from '~/lib/apiError'
+import { formatCurrencyBRL } from '~/lib/currency'
 
 const wizard = useQuotationGroupWizardStore()
-const { runQuotations, listQuotations, selectQuotation } = useQuotations()
+const { runQuotations, selectQuotation } = useQuotations()
 const { submitMinuta } = useQuotationMinuta()
 const { isMobile } = useIsMobile()
 
-const loading = ref(false)
-const error = ref<string | null>(null)
+// Ações ao $api com try/catch centralizado (loading + mensagem tratada do backend).
+const { loading: generating, error: generateError, run: runGenerate } = useApiError()
+const { loading: draftLoading, error: draftError, run: runDraft } = useApiError()
+// Erro de SELEÇÃO em instância própria: uma falha ao selecionar não pode apagar o leque inteiro.
+const { error: selectError, run: runSelect } = useApiError()
+
+// Acompanhamento do fan-out (timer/timeout/estado terminal) no composable dedicado.
+const { timedOut, start: startPolling, refresh: refreshQuotations, resume: resumePolling } = useQuotationPolling()
+
 const unavailOpen = ref(false)
-const polling = ref(false)
 
 // Gate de seleção (RN-059): a Análise de subscrição é confirmada antes de marcar (vai para a esteira).
 const confirmOpen = ref(false)
 const pendingSelection = ref<Quotation | null>(null)
-
-// Baixar minuta (RN-063).
-const draftLoading = ref(false)
-const draftError = ref<string | null>(null)
-
-const POLL_INTERVAL_MS = 2500
-const POLL_TIMEOUT_MS = 120_000
-let pollTimer: ReturnType<typeof setInterval> | null = null
 
 type SortKey = 'premio' | 'comissao' | 'limite'
 const sortKey = ref<SortKey>('premio')
@@ -55,7 +53,13 @@ const available = computed<Quotation[]>(() => {
   return list.sort((a, b) => {
     // Prêmio: menor é melhor (asc); comissão e limite: maior é melhor (desc).
     if (sortKey.value === 'comissao') return b.comissao - a.comissao
-    if (sortKey.value === 'limite') return b.limite - a.limite
+    if (sortKey.value === 'limite') return (b.limite ?? 0) - (a.limite ?? 0)
+    // Prêmio asc, com as sem prêmio (Análise) no fim. Duas chaves (auto primeiro, depois prêmio) para
+    // não gerar NaN entre duas Análises — Infinity - Infinity daria ordem indefinida.
+    const aAuto = a.status === 'auto'
+    const bAuto = b.status === 'auto'
+    if (aAuto !== bAuto) return aAuto ? -1 : 1
+    if (!aAuto) return 0
     return a.premio - b.premio
   })
 })
@@ -78,10 +82,6 @@ const headers = [
   { title: '', key: 'actions', sortable: false, align: 'end' },
 ] as const
 
-function brl(value: number): string {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
-
 // Classificação exibida (RN-058): Automática = sucesso; Análise = aviso com a esteira específica.
 function classification(item: Quotation): { label: string, color: string } {
   if (item.status === 'auto') return quotationStatusView.auto
@@ -98,22 +98,6 @@ function cleanReason(reason: string): string {
     .replace(/^Atenção!\s*/i, '')
     .trim()
   return cleaned.length > 0 ? cleaned : reason
-}
-
-// Monograma da Seguradora (2 iniciais) — fallback quando não há logo ou a URL falha.
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  const letters = parts.slice(0, 2).map(part => part[0] ?? '').join('')
-  return (letters || name.slice(0, 2)).toUpperCase()
-}
-
-// Logos externos podem falhar (URL quebrada / offline) — nesse caso cai no monograma.
-const logoFailed = ref(new Set<string>())
-function onLogoError(id: string): void {
-  logoFailed.value = new Set(logoFailed.value).add(id)
-}
-function showLogo(item: { id: string, logoUrl: string | null }): boolean {
-  return Boolean(item.logoUrl) && !logoFailed.value.has(item.id)
 }
 
 function canSelect(item: Quotation): boolean {
@@ -146,74 +130,27 @@ function cancelSelect(): void {
 async function doSelect(item: Quotation): Promise<void> {
   const groupId = wizard.quotationGroupId
   if (!groupId) return
-  try {
-    await selectQuotation(groupId, item.id)
-    wizard.setSelectedQuotation(item)
-  }
-  catch (err) {
-    error.value = extractApiErrorMessage(err, 'Não foi possível selecionar a cotação.')
-  }
-}
-
-function stopPolling(): void {
-  if (pollTimer) {
-    clearInterval(pollTimer)
-    pollTimer = null
-  }
-  polling.value = false
-}
-
-async function refresh(): Promise<void> {
-  const groupId = wizard.quotationGroupId
-  if (!groupId) return
-  const result = await listQuotations(groupId)
-  wizard.setQuotations(result)
-
-  // Reflete a Cotação escolhida persistida no servidor (RN-059).
-  if (result.selectedQuotationId && !wizard.selectedQuotation) {
-    const selected = result.available.find(quotation => quotation.id === result.selectedQuotationId)
-    if (selected) wizard.setSelectedQuotation(selected)
-  }
-
-  if (result.pending.length === 0) {
-    stopPolling()
-    wizard.markQuotationsGenerated()
-  }
-}
-
-function startPolling(): void {
-  polling.value = true
-  const startedAt = Date.now()
-  pollTimer = setInterval(() => {
-    if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
-      stopPolling()
-      return
-    }
-    void refresh().catch(() => {})
-  }, POLL_INTERVAL_MS)
+  // Erro de seleção vai para o alerta próprio (selectError) — nunca apaga o leque.
+  const result = await runSelect(() => selectQuotation(groupId, item.id), 'Não foi possível selecionar a cotação.')
+  if (result) wizard.setSelectedQuotation(item)
 }
 
 async function generate(): Promise<void> {
   const groupId = wizard.quotationGroupId
   const brokerageId = wizard.brokerageId
   if (!groupId || !brokerageId) {
-    error.value = 'Não foi possível identificar o grupo de cotação ou a corretora para cotar.'
+    generateError.value = 'Não foi possível identificar o grupo de cotação ou a corretora para cotar.'
     return
   }
 
-  loading.value = true
-  error.value = null
-  try {
+  selectError.value = null
+  const started = await runGenerate(async () => {
     await runQuotations(groupId, brokerageId)
-    await refresh()
-    if (wizard.quotations?.pending.length) startPolling()
-  }
-  catch (err) {
-    error.value = extractApiErrorMessage(err, 'Não foi possível iniciar as cotações.')
-  }
-  finally {
-    loading.value = false
-  }
+    await refreshQuotations()
+    return true
+  }, 'Não foi possível iniciar as cotações.')
+
+  if (started && wizard.quotations?.pending.length) startPolling()
 }
 
 async function baixarMinuta(): Promise<void> {
@@ -222,35 +159,29 @@ async function baixarMinuta(): Promise<void> {
   const brokerageId = wizard.brokerageId
   if (!groupId || !quotation || !brokerageId) return
 
-  draftLoading.value = true
-  draftError.value = null
-  try {
-    const terms = Object.entries(wizard.minuta)
-      .map(([name, value]) => ({ name, value: String(value ?? '') }))
-      .filter(term => term.value.trim().length > 0)
-    const particularClauses = Object.entries(wizard.clauses)
-      .filter(([, on]) => on)
-      .map(([externalId]) => ({
-        particularClauseExternalId: externalId,
-        // Tags próprias da cláusula preenchidas pelo corretor (RN-062): nome → valor (só as não vazias).
-        tags: Object.entries(wizard.clauseTags[externalId] ?? {})
-          .map(([name, value]) => ({ name, value: String(value ?? '') }))
-          .filter(tag => tag.value.trim().length > 0),
-      }))
+  const terms = Object.entries(wizard.minuta)
+    .map(([name, value]) => ({ name, value: String(value ?? '') }))
+    .filter(term => term.value.trim().length > 0)
+  const particularClauses = Object.entries(wizard.clauses)
+    .filter(([, on]) => on)
+    .map(([externalId]) => ({
+      particularClauseExternalId: externalId,
+      // Tags próprias da cláusula preenchidas pelo corretor (RN-062): nome → valor (só as não vazias).
+      tags: Object.entries(wizard.clauseTags[externalId] ?? {})
+        .map(([name, value]) => ({ name, value: String(value ?? '') }))
+        .filter(tag => tag.value.trim().length > 0),
+    }))
 
-    const result = await submitMinuta(groupId, quotation.id, { brokerageId, terms, particularClauses })
-    if (result.draftUrl && import.meta.client) {
-      window.open(result.draftUrl, '_blank', 'noopener')
-    }
-    else if (!result.draftUrl) {
-      draftError.value = 'A seguradora não retornou a minuta.'
-    }
+  const result = await runDraft(
+    () => submitMinuta(groupId, quotation.id, { brokerageId, terms, particularClauses }),
+    'Não foi possível baixar a minuta.',
+  )
+  if (result === undefined) return
+  if (result.draftUrl && import.meta.client) {
+    window.open(result.draftUrl, '_blank', 'noopener')
   }
-  catch (err) {
-    draftError.value = extractApiErrorMessage(err, 'Não foi possível baixar a minuta.')
-  }
-  finally {
-    draftLoading.value = false
+  else if (!result.draftUrl) {
+    draftError.value = 'A seguradora não retornou a minuta.'
   }
 }
 
@@ -266,8 +197,6 @@ onMounted(() => {
   if (wizard.signatureChanged) wizard.setSelectedQuotation(null)
   void generate()
 })
-
-onBeforeUnmount(() => stopPolling())
 </script>
 
 <template>
@@ -283,7 +212,7 @@ onBeforeUnmount(() => stopPolling())
 
     <!-- Espera inicial → lote incremental. -->
     <div
-      v-if="loading && !available.length && !unavailable.length && !pending.length"
+      v-if="generating && !available.length && !unavailable.length && !pending.length"
       class="si-qg-step4__loading"
     >
       <div class="si-qg-step4__loading-head">
@@ -304,13 +233,41 @@ onBeforeUnmount(() => stopPolling())
 
     <template v-else>
       <SiAlert
-        v-if="error"
+        v-if="generateError"
         type="error"
         class="mb-0"
-        :text="error"
+        :text="generateError"
       />
 
       <template v-else>
+        <!-- Falha ao SELECIONAR (RN-059): alerta próprio — nunca apaga o leque de cotações. -->
+        <SiAlert
+          v-if="selectError"
+          type="error"
+          class="mb-0"
+          :text="selectError"
+        />
+
+        <!-- Acompanhamento estourou o tempo com seguradoras ainda cotando (RN-057): sinaliza e deixa
+             retomar, em vez de manter os skeletons "Cotando…" presos. -->
+        <div
+          v-if="timedOut"
+          class="si-qg-step4__timeout"
+        >
+          <SiAlert
+            type="warning"
+            class="mb-0"
+            text="Algumas seguradoras ainda não responderam. Você pode continuar aguardando."
+          />
+          <SiButton
+            size="small"
+            variant="text"
+            @click="resumePolling"
+          >
+            Continuar acompanhando
+          </SiButton>
+        </div>
+
         <!-- Progresso do fan-out: quantas já voltaram de quantas (RN-057). -->
         <div
           v-if="cotando"
@@ -356,17 +313,10 @@ onBeforeUnmount(() => stopPolling())
           >
             <template #[`item.name`]="{ item }">
               <div class="si-qg-step4__insurer">
-                <span class="si-qg-step4__insurer-logo">
-                  <img
-                    v-if="showLogo(item)"
-                    :src="item.logoUrl!"
-                    :alt="item.name"
-                    class="si-qg-step4__insurer-img"
-                    loading="lazy"
-                    @error="onLogoError(item.id)"
-                  >
-                  <template v-else>{{ initials(item.name) }}</template>
-                </span>
+                <SiInsurerLogo
+                  :name="item.name"
+                  :logo-url="item.logoUrl"
+                />
                 <span class="si-cell-strong">{{ item.name }}</span>
                 <SiChip
                   v-if="item.requiresCcg"
@@ -378,13 +328,13 @@ onBeforeUnmount(() => stopPolling())
               </div>
             </template>
             <template #[`item.premio`]="{ item }">
-              <span class="si-qg-step4__premio">{{ item.status === 'auto' ? brl(item.premio) : '—' }}</span>
+              <span class="si-qg-step4__premio">{{ item.status === 'auto' ? formatCurrencyBRL(item.premio) : '—' }}</span>
             </template>
             <template #[`item.comissao`]="{ item }">
               {{ item.status === 'auto' ? `${item.comissao}%` : '—' }}
             </template>
             <template #[`item.limite`]="{ item }">
-              {{ item.limite ? brl(item.limite) : '—' }}
+              {{ formatCurrencyBRL(item.limite) }}
             </template>
             <template #[`item.status`]="{ item }">
               <SiChip
@@ -421,17 +371,10 @@ onBeforeUnmount(() => stopPolling())
             >
               <div class="si-qg-step4__card-head">
                 <div class="si-qg-step4__card-insurer">
-                  <span class="si-qg-step4__insurer-logo">
-                    <img
-                      v-if="showLogo(item)"
-                      :src="item.logoUrl!"
-                      :alt="item.name"
-                      class="si-qg-step4__insurer-img"
-                      loading="lazy"
-                      @error="onLogoError(item.id)"
-                    >
-                    <template v-else>{{ initials(item.name) }}</template>
-                  </span>
+                  <SiInsurerLogo
+                    :name="item.name"
+                    :logo-url="item.logoUrl"
+                  />
                   <span class="si-qg-step4__card-name">{{ item.name }}</span>
                 </div>
                 <SiChip
@@ -444,7 +387,7 @@ onBeforeUnmount(() => stopPolling())
               <div class="si-qg-step4__card-facts">
                 <div class="si-qg-step4__card-premio">
                   <span class="si-qg-step4__card-eyebrow">Prêmio</span>
-                  <span class="si-qg-step4__premio">{{ item.status === 'auto' ? brl(item.premio) : '—' }}</span>
+                  <span class="si-qg-step4__premio">{{ item.status === 'auto' ? formatCurrencyBRL(item.premio) : '—' }}</span>
                 </div>
                 <div>
                   <span class="si-qg-step4__card-eyebrow">Comissão</span>
@@ -452,7 +395,7 @@ onBeforeUnmount(() => stopPolling())
                 </div>
                 <div>
                   <span class="si-qg-step4__card-eyebrow">Limite</span>
-                  <span class="si-qg-step4__card-value">{{ item.limite ? brl(item.limite) : '—' }}</span>
+                  <span class="si-qg-step4__card-value">{{ formatCurrencyBRL(item.limite) }}</span>
                 </div>
               </div>
               <SiButton
@@ -479,17 +422,10 @@ onBeforeUnmount(() => stopPolling())
             :key="item.id"
             class="si-qg-step4__skel"
           >
-            <span class="si-qg-step4__insurer-logo">
-              <img
-                v-if="showLogo(item)"
-                :src="item.logoUrl!"
-                :alt="item.name"
-                class="si-qg-step4__insurer-img"
-                loading="lazy"
-                @error="onLogoError(item.id)"
-              >
-              <template v-else>{{ initials(item.name) }}</template>
-            </span>
+            <SiInsurerLogo
+              :name="item.name"
+              :logo-url="item.logoUrl"
+            />
             <div class="si-qg-step4__skel-body">
               <span class="si-qg-step4__skel-name">{{ item.name }}</span>
               <SiSkeleton
@@ -573,17 +509,11 @@ onBeforeUnmount(() => stopPolling())
               :key="item.id"
               class="si-qg-step4__unavail-item"
             >
-              <span class="si-qg-step4__unavail-mono">
-                <img
-                  v-if="showLogo(item)"
-                  :src="item.logoUrl!"
-                  :alt="item.name"
-                  class="si-qg-step4__unavail-logo"
-                  loading="lazy"
-                  @error="onLogoError(item.id)"
-                >
-                <template v-else>{{ initials(item.name) }}</template>
-              </span>
+              <SiInsurerLogo
+                :name="item.name"
+                :logo-url="item.logoUrl"
+                :size="40"
+              />
               <div class="si-qg-step4__unavail-body">
                 <div class="si-qg-step4__unavail-line">
                   <span class="si-qg-step4__unavail-name">{{ item.name }}</span>
@@ -629,7 +559,7 @@ onBeforeUnmount(() => stopPolling())
         <div>
           <dt>Prêmio</dt>
           <dd class="si-qg-step4__premio">
-            {{ wizard.selectedQuotation.status === 'auto' ? brl(wizard.selectedQuotation.premio) : '—' }}
+            {{ wizard.selectedQuotation.status === 'auto' ? formatCurrencyBRL(wizard.selectedQuotation.premio) : '—' }}
           </dd>
         </div>
         <div>
@@ -638,7 +568,7 @@ onBeforeUnmount(() => stopPolling())
         </div>
         <div>
           <dt>Limite</dt>
-          <dd>{{ wizard.selectedQuotation.limite ? brl(wizard.selectedQuotation.limite) : '—' }}</dd>
+          <dd>{{ formatCurrencyBRL(wizard.selectedQuotation.limite) }}</dd>
         </div>
       </dl>
 
@@ -709,6 +639,14 @@ onBeforeUnmount(() => stopPolling())
   font-size: var(--si-fs-small);
 }
 
+/* Timeout do acompanhamento (seguradoras ainda cotando). */
+.si-qg-step4__timeout {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--si-space-1);
+}
+
 /* ── Resultado ── */
 .si-qg-step4__results-head {
   display: flex;
@@ -747,29 +685,6 @@ onBeforeUnmount(() => stopPolling())
   align-items: center;
   gap: var(--si-space-2);
   min-width: 0;
-}
-
-.si-qg-step4__insurer-logo {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: var(--si-radius-sm);
-  background: #fff;
-  border: 1px solid var(--si-cinza-claro);
-  padding: 3px;
-  overflow: hidden;
-  color: rgba(var(--v-theme-on-surface), 0.6);
-  font-size: 10px;
-  font-weight: var(--si-font-weight-bold);
-}
-
-.si-qg-step4__insurer-img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
 }
 
 /* ── Progresso + skeletons nomeados (cotando) ── */
@@ -936,29 +851,6 @@ onBeforeUnmount(() => stopPolling())
   border: 1px solid var(--si-cinza-claro);
   border-radius: var(--si-radius-sm);
   background: rgb(var(--v-theme-background));
-}
-
-.si-qg-step4__unavail-mono {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--si-radius-sm);
-  background: #fff;
-  border: 1px solid var(--si-cinza-claro);
-  padding: 4px;
-  overflow: hidden;
-  color: rgba(var(--v-theme-on-surface), 0.6);
-  font-size: var(--si-fs-caption);
-  font-weight: var(--si-font-weight-bold);
-}
-
-.si-qg-step4__unavail-logo {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
 }
 
 .si-qg-step4__unavail-body {

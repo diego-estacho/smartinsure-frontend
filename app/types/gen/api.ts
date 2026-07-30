@@ -2991,6 +2991,8 @@ export interface components {
         QuotationMinutaResponse: {
             tagJson: null | string;
             clauses: components["schemas"]["QuotationMinutaClauseResponse"][];
+            filledTagsJson?: null | string;
+            filledClausesJson?: null | string;
         };
         QuotationTermInput: {
             name: string;

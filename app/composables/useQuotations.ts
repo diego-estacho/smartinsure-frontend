@@ -26,8 +26,8 @@ export interface Quotation {
   premio: number
   /** Comissão em pontos percentuais. */
   comissao: number
-  /** Limite disponível em reais. */
-  limite: number
+  /** Limite disponível em reais; null quando a seguradora não informou (distinto de um limite real de 0). */
+  limite: number | null
   status: QuotationStatus
   /** Taxa aplicada. */
   taxa: number
@@ -110,7 +110,7 @@ function toAvailable(item: ItemResponse): Quotation {
     logoUrl: item.insurerLogoUrl,
     premio: num(item.premium),
     comissao: num(item.commissionPercentage),
-    limite: num(item.availableLimit),
+    limite: numOrNull(item.availableLimit),
     status: item.result === 'Automatic' ? 'auto' : 'analise',
     taxa: num(item.tax),
     tags: [],

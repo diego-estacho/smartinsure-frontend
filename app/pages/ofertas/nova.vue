@@ -20,7 +20,7 @@ const wizard = useQuotationGroupWizardStore()
 const route = useRoute()
 const router = useRouter()
 const { getQuotationGroup } = useQuotationGroups()
-const { listQuotations } = useQuotations()
+const { restore: restoreQuotations } = useQuotationPolling()
 
 // Contorno TEMPORÁRIO (OPEN-03): o brokerageId da oferta vem de runtime config enquanto a feature de
 // usuário→corretora não sobe. O usuário logado É uma corretora; quando a sessão trouxer o id da
@@ -87,16 +87,9 @@ async function restoreFromRoute(groupId: string): Promise<void> {
   }
   wizard.setQuotationGroupId(group.id)
 
-  // Leque de Cotações persistido (GET barato — NÃO recota): popula a store para o passo 4 preservar o
-  // resultado (não refaz o fan-out) e refletir a Cotação escolhida (RN-059).
-  const quotations = await listQuotations(group.id)
-  wizard.setQuotations(quotations)
-  if (quotations.selectedQuotationId) {
-    const selected = quotations.available.find(item => item.id === quotations.selectedQuotationId)
-    if (selected) wizard.setSelectedQuotation(selected)
-  }
-  // Assinatura do momento (signatureChanged = false): o passo 4 preserva o leque em vez de recalcular.
-  wizard.markQuotationsGenerated()
+  // Leque de Cotações persistido (GET barato — NÃO recota): popula a store e reflete a escolhida (RN-059).
+  // Fixa a assinatura para o passo 4 preservar o resultado; ele retoma o polling ao montar se ainda cotando.
+  await restoreQuotations()
 
   wizard.phase = 'steps'
   wizard.currentStep = 3
