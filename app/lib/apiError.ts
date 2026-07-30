@@ -12,18 +12,26 @@
 interface ProblemDetailsLike {
   detail?: string
   title?: string
+  /** Alguns endpoints devolvem a mensagem em `message` (não no ProblemDetails padrão). */
+  message?: string
   errors?: Record<string, string[]>
+  /** Outros (ex.: busca de CNPJ na Receita) aninham o corpo tratado do provedor em `data`. */
+  data?: { detail?: string, message?: string }
 }
 
 export function extractApiErrorMessage(error: unknown, fallback: string): string {
   const data = (error as { data?: ProblemDetailsLike } | null | undefined)?.data
 
-  // Campo (validação) → detail (mensagem da regra/integração) → title (categoria); pega o primeiro
-  // não-vazio. Campos em branco são pulados para não mascarar uma mensagem útil mais adiante.
+  // Campo (validação) → detail (mensagem da regra/integração) → title (categoria) → message e os
+  // detail/message aninhados (endpoints que embrulham o corpo do provedor). Pega o primeiro não-vazio;
+  // campos em branco são pulados para não mascarar uma mensagem útil mais adiante.
   const candidates: (string | undefined)[] = [
     ...(data?.errors ? Object.values(data.errors).flat() : []),
     data?.detail,
     data?.title,
+    data?.message,
+    data?.data?.detail,
+    data?.data?.message,
   ]
 
   const message = candidates.find(candidate => Boolean(candidate?.trim()))
