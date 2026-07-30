@@ -21,7 +21,7 @@
  * sem rota ainda implementada ficam desabilitados; nascem quando a rota + glossário existirem.
  */
 import type { AppIconName } from '~/lib/icons'
-import { describeRequestError } from '~/lib/errors'
+import { extractApiErrorMessage } from '~/lib/apiError'
 import { getProfileLabel } from '~/lib/status/profiles'
 
 interface NavItem {
@@ -127,7 +127,7 @@ async function onSelectWorkspace(id: string) {
     await refreshNuxtData()
   }
   catch (error) {
-    workspaceError.value = describeRequestError(error, 'Não foi possível trocar de corretora.')
+    workspaceError.value = extractApiErrorMessage(error, 'Não foi possível trocar de corretora.')
   }
 }
 

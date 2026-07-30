@@ -8,6 +8,7 @@
  * a recusa continua sendo do servidor; aqui é só para não oferecer opção que já se sabe inválida.
  */
 import type { BrokerageListItem } from '~/composables/useBrokerages'
+import { extractApiErrorMessage } from '~/lib/apiError'
 import { formatCnpj } from '~/lib/documents'
 import { email as emailRule, required } from '~/lib/rules'
 import { brokerageSituations } from '~/lib/status/brokerages'
@@ -63,8 +64,8 @@ async function loadBrokerages() {
     })
     brokerages.value = response.items
   }
-  catch {
-    brokeragesError.value = 'Não foi possível carregar as corretoras.'
+  catch (err) {
+    brokeragesError.value = extractApiErrorMessage(err, 'Não foi possível carregar as corretoras.')
     brokerages.value = []
   }
   finally {

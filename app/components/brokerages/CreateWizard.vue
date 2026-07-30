@@ -6,6 +6,7 @@
  * corretora.
  */
 import type { BrokeragePreview } from '~/composables/useBrokerages'
+import { extractApiErrorMessage } from '~/lib/apiError'
 import { formatCnpj } from '~/lib/documents'
 import { formatAddress } from '~/lib/format'
 import { cnpj as cnpjRule, required } from '~/lib/rules'
@@ -80,7 +81,7 @@ async function consult() {
     stage.value = 'review'
   }
   catch (err) {
-    error.value = getErrorMessage(err, 'Não foi possível consultar o CNPJ.')
+    error.value = extractApiErrorMessage(err, 'Não foi possível consultar o CNPJ.')
     stage.value = 'search'
   }
 }
@@ -102,7 +103,7 @@ async function save() {
     open.value = false
   }
   catch (err) {
-    error.value = getErrorMessage(err, 'Não foi possível cadastrar a corretora.')
+    error.value = extractApiErrorMessage(err, 'Não foi possível cadastrar a corretora.')
   }
   finally {
     submitting.value = false
@@ -134,15 +135,6 @@ function consultAnother() {
 function sectorLabel(value: boolean | null | undefined) {
   if (value === null || value === undefined) return '—'
   return value ? 'Privado' : 'Público'
-}
-
-function getErrorMessage(err: unknown, fallback: string): string {
-  if (typeof err === 'object' && err !== null && 'data' in err) {
-    const data = (err as { data?: { detail?: unknown, message?: unknown } }).data
-    if (typeof data?.detail === 'string') return data.detail
-    if (typeof data?.message === 'string') return data.message
-  }
-  return fallback
 }
 </script>
 
