@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { $Fetch } from 'nitropack'
-import { useCreditInquiries } from './useCreditInquiries'
+import { useCreditInquiries } from '../../app/composables/useCreditInquiries'
 
 describe('RN-029 — Consulta de Limites de Crédito do Tomador', () => {
   it('deve executar consulta com payload correto', async () => {

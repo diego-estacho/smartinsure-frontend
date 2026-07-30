@@ -3,7 +3,7 @@ import {
   creditInquiryInsurerStatuses,
   isCreditInquiryInsurerStatus,
   getCreditInquiryInsurerStatusView,
-} from './creditInquiries'
+} from '../../app/lib/status/creditInquiries'
 
 describe('RN-030 — Falha isolada na Consulta de Crédito (Status Mapping)', () => {
   it('deve mapear status "Available" para label "Disponível" e cor "success"', () => {
