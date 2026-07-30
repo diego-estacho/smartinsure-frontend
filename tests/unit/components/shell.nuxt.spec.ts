@@ -11,18 +11,15 @@ function forceDesktopViewport() {
   window.dispatchEvent(new Event('resize'))
 }
 
-describe('useWorkspaces — placeholder OPEN-03 (moldura visual, sem inventar dado)', () => {
-  it('nasce vazio: sem corretoras, sem ativa', () => {
+// RN-064: o switcher deixou de ser moldura (placeholder do 0014) e passou a consumir /api/me.
+// O comportamento com dado real está em tests/unit/useWorkspaces.spec.ts; aqui fica o estado
+// sem contexto carregado, que é o que o shell renderiza antes/na falta de sessão válida.
+describe('useWorkspaces — estado sem contexto carregado', () => {
+  it('nasce vazio: sem corretoras, sem ativa (nada inventado)', () => {
     const { workspaces, activeWorkspace, hasWorkspaces } = useWorkspaces()
     expect(workspaces.value).toEqual([])
     expect(activeWorkspace.value).toBeNull()
     expect(hasWorkspaces.value).toBe(false)
-  })
-
-  it('selectWorkspace é no-op enquanto a lista é vazia (bloqueado por OPEN-03)', () => {
-    const { activeWorkspace, selectWorkspace } = useWorkspaces()
-    selectWorkspace('qualquer-id')
-    expect(activeWorkspace.value).toBeNull()
   })
 })
 
@@ -84,11 +81,16 @@ describe('Layout shell — menu de navegação (exec-plan 0014)', () => {
     const painel = items.find(i => i.text().includes('Painel'))
     const cotacoes = items.find(i => i.text().includes('Cotações'))
     const apolices = items.find(i => i.text().includes('Apólices'))
+    const usuarios = items.find(i => i.text().includes('Usuários'))
+    const perfis = items.find(i => i.text().includes('Perfis de acesso'))
     expect(painel).toBeTruthy()
     expect(apolices).toBeTruthy()
     expect(painel!.classes()).not.toContain('v-list-item--disabled')
     // Cotações passou a navegar para /cotacoes (exec-plan 0015) → habilitado.
     expect(cotacoes!.classes()).not.toContain('v-list-item--disabled')
+    // Usuários e Perfis de acesso passaram a navegar (exec-plan 0016) → habilitados.
+    expect(usuarios!.classes()).not.toContain('v-list-item--disabled')
+    expect(perfis!.classes()).not.toContain('v-list-item--disabled')
     // Apólices segue sem rota → desabilitado.
     expect(apolices!.classes()).toContain('v-list-item--disabled')
   })
