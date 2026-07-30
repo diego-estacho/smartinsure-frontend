@@ -4,7 +4,7 @@ import {
   isPolicyHolderAppointmentStatus,
   getPolicyHolderAppointmentStatusView,
   canEndPolicyHolderAppointment,
-} from './policyHolderAppointments'
+} from '../../app/lib/status/policyHolderAppointments'
 
 // RN-027/RN-028 — Nomeação de Tomador: status quo do appointment
 describe('RN-027/RN-028 — Policy Holder Appointment Status', () => {
