@@ -2,10 +2,26 @@ import { describe, expect, it } from 'vitest'
 import { describeRequestError } from '../../../app/lib/errors'
 
 describe('describeRequestError — recusa do servidor traduzida em texto', () => {
-  it('403 vira mensagem de acesso restrito', () => {
+  it('403 sem corpo (recusa da policy de rota) usa texto genérico de permissão', () => {
     const message = describeRequestError({ response: { status: 403 } }, 'fallback')
 
-    expect(message).toBe('Acesso restrito ao Administrador do Sistema.')
+    expect(message).toBe('Você não tem permissão para esta operação.')
+  })
+
+  it('403 com ProblemDetails mostra o motivo do servidor, não um texto fixo', () => {
+    const message = describeRequestError(
+      {
+        response: { status: 403 },
+        data: {
+          title: 'Acesso negado.',
+          detail: 'Somente o Corretor Administrador da corretora ativa executa esta operação.',
+        },
+      },
+      'fallback',
+    )
+
+    // Antes do fix, qualquer 403 dizia "restrito ao Administrador do Sistema" — errado para CA/TA.
+    expect(message).toBe('Somente o Corretor Administrador da corretora ativa executa esta operação.')
   })
 
   it('409 usa o detail do ProblemDetails do servidor, sem reimplementar a regra', () => {

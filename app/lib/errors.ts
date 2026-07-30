@@ -16,15 +16,19 @@ export function describeRequestError(error: unknown, fallback: string): string {
   const requestError = error as RequestError
   const status = requestError?.response?.status ?? requestError?.status
 
-  if (status === 403) {
-    return 'Acesso restrito ao Administrador do Sistema.'
-  }
-
-  if (status === 400 || status === 404 || status === 409) {
+  // 403 do backend vem com o motivo real no ProblemDetails (ex.: "Este perfil não pertence ao
+  // escopo que você administra", "Somente o Corretor Administrador da corretora ativa executa
+  // esta operação"). Mostrar o motivo do servidor, e não um texto fixo que assumiria sempre o
+  // Administrador do Sistema. Quando a recusa vem da policy de rota, não há corpo — daí o genérico.
+  if (status === 400 || status === 403 || status === 404 || status === 409) {
     const problem = requestError?.data
     const message = problem?.detail?.trim() || problem?.title?.trim()
     if (message) {
       return message
+    }
+
+    if (status === 403) {
+      return 'Você não tem permissão para esta operação.'
     }
   }
 
