@@ -223,6 +223,23 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     quotationGroupId.value = id
   }
 
+  /**
+   * RN-060 — fork por mudança de dado-base num Grupo já cotado: os dados-base (tomador/segurado/risco/
+   * escopo) já refletem a mudança na store; aqui só se troca para o Grupo NOVO e zera-se o estado de
+   * cotação (cotações, assinatura, seleção e minuta) para a nova cotação começar limpa. O Grupo
+   * anterior e suas Cotações ficam preservados no backend (não são tocados).
+   */
+  function resetQuotationsForFork(newGroupId: string): void {
+    quotationGroupId.value = newGroupId
+    quotations.value = null
+    quotationsGenerated.value = false
+    quotationSignature.value = null
+    selectedQuotation.value = null
+    minuta.value = {}
+    clauses.value = {}
+    clauseTags.value = {}
+  }
+
   function setBrokerageId(id: string | null): void {
     brokerageId.value = id
   }
@@ -353,6 +370,7 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     setSelectedQuotation,
     setQuotations,
     setQuotationGroupId,
+    resetQuotationsForFork,
     setBrokerageId,
     markQuotationsGenerated,
     validateCurrentStep,
