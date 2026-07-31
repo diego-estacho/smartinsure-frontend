@@ -27,8 +27,8 @@ describe('RN-062/RN-063 — composable useQuotationMinuta (BFF)', () => {
   it('envia os termos e devolve a minuta via POST submit', async () => {
     fetchMock.mockResolvedValueOnce({ draftUrl: 'https://x/draft.pdf', draftExternalId: 'd-1', draftCreatedAt: null })
 
+    // RN-103: a Corretora do envio vem do Escopo ativo no servidor — não no corpo.
     const body: SubmitBody = {
-      brokerageId: 'brk-1',
       terms: [{ name: 'objeto', value: 'Fornecimento' }],
       particularClauses: [{ particularClauseExternalId: '10', tags: [{ name: 'perc', value: '5' }] }],
     }

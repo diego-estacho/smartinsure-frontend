@@ -137,15 +137,15 @@ async function doSelect(item: Quotation): Promise<void> {
 
 async function generate(): Promise<void> {
   const groupId = wizard.quotationGroupId
-  const brokerageId = wizard.brokerageId
-  if (!groupId || !brokerageId) {
-    generateError.value = 'Não foi possível identificar o grupo de cotação ou a corretora para cotar.'
+  if (!groupId) {
+    generateError.value = 'Não foi possível identificar o grupo de cotação para cotar.'
     return
   }
 
   selectError.value = null
   const started = await runGenerate(async () => {
-    await runQuotations(groupId, brokerageId)
+    // RN-103: a Corretora (fan-out) é a do Escopo ativo do acesso, resolvida no servidor.
+    await runQuotations(groupId)
     await refreshQuotations()
     return true
   }, 'Não foi possível iniciar as cotações.')
@@ -156,8 +156,7 @@ async function generate(): Promise<void> {
 async function baixarMinuta(): Promise<void> {
   const groupId = wizard.quotationGroupId
   const quotation = wizard.selectedQuotation
-  const brokerageId = wizard.brokerageId
-  if (!groupId || !quotation || !brokerageId) return
+  if (!groupId || !quotation) return
 
   const terms = Object.entries(wizard.minuta)
     .map(([name, value]) => ({ name, value: String(value ?? '') }))
@@ -173,7 +172,7 @@ async function baixarMinuta(): Promise<void> {
     }))
 
   const result = await runDraft(
-    () => submitMinuta(groupId, quotation.id, { brokerageId, terms, particularClauses }),
+    () => submitMinuta(groupId, quotation.id, { terms, particularClauses }),
     'Não foi possível baixar a minuta.',
   )
   if (result === undefined) return

@@ -22,11 +22,6 @@ const router = useRouter()
 const { getQuotationGroup } = useQuotationGroups()
 const { restore: restoreQuotations } = useQuotationPolling()
 
-// Contorno TEMPORÁRIO (OPEN-03): o brokerageId da oferta vem de runtime config enquanto a feature de
-// usuário→corretora não sobe. O usuário logado É uma corretora; quando a sessão trouxer o id da
-// corretora do logado, esta linha é substituída por essa origem.
-const devBrokerageId = useRuntimeConfig().public.devBrokerageId
-
 // Com o id na rota, a página começa em modo de reidratação — evita piscar a tela de entrada antes de
 // restaurar (o wizard só monta com a store já preenchida, então o passo 4 não refaz o fan-out).
 const routeGroupId = computed(() => (typeof route.query.grupo === 'string' ? route.query.grupo : null))
@@ -96,8 +91,6 @@ async function restoreFromRoute(groupId: string): Promise<void> {
 }
 
 onMounted(async () => {
-  if (devBrokerageId) wizard.setBrokerageId(String(devBrokerageId))
-
   const groupId = routeGroupId.value
   if (!groupId) return
 

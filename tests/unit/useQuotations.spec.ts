@@ -95,15 +95,14 @@ describe('RN-058 — mapeamento do leque de Cotações (ACL → tela)', () => {
 })
 
 describe('RN-056/057/059 — composable useQuotations (BFF)', () => {
-  it('dispara o fan-out via POST com a Corretora no corpo', async () => {
+  it('RN-103: dispara o fan-out via POST sem corpo (a Corretora vem do Escopo ativo no servidor)', async () => {
     fetchMock.mockResolvedValueOnce({ quotationGroupId: 'g-1', requestedCount: 3 })
 
     const { runQuotations } = useQuotations(api)
-    await runQuotations('g-1', 'brk-1')
+    await runQuotations('g-1')
 
     expect(fetchMock).toHaveBeenCalledWith('/api/quotation-groups/g-1/quotations', {
       method: 'POST',
-      body: { brokerageId: 'brk-1' },
     })
   })
 
