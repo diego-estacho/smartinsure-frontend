@@ -38,7 +38,7 @@ function makeQuote(over: Partial<Quotation> = {}): Quotation {
     status: 'auto',
     taxa: 0.42,
     tags: [],
-    result: 'Automatic',
+    result: 'ReadyForEmission',
     analysisTrack: null,
     isFollowable: true,
     requiresCcg: false,
