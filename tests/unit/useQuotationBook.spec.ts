@@ -61,6 +61,7 @@ describe('RN-078 situação apresentada da Cotação', () => {
   it('mapeia o resultado por nome estável (situação + cor)', () => {
     expect(getQuotationSituationView('ReadyForEmission')).toEqual({
       label: 'Pronta para emissão',
+      short: 'Pronta',
       color: 'info',
       known: true,
     })
@@ -73,6 +74,7 @@ describe('RN-078 situação apresentada da Cotação', () => {
   it('resultado desconhecido cai em fallback honesto (não some)', () => {
     expect(getQuotationSituationView('Foo')).toEqual({
       label: 'Desconhecida',
+      short: 'Desconhec.',
       color: 'warning',
       known: false,
     })

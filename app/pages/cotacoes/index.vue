@@ -111,16 +111,18 @@ const isEmptyFirstUse = computed(
   () => !loading.value && !error.value && items.value.length === 0 && !hasActiveFilters.value,
 )
 
+// Larguras exatas do protótipo (01-cotacoes.md) — com table-layout:fixed (no <style>) cabem as 9
+// colunas em ~1090px; alargar uma exige estreitar outra.
 const headers = [
-  { title: 'Cotação', key: 'number', sortable: false },
-  { title: 'Tomador', key: 'policyHolderName', sortable: false },
-  { title: 'Segurado', key: 'insuredName', sortable: false },
-  { title: 'Seguradora', key: 'insurerName', sortable: false },
-  { title: 'Modalidade', key: 'modalityName', sortable: false },
-  { title: 'Valores', key: 'values', sortable: false, align: 'end' },
-  { title: 'Status', key: 'result', sortable: false },
-  { title: 'Vigência', key: 'coverage', sortable: false },
-  { title: 'Ações', key: 'actions', sortable: false, align: 'end' },
+  { title: 'Cotação', key: 'number', sortable: false, width: 118 },
+  { title: 'Tomador', key: 'policyHolderName', sortable: false, width: 150 },
+  { title: 'Segurado', key: 'insuredName', sortable: false, width: 118 },
+  { title: 'Seguradora', key: 'insurerName', sortable: false, width: 99 },
+  { title: 'Modalidade', key: 'modalityName', sortable: false, width: 104 },
+  { title: 'Valores', key: 'values', sortable: false, align: 'end', width: 149 },
+  { title: 'Status', key: 'result', sortable: false, width: 107 },
+  { title: 'Vigência', key: 'coverage', sortable: false, width: 118 },
+  { title: 'Ações', key: 'actions', sortable: false, align: 'end', width: 126 },
 ] as const
 
 await refresh()
@@ -261,17 +263,18 @@ function changePageSize(size: number) {
     </div>
 
     <template v-if="!isEmptyFirstUse && !error">
-      <div class="si-quotations__tabs">
-        <SiButton
+      <SiTabs
+        :model-value="situation"
+        class="si-quotations__tabs"
+        @update:model-value="(v) => selectTab((v ?? null) as string | null)"
+      >
+        <SiTab
           v-for="option in quotationSituationOptions"
           :key="option.title"
-          :variant="situation === option.value ? 'tonal' : 'text'"
-          size="small"
-          @click="selectTab(option.value)"
-        >
-          {{ option.title }} ({{ situationCount(option.value) }})
-        </SiButton>
-      </div>
+          :value="option.value"
+          :text="`${option.title} (${situationCount(option.value)})`"
+        />
+      </SiTabs>
 
       <div class="si-quotations__toolbar">
         <SiTextField
@@ -443,7 +446,7 @@ function changePageSize(size: number) {
               :color="getQuotationSituationView(item.result).color"
               size="small"
             >
-              {{ getQuotationSituationView(item.result).label }}
+              {{ getQuotationSituationView(item.result).short }}
             </SiChip>
           </template>
 
@@ -475,7 +478,7 @@ function changePageSize(size: number) {
               :color="getQuotationSituationView(item.result).color"
               size="small"
             >
-              {{ getQuotationSituationView(item.result).label }}
+              {{ getQuotationSituationView(item.result).short }}
             </SiChip>
           </div>
           <div class="si-quotations__card-holder">
@@ -566,11 +569,6 @@ function changePageSize(size: number) {
 }
 
 .si-quotations__tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--si-space-1);
-  border-bottom: 1px solid var(--si-cinza-claro);
-  padding-bottom: var(--si-space-2);
   margin-bottom: var(--si-space-3);
 }
 
@@ -601,6 +599,17 @@ function changePageSize(size: number) {
 
 .si-quotations__table-card {
   overflow: hidden;
+}
+
+/* Densidade do protótipo (01-cotacoes.md): 9 colunas cabem em ~1090px com largura fixa; o padding
+   padrão do Vuetify (16px) não cabe, então 10px. Especificidade via :deep para vencer o skin base. */
+.si-quotations__table :deep(table) {
+  table-layout: fixed;
+}
+
+.si-quotations__table :deep(th),
+.si-quotations__table :deep(td) {
+  padding-inline: 10px !important;
 }
 
 .si-quotations__mono {
