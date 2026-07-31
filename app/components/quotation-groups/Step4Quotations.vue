@@ -2,7 +2,7 @@
 /**
  * Etapa 4 — Cotações (exec-plan 0013, RN-056..063) — **API real**. Dispara o fan-out (POST, 202) e
  * acompanha o leque por polling (GET, ADR-051): cada Seguradora aparece assim que sua Cotação chega,
- * classificada pela ACL do backend (ADR-064) — Automática, Análise (com esteira), Indisponível (com
+ * classificada pela ACL do backend (ADR-064) — Pronta para emissão, Análise (com esteira), Indisponível (com
  * motivos) ou Não reconhecida. Selecionar só é permitido nas seguíveis (RN-059); a Análise de
  * subscrição pede confirmação (vai para a esteira da Seguradora). Recálculo por mudança real de dado
  * (RN-060) descarta a seleção e recota. "Baixar minuta" envia os termos e abre o documento (RN-063).
@@ -82,7 +82,7 @@ const headers = [
   { title: '', key: 'actions', sortable: false, align: 'end' },
 ] as const
 
-// Classificação exibida (RN-058): Automática = sucesso; Análise = aviso com a esteira específica.
+// Classificação exibida (RN-058): Pronta para emissão = sucesso; Análise = aviso com a esteira específica.
 function classification(item: Quotation): { label: string, color: string } {
   if (item.status === 'auto') return quotationStatusView.auto
   const track = item.analysisTrack ? analysisTrackLabel[item.analysisTrack] : null
