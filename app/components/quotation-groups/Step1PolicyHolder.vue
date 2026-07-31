@@ -7,16 +7,20 @@
  * ENCONTRADO + razão social + CNPJ + endereço) e guarda na store para o resumo e a assinatura de
  * recálculo. A busca fica SEMPRE visível — trocar o tomador é só buscar de novo (sem botão "Trocar").
  *
- * "Ver limites e taxas" abre um modal placeholder (tela à parte). "Adicionar filial" abre um modal
- * com o CNPJ da filial — criação real depende de contrato (Branch) inexistente: TODO(backend).
+ * "Ver limites e taxas" abre um modal placeholder (tela à parte). O card também lista as Filiais do
+ * tomador (RN-102) com marcação exclusiva (no máx. uma) via `usePolicyHolderBranches`; "Adicionar
+ * filial" abre um modal que registra uma nova por CNPJ via Birô (`createBranch`) e mostra o aviso do
+ * backend quando o CNPJ não é localizado (a matriz continua usável — não é erro).
  */
 import type { PersonAddress, PersonSearchItem } from '~/composables/usePersons'
+import type { CreatePolicyHolderBranchResponse, PolicyHolderBranch } from '~/composables/usePolicyHolderBranches'
 import type { SelectedPolicyHolder } from '~/stores/quotationGroupWizard'
 import { formatCnpj } from '~/lib/documents'
 import { extractApiErrorMessage } from '~/lib/apiError'
 
 const wizard = useQuotationGroupWizardStore()
 const { searchPersons } = usePersons()
+const { listBranches, createBranch } = usePolicyHolderBranches()
 
 const query = ref('')
 const searching = ref(false)
@@ -24,11 +28,16 @@ const error = ref<string | null>(null)
 const notice = ref<string | null>(null)
 const results = ref<PersonSearchItem[]>([])
 const searched = ref(false)
+/** Falha ao listar as Filiais (não é silenciosa — Finding 2 da revisão final): visível sempre,
+ * independentemente de haver ou não uma Filial marcada no momento da falha. */
+const branchesError = ref<string | null>(null)
 
 const limitsModalOpen = ref(false)
 const branchModalOpen = ref(false)
 const branchCnpj = ref('')
 const branchNotice = ref<string | null>(null)
+const branchError = ref<string | null>(null)
+const branchSaving = ref(false)
 
 const selected = computed(() => wizard.policyHolder)
 
@@ -72,23 +81,122 @@ async function search(): Promise<void> {
 }
 
 // Cada item da busca de Pessoas já traz o endereço principal — não há endpoint de detalhe (igual à
-// etapa 2). Monta o tomador direto do item selecionado.
+// etapa 2). Monta o tomador direto do item selecionado. `preSelectedBranchId`: quando o corretor
+// chegou digitando o CNPJ de uma Filial, ela já nasce marcada (RN-102); nos demais casos, a lista
+// abre desmarcada (matriz). A lista de Filiais é buscada em seguida via BFF.
 function select(item: PersonSearchItem): void {
   const chosen: SelectedPolicyHolder = {
     id: item.id,
     name: item.name,
     documentNumber: item.documentNumber,
     mainAddress: item.mainAddress ? formatAddress(item.mainAddress) : null,
+    branches: [],
+    selectedBranchId: item.preSelectedBranchId ?? null,
   }
   wizard.setPolicyHolder(chosen)
   branchNotice.value = null
+  branchError.value = null
   results.value = []
+  // Se a busca já veio com Filial pré-selecionada (RN-016), essa é a única Filial que pode estar
+  // marcada quando o GET abaixo falhar (o corretor não teve chance de marcar outra antes disso) —
+  // por isso é o fallback que `loadBranches` usa para nunca deixar a marcação invisível.
+  void loadBranches(
+    item.id,
+    item.preSelectedBranchId && item.preSelectedBranchDocumentNumber
+      ? fallbackBranch(item.preSelectedBranchId, item.preSelectedBranchDocumentNumber, item.name)
+      : null,
+  )
 }
 
-function addBranch(): void {
-  // TODO(backend): endpoint de filial (Branch) não existe no contrato; por ora confirma só na UI.
+/** Filial mínima reconstruída só com o que o próprio fluxo já sabe (nunca inventado, ADR-004) —
+ * usada apenas quando a listagem completa falha, pra nunca deixar uma Filial marcada sem checkbox
+ * pra vê-la/desmarcá-la (Finding 2 da revisão final). */
+function fallbackBranch(id: string, documentNumber: string, name: string): PolicyHolderBranch {
+  return { id, documentNumber, name, socialName: null }
+}
+
+/**
+ * Busca as Filiais já registradas do tomador (RN-102). Falha na listagem NÃO é silenciosa (aviso
+ * visível, `branchesError`) e nunca apaga uma Filial já marcada da tela: `selectedBranchId` pode já
+ * estar apontando pra uma Filial (marcação síncrona em `select()`, ou a recém-criada em
+ * `addBranch()`) que só existiria como checkbox através da lista que este GET traria — se ele
+ * falhar sem esse cuidado, a marcação fica invisível e sem como desmarcar, mas ainda é o que vai
+ * pro servidor. `fallback`, quando informado, garante que a Filial marcada permaneça visível.
+ */
+async function loadBranches(policyHolderId: string, fallback: PolicyHolderBranch | null = null): Promise<void> {
+  branchesError.value = null
+  try {
+    const response = await listBranches(policyHolderId)
+    wizard.setBranches(response.branches)
+  }
+  catch {
+    branchesError.value = 'Não foi possível carregar as filiais do tomador.'
+    wizard.setBranches(fallback ? [fallback] : [])
+  }
+}
+
+/** Marca/desmarca a Filial clicada. O v-model do SiCheckbox já garante a exclusividade: como cada
+ * clique substitui `selectedBranchId` por inteiro (nunca acumula), marcar uma Filial desmarca
+ * qualquer outra automaticamente (RN-102). */
+function toggleBranch(branchId: string, checked: boolean | null): void {
+  if (checked) wizard.setBranch(branchId)
+  else wizard.clearBranch()
+}
+
+/** Registra a Filial por CNPJ via Birô (Task 9). `branchId` no corpo é o caminho feliz — recarrega
+ * a lista (para trazer nome/razão social canônicos) e já marca a Filial recém-criada, já que foi
+ * exatamente o que o corretor pediu. `notice` sem `branchId` é o Birô não achando o CNPJ — um
+ * retorno não-erro do backend; a matriz continua usável e o modal permanece aberto para o corretor
+ * tentar outro CNPJ (não é uma falha, então não fecha nem limpa o campo). */
+async function addBranch(): Promise<void> {
+  if (!selected.value) return
+  branchSaving.value = true
+  branchError.value = null
+  branchNotice.value = null
+  try {
+    const result: CreatePolicyHolderBranchResponse = await createBranch(selected.value.id, branchCnpj.value)
+    if (result.branchId) {
+      // Mesmo cuidado de `select()`: se o GET de recarga falhar, a Filial que acabou de ser
+      // criada — e que `wizard.setBranch` abaixo vai marcar — não pode ficar sem checkbox.
+      await loadBranches(
+        selected.value.id,
+        fallbackBranch(result.branchId, branchCnpj.value, selected.value.name),
+      )
+      wizard.setBranch(result.branchId)
+      branchModalOpen.value = false
+      branchCnpj.value = ''
+    }
+    else {
+      // Contrato-impossível: nem `branchId` nem `notice` vieram preenchidos. Mensagem genérica —
+      // não inventamos um motivo que o backend não informou (ADR-004).
+      branchNotice.value = result.notice ?? 'Não foi possível registrar a filial: resposta inesperada do servidor.'
+    }
+  }
+  catch (err) {
+    // 422 é o Backend rejeitando por RN-101 (raiz de CNPJ diferente da do tomador, ou `/0001` como
+    // Filial) com o motivo em `detail` — mostramos o texto do servidor, sem reimplementar a checagem
+    // aqui (ADR-004). Sem `detail` (ou erro de outra natureza — rede, 500, corpo malformado), cai na
+    // mensagem genérica.
+    const errorObj = err as { status?: number, data?: { detail?: string } }
+    branchError.value = typeof err === 'object' && err !== null && 'status' in err && errorObj.status === 422
+      ? errorObj.data?.detail || 'Não foi possível registrar a filial.'
+      : 'Não foi possível registrar a filial.'
+  }
+  finally {
+    branchSaving.value = false
+  }
+}
+
+/** Abre o modal já limpo — sem aviso/erro de uma tentativa anterior. */
+function openBranchModal(): void {
+  branchModalOpen.value = true
+  branchNotice.value = null
+  branchError.value = null
+  branchCnpj.value = ''
+}
+
+function closeBranchModal(): void {
   branchModalOpen.value = false
-  branchNotice.value = 'Filial adicionada ao tomador.'
   branchCnpj.value = ''
 }
 </script>
@@ -176,6 +284,11 @@ function addBranch(): void {
         {{ selected.mainAddress }}
       </p>
 
+      <!-- Limite de Crédito e taxa são SEMPRE da matriz — a Seguradora não consulta limite pelo CNPJ
+      da Filial (decisão do dono em 2026-07-28, ver OPEN-90). Por isso a ação fica junto dos dados da
+      matriz, ACIMA da seção de Filiais: a escolha da Filial não muda o que este botão mostra.
+      Não confundir com o cotar/emitir, que usam o CNPJ do estabelecimento cotado — que a Seguradora
+      avalie o risco pela matriz é funcionamento interno dela, não comportamento da plataforma. -->
       <div class="si-qg-step1__card-actions">
         <SiButton
           variant="outlined"
@@ -186,23 +299,45 @@ function addBranch(): void {
         >
           Ver limites e taxas
         </SiButton>
-        <SiButton
-          variant="outlined"
-          color="secondary"
-          size="small"
-          :prepend-icon="'plus'"
-          @click="branchModalOpen = true"
-        >
-          Adicionar filial
-        </SiButton>
       </div>
 
+      <!-- Falha ao listar Filiais nunca é silenciosa (Finding 2 da revisão final): mostrada sempre,
+      mesmo quando não há Filial marcada para preservar. -->
       <SiAlert
-        v-if="branchNotice"
-        type="success"
+        v-if="branchesError"
+        type="error"
         class="mt-3 mb-0"
-        :text="branchNotice"
+        :text="branchesError"
       />
+
+      <!-- Filiais do tomador (RN-102): marcação exclusiva — no máx. uma; desmarcar volta à matriz.
+      A seção aparece mesmo sem Filial cadastrada, senão não haveria por onde adicionar a primeira. -->
+      <div class="si-qg-step1__branches">
+        <span class="si-qg-step1__branches-label">Filial da cotação</span>
+        <p class="si-qg-step1__branches-hint">
+          Caso deseje utilizar uma filial, selecione abaixo ou adicione uma.
+        </p>
+        <SiCheckbox
+          v-for="branch in selected.branches"
+          :key="branch.id"
+          :model-value="wizard.selectedBranchId === branch.id"
+          :label="`${branch.name} — CNPJ ${formatCnpj(branch.documentNumber)}`"
+          density="compact"
+          hide-details
+          @update:model-value="toggleBranch(branch.id, $event as boolean | null)"
+        />
+        <div class="si-qg-step1__branches-actions">
+          <SiButton
+            variant="outlined"
+            color="secondary"
+            size="small"
+            :prepend-icon="'plus'"
+            @click="openBranchModal"
+          >
+            Adicionar filial
+          </SiButton>
+        </div>
+      </div>
     </SiCard>
 
     <!-- Modal: limites e taxas (placeholder — tela à parte, fora de escopo). -->
@@ -247,15 +382,32 @@ function addBranch(): void {
             density="comfortable"
           />
         </SiForm>
+
+        <SiAlert
+          v-if="branchNotice"
+          type="info"
+          class="mt-3 mb-0"
+          :text="branchNotice"
+        />
+        <SiAlert
+          v-if="branchError"
+          type="error"
+          class="mt-3 mb-0"
+          :text="branchError"
+        />
+
         <div class="si-qg-step1__modal-actions">
           <SiButton
             variant="text"
             color="secondary"
-            @click="branchModalOpen = false"
+            @click="closeBranchModal"
           >
             Cancelar
           </SiButton>
-          <SiButton @click="addBranch">
+          <SiButton
+            :loading="branchSaving"
+            @click="addBranch"
+          >
             Adicionar filial
           </SiButton>
         </div>
@@ -344,6 +496,30 @@ function addBranch(): void {
   font-size: var(--si-fs-small);
   color: rgba(var(--v-theme-on-surface), 0.8);
   line-height: var(--si-lh-body);
+}
+
+.si-qg-step1__branches {
+  margin-top: var(--si-space-5);
+  padding-top: var(--si-space-4);
+  border-top: 1px solid var(--si-cinza-claro);
+  display: flex;
+  flex-direction: column;
+}
+
+.si-qg-step1__branches-label {
+  font-size: var(--si-fs-small);
+  font-weight: var(--si-font-weight-semibold);
+}
+
+.si-qg-step1__branches-actions {
+  display: flex;
+  margin-top: var(--si-space-3);
+}
+
+.si-qg-step1__branches-hint {
+  margin: 2px 0 var(--si-space-2);
+  color: var(--si-cinza);
+  font-size: var(--si-fs-caption, 0.75rem);
 }
 
 .si-qg-step1__card-actions {
