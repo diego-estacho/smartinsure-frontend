@@ -1,9 +1,11 @@
 import type { components } from '~/types/gen/api'
 
 /**
- * QuotationGroup — persistência do "grupo de cotação" (RN-050/RN-051) via BFF (ADR-008). POST cria
- * em Rascunho ao continuar do passo de risco; PUT `/quotation-groups/{id}` atualiza no lugar (mesmo
- * id) nas voltas. Mapeia o estado do wizard para o contrato do backend (tipos gerados em `api.ts`):
+ * QuotationGroup — persistência do "grupo de cotação" (RN-050/RN-051/RN-060) via BFF (ADR-008). POST
+ * cria em Rascunho ao continuar do passo de risco; PUT `/quotation-groups/{id}` atualiza no lugar
+ * (mesmo id) nas voltas **enquanto o grupo não tem Cotações**. Com Cotações, mudar dado-base não edita:
+ * o chamador cria um Grupo novo (fork, RN-060) passando `existingId=null`; o backend recusa o PUT nesse
+ * caso (fail-closed). Mapeia o estado do wizard para o contrato do backend (tipos gerados em `api.ts`):
  * escopo/risco achatados, `scopeMode` em nome estável (All/Specific), coberturas como 2 booleanos.
  */
 type QuotationGroupBody = components['schemas']['CreateQuotationGroupRequest']
