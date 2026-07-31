@@ -5,7 +5,7 @@
  * classificada pela ACL do backend (ADR-064) — Pronta para emissão, Análise (com esteira), Indisponível (com
  * motivos) ou Não reconhecida. Selecionar só é permitido nas seguíveis (RN-059); a Análise de
  * subscrição pede confirmação (vai para a esteira da Seguradora). Recálculo por mudança real de dado
- * (RN-060) descarta a seleção e recota. "Baixar minuta" envia os termos e abre o documento (RN-063).
+ * (RN-060) descarta a seleção e recota. "Baixar minuta" envia os termos e abre o documento (RN-080).
  *
  * Sempre mostramos o MOTIVO por Seguradora quando não é seguível (RN-058) — inclusive quando nenhuma
  * seguradora retorna cotação seguível: o corretor precisa ver por que cada uma recusou, não um beco sem saída.
@@ -166,7 +166,7 @@ async function baixarMinuta(): Promise<void> {
     .filter(([, on]) => on)
     .map(([externalId]) => ({
       particularClauseExternalId: externalId,
-      // Tags próprias da cláusula preenchidas pelo corretor (RN-062): nome → valor (só as não vazias).
+      // Tags próprias da cláusula preenchidas pelo corretor (RN-079): nome → valor (só as não vazias).
       tags: Object.entries(wizard.clauseTags[externalId] ?? {})
         .map(([name, value]) => ({ name, value: String(value ?? '') }))
         .filter(tag => tag.value.trim().length > 0),
@@ -876,8 +876,8 @@ onMounted(() => {
 .si-qg-step4__unavail-badge {
   font-size: var(--si-fs-caption);
   font-weight: var(--si-font-weight-semibold);
-  color: #991b1b;
-  background: #fee2e2;
+  color: rgb(var(--v-theme-error));
+  background: rgba(var(--v-theme-error), 0.12);
   padding: 2px 8px;
   border-radius: 999px;
 }

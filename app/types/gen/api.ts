@@ -2130,6 +2130,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/quotations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                    search?: string;
+                    situation?: string;
+                    insurerId?: string;
+                    modalityId?: string;
+                    premiumMin?: number | string;
+                    premiumMax?: number | string;
+                    insuredAmountMin?: number | string;
+                    insuredAmountMax?: number | string;
+                    createdFrom?: string;
+                    createdTo?: string;
+                    coverageStartFrom?: string;
+                    coverageStartTo?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["QuotationBookResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/quotation-groups": {
         parameters: {
             query?: never;
@@ -3784,6 +3834,50 @@ export interface components {
             description: null | string;
             isSystem: boolean;
         };
+        QuotationBookItemResponse: {
+            /** Format: uuid */
+            quotationId: string;
+            number: null | string;
+            policyHolderName: string;
+            insuredName: string;
+            /** Format: uuid */
+            insurerId: string;
+            insurerName: string;
+            insurerLogoUrl: null | string;
+            /** Format: uuid */
+            modalityId: string;
+            modalityName: string;
+            /** Format: double */
+            insuredAmount: number | string;
+            /** Format: double */
+            premium: null | number | string;
+            /** Format: double */
+            commissionPercentage: null | number | string;
+            result: string;
+            /** Format: date */
+            coverageStartDate: string;
+            /** Format: date */
+            coverageEndDate: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        QuotationBookOptionResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
+        QuotationBookResponse: {
+            items: components["schemas"]["QuotationBookItemResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int64 */
+            totalCount: number | string;
+            counts: components["schemas"]["QuotationSituationCountResponse"][];
+            insurers: components["schemas"]["QuotationBookOptionResponse"][];
+            modalities: components["schemas"]["QuotationBookOptionResponse"][];
+        };
         QuotationClauseInput: {
             particularClauseExternalId: string;
             tags: components["schemas"]["QuotationTermInput"][];
@@ -3843,6 +3937,11 @@ export interface components {
             clauses: components["schemas"]["QuotationMinutaClauseResponse"][];
             filledTagsJson?: null | string;
             filledClausesJson?: null | string;
+        };
+        QuotationSituationCountResponse: {
+            result: string;
+            /** Format: int64 */
+            count: number | string;
         };
         QuotationTermInput: {
             name: string;
