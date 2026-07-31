@@ -1,7 +1,7 @@
 /**
  * Cotações (Quotation) da etapa 4 — **API real** (exec-plan 0013, RN-056..059). Substitui o mock
  * "espera → lote" pelo modelo real: `runQuotations` dispara o fan-out (202) e `listQuotations` lê o
- * leque persistido (polling barato, ADR-051). A classificação estável (Automatic/Analysis/Unavailable/
+ * leque persistido (polling barato, ADR-051). A classificação estável (ReadyForEmission/Analysis/Unavailable/
  * Unrecognized), a esteira, os motivos e o CCG vêm da ACL do backend (ADR-064). `selectQuotation`
  * marca a escolhida (RN-059). Composable com `$fetch` injetável (testes mockam sem rede).
  */
@@ -22,7 +22,7 @@ export interface Quotation {
   name: string
   /** Logo da Seguradora (URL), quando cadastrado; null cai no monograma. */
   logoUrl: string | null
-  /** Prêmio em reais (0 quando não Automática). */
+  /** Prêmio em reais (0 quando não Pronta para emissão). */
   premio: number
   /** Comissão em pontos percentuais. */
   comissao: number
@@ -33,11 +33,11 @@ export interface Quotation {
   taxa: number
   /** Compat com a minuta antiga; a minuta real vem do endpoint próprio (RN-062). */
   tags: string[]
-  /** Classificação estável do backend (ADR-064): 'Automatic' | 'Analysis'. */
+  /** Classificação estável do backend (ADR-064): 'ReadyForEmission' | 'Analysis'. */
   result: string
   /** Esteira específica quando em Análise (RN-058). */
   analysisTrack: string | null
-  /** RN-059: só Automática ou Análise de subscrição são selecionáveis. */
+  /** RN-059: só Pronta para emissão ou Análise de subscrição são selecionáveis. */
   isFollowable: boolean
   /** CCG (ortogonal à classificação — ADR-064). */
   requiresCcg: boolean
@@ -111,7 +111,7 @@ function toAvailable(item: ItemResponse): Quotation {
     premio: num(item.premium),
     comissao: num(item.commissionPercentage),
     limite: numOrNull(item.availableLimit),
-    status: item.result === 'Automatic' ? 'auto' : 'analise',
+    status: item.result === 'ReadyForEmission' ? 'auto' : 'analise',
     taxa: num(item.tax),
     tags: [],
     result: item.result ?? '',
@@ -138,7 +138,7 @@ function toUnavailable(item: ItemResponse): UnavailableQuotation {
   }
 }
 
-/** Traduz o leque do backend para o modelo da tela: Automática/Análise → disponíveis; o resto → indisponíveis. */
+/** Traduz o leque do backend para o modelo da tela: Pronta para emissão/Análise → disponíveis; o resto → indisponíveis. */
 export function mapQuotations(response: ListResponse): QuotationsResult {
   const available: Quotation[] = []
   const unavailable: UnavailableQuotation[] = []
@@ -156,7 +156,7 @@ export function mapQuotations(response: ListResponse): QuotationsResult {
       continue
     }
 
-    if (item.result === 'Automatic' || item.result === 'Analysis') {
+    if (item.result === 'ReadyForEmission' || item.result === 'Analysis') {
       available.push(toAvailable(item))
     }
     else {

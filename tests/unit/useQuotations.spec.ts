@@ -40,9 +40,9 @@ function list(quotations: Item[], selectedQuotationId: string | null = null): Li
 }
 
 describe('RN-058 — mapeamento do leque de Cotações (ACL → tela)', () => {
-  it('classifica Automatic como disponível "auto" com prêmio/CCG', () => {
+  it('classifica ReadyForEmission como disponível "auto" com prêmio/CCG', () => {
     const result = mapQuotations(list([
-      item({ quotationId: 'a', result: 'Automatic', isFollowable: true, premium: 300, commissionPercentage: 25, availableLimit: 1000000, requiresCcg: true }),
+      item({ quotationId: 'a', result: 'ReadyForEmission', isFollowable: true, premium: 300, commissionPercentage: 25, availableLimit: 1000000, requiresCcg: true }),
     ]))
 
     expect(result.available).toHaveLength(1)
@@ -80,7 +80,7 @@ describe('RN-058 — mapeamento do leque de Cotações (ACL → tela)', () => {
   it('expõe as Requested como pendentes (skeletons nomeados) com nome/logo', () => {
     const result = mapQuotations(list([
       item({ quotationId: 'f', insurerName: 'Seguradora Y', processingStatus: 'Requested', result: null }),
-      item({ quotationId: 'g', result: 'Automatic', isFollowable: true, premium: 200 }),
+      item({ quotationId: 'g', result: 'ReadyForEmission', isFollowable: true, premium: 200 }),
     ]))
 
     expect(result.pending).toHaveLength(1)
@@ -89,7 +89,7 @@ describe('RN-058 — mapeamento do leque de Cotações (ACL → tela)', () => {
   })
 
   it('propaga a Cotação escolhida do Grupo (selectedQuotationId)', () => {
-    const result = mapQuotations(list([item({ quotationId: 'h', result: 'Automatic', isFollowable: true })], 'h'))
+    const result = mapQuotations(list([item({ quotationId: 'h', result: 'ReadyForEmission', isFollowable: true })], 'h'))
     expect(result.selectedQuotationId).toBe('h')
   })
 })
@@ -109,7 +109,7 @@ describe('RN-056/057/059 — composable useQuotations (BFF)', () => {
 
   it('lê o leque via GET e devolve o resultado mapeado', async () => {
     fetchMock.mockResolvedValueOnce(list([
-      item({ quotationId: 'a', result: 'Automatic', isFollowable: true, premium: 300 }),
+      item({ quotationId: 'a', result: 'ReadyForEmission', isFollowable: true, premium: 300 }),
     ]))
 
     const { listQuotations } = useQuotations(api)
