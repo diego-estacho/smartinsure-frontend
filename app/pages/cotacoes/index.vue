@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import type { QuotationBookItem } from '~/composables/useQuotationBook'
+import type { QuotationFilters } from '~/components/quotations/FiltersDrawer.vue'
 import { getQuotationSituationView, quotationSituationOptions } from '~/lib/status/quotations'
 
 /**
  * Listagem de Cotações — o "livro" da Corretora (RN-077/RN-078). Read-only, paginado e filtrado no
  * servidor: cada linha é uma Cotação (uma Seguradora), achatando os Grupos. A situação apresentada
  * (RN-078) vem do resultado por nome estável, relabelada aqui. Mobile é lista de cards (não a tabela
- * rolando). Núcleo desta fatia: abas + busca + tabela + paginação + estados; o drawer de filtros
- * avançados entra na fatia seguinte (o backend já aceita os params).
+ * rolando). Filtros avançados num drawer (opções = distintos no livro, Q10).
  */
 definePageMeta({ layout: 'shell' })
 
@@ -15,6 +15,8 @@ const { listQuotations } = useQuotationBook()
 
 const items = ref<QuotationBookItem[]>([])
 const counts = ref<Record<string, number>>({})
+const insurers = ref<{ title: string, value: string }[]>([])
+const modalities = ref<{ title: string, value: string }[]>([])
 const totalCount = ref(0)
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -23,24 +25,24 @@ const page = ref(1)
 const pageSize = ref(8)
 const search = ref('')
 const situation = ref<string | null>(null)
+const drawerOpen = ref(false)
 
-const hasActiveFilters = computed(() => !!search.value || situation.value !== null)
-const isEmptyFirstUse = computed(
-  () => !loading.value && !error.value && items.value.length === 0 && !hasActiveFilters.value,
-)
+function emptyFilters(): QuotationFilters {
+  return {
+    insurerId: null,
+    modalityId: null,
+    premiumMin: null,
+    premiumMax: null,
+    insuredAmountMin: null,
+    insuredAmountMax: null,
+    createdFrom: null,
+    createdTo: null,
+    coverageStartFrom: null,
+    coverageStartTo: null,
+  }
+}
 
-// DS Table: rótulos à esquerda; IS é o valor destacado (dimensiona a operação).
-const headers = [
-  { title: 'Cotação', key: 'number', sortable: false },
-  { title: 'Tomador', key: 'policyHolderName', sortable: false },
-  { title: 'Segurado', key: 'insuredName', sortable: false },
-  { title: 'Seguradora', key: 'insurerName', sortable: false },
-  { title: 'Modalidade', key: 'modalityName', sortable: false },
-  { title: 'Valores', key: 'values', sortable: false, align: 'end' },
-  { title: 'Status', key: 'result', sortable: false },
-  { title: 'Vigência', key: 'coverage', sortable: false },
-  { title: 'Ações', key: 'actions', sortable: false, align: 'end' },
-] as const
+const filters = ref<QuotationFilters>(emptyFilters())
 
 const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -77,6 +79,50 @@ function situationCount(value: string | null): number {
   return counts.value[value] ?? 0
 }
 
+// Chips dos filtros avançados ativos (removíveis). Seguradora/Modalidade resolvem o rótulo pelas opções.
+const activeFilterChips = computed<{ key: string, label: string }[]>(() => {
+  const f = filters.value
+  const chips: { key: string, label: string }[] = []
+  if (f.insurerId) {
+    chips.push({ key: 'insurer', label: `Seguradora: ${insurers.value.find(i => i.value === f.insurerId)?.title ?? '—'}` })
+  }
+  if (f.modalityId) {
+    chips.push({ key: 'modality', label: `Modalidade: ${modalities.value.find(m => m.value === f.modalityId)?.title ?? '—'}` })
+  }
+  if (f.premiumMin != null || f.premiumMax != null) {
+    chips.push({ key: 'premium', label: `Prêmio: ${money(f.premiumMin)} – ${money(f.premiumMax)}` })
+  }
+  if (f.insuredAmountMin != null || f.insuredAmountMax != null) {
+    chips.push({ key: 'insuredAmount', label: `IS: ${money(f.insuredAmountMin)} – ${money(f.insuredAmountMax)}` })
+  }
+  if (f.createdFrom || f.createdTo) {
+    chips.push({ key: 'created', label: `Criação: ${shortDate(f.createdFrom)} – ${shortDate(f.createdTo)}` })
+  }
+  if (f.coverageStartFrom || f.coverageStartTo) {
+    chips.push({ key: 'coverage', label: `Vigência: ${shortDate(f.coverageStartFrom)} – ${shortDate(f.coverageStartTo)}` })
+  }
+  return chips
+})
+
+const hasActiveFilters = computed(
+  () => !!search.value || situation.value !== null || activeFilterChips.value.length > 0,
+)
+const isEmptyFirstUse = computed(
+  () => !loading.value && !error.value && items.value.length === 0 && !hasActiveFilters.value,
+)
+
+const headers = [
+  { title: 'Cotação', key: 'number', sortable: false },
+  { title: 'Tomador', key: 'policyHolderName', sortable: false },
+  { title: 'Segurado', key: 'insuredName', sortable: false },
+  { title: 'Seguradora', key: 'insurerName', sortable: false },
+  { title: 'Modalidade', key: 'modalityName', sortable: false },
+  { title: 'Valores', key: 'values', sortable: false, align: 'end' },
+  { title: 'Status', key: 'result', sortable: false },
+  { title: 'Vigência', key: 'coverage', sortable: false },
+  { title: 'Ações', key: 'actions', sortable: false, align: 'end' },
+] as const
+
 await refresh()
 
 async function refresh() {
@@ -89,12 +135,15 @@ async function refresh() {
       pageSize: pageSize.value,
       search: search.value || undefined,
       situation: situation.value,
+      ...filters.value,
     })
     items.value = response.items ?? []
     totalCount.value = Number(response.totalCount ?? 0)
     counts.value = Object.fromEntries(
       (response.counts ?? []).map(count => [count.result, Number(count.count)]),
     )
+    insurers.value = (response.insurers ?? []).map(option => ({ title: option.name, value: option.id }))
+    modalities.value = (response.modalities ?? []).map(option => ({ title: option.name, value: option.id }))
   }
   catch {
     error.value = 'Não foi possível carregar as cotações.'
@@ -104,11 +153,68 @@ async function refresh() {
   }
 }
 
-// Nova busca/aba volta à página 1 e refaz (server-side).
-watch([search, situation], () => {
+// Qualquer novo recorte volta à página 1 e refaz (server-side).
+function reload() {
   page.value = 1
   refresh()
-})
+}
+
+watch(search, reload)
+
+function selectTab(value: string | null) {
+  situation.value = value
+  reload()
+}
+
+function applyFilters(next: QuotationFilters) {
+  filters.value = next
+  reload()
+}
+
+function clearDrawerFilters() {
+  filters.value = emptyFilters()
+  reload()
+}
+
+function removeFilterChip(key: string) {
+  const f = { ...filters.value }
+  if (key === 'insurer') {
+    f.insurerId = null
+  }
+  else if (key === 'modality') {
+    f.modalityId = null
+  }
+  else if (key === 'premium') {
+    f.premiumMin = null
+    f.premiumMax = null
+  }
+  else if (key === 'insuredAmount') {
+    f.insuredAmountMin = null
+    f.insuredAmountMax = null
+  }
+  else if (key === 'created') {
+    f.createdFrom = null
+    f.createdTo = null
+  }
+  else if (key === 'coverage') {
+    f.coverageStartFrom = null
+    f.coverageStartTo = null
+  }
+  filters.value = f
+  reload()
+}
+
+// "Limpar filtros" do estado vazio-filtro: zera tudo (busca, aba e drawer).
+function clearFilters() {
+  situation.value = null
+  filters.value = emptyFilters()
+  if (search.value) {
+    search.value = ''
+  }
+  else {
+    reload()
+  }
+}
 
 function goToPage(target: number) {
   page.value = target
@@ -119,11 +225,6 @@ function changePageSize(size: number) {
   pageSize.value = size
   page.value = 1
   refresh()
-}
-
-function clearFilters() {
-  search.value = ''
-  situation.value = null
 }
 </script>
 
@@ -166,7 +267,7 @@ function clearFilters() {
           :key="option.title"
           :variant="situation === option.value ? 'tonal' : 'text'"
           size="small"
-          @click="situation = option.value"
+          @click="selectTab(option.value)"
         >
           {{ option.title }} ({{ situationCount(option.value) }})
         </SiButton>
@@ -181,6 +282,35 @@ function clearFilters() {
           clearable
           class="si-quotations__search"
         />
+        <SiButton
+          variant="tonal"
+          prepend-icon="filter"
+          @click="drawerOpen = true"
+        >
+          Filtros avançados<template v-if="activeFilterChips.length"> ({{ activeFilterChips.length }})</template>
+        </SiButton>
+      </div>
+
+      <div
+        v-if="activeFilterChips.length"
+        class="si-quotations__chips"
+      >
+        <SiChip
+          v-for="chip in activeFilterChips"
+          :key="chip.key"
+          size="small"
+          closable
+          @click:close="removeFilterChip(chip.key)"
+        >
+          {{ chip.label }}
+        </SiChip>
+        <SiButton
+          variant="text"
+          size="small"
+          @click="clearFilters"
+        >
+          Limpar filtros
+        </SiButton>
       </div>
     </template>
 
@@ -386,6 +516,16 @@ function clearFilters() {
         @update:items-per-page="changePageSize"
       />
     </template>
+
+    <QuotationsFiltersDrawer
+      v-model="drawerOpen"
+      :filters="filters"
+      :result-count="totalCount"
+      :insurers="insurers"
+      :modalities="modalities"
+      @apply="applyFilters"
+      @clear="clearDrawerFilters"
+    />
   </VContainer>
 </template>
 
@@ -435,11 +575,22 @@ function clearFilters() {
 }
 
 .si-quotations__toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--si-space-3);
   margin-bottom: var(--si-space-3);
 }
 
 .si-quotations__search {
-  max-width: 420px;
+  flex: 1;
+}
+
+.si-quotations__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--si-space-2);
+  margin-bottom: var(--si-space-3);
 }
 
 .si-quotations__count {
@@ -506,7 +657,8 @@ function clearFilters() {
   }
 
   .si-quotations__header,
-  .si-quotations__header-actions {
+  .si-quotations__header-actions,
+  .si-quotations__toolbar {
     flex-direction: column;
     align-items: stretch;
   }
