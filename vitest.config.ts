@@ -14,6 +14,7 @@ export default defineVitestConfig({
   },
   test: {
     environment: 'happy-dom',
+    setupFiles: ['./tests/unit/setup.ts'],
     // Medido nesta suíte: o `setupNuxt` dos arquivos `@vitest-environment nuxt` sobe Vuetify +
     // auto-imports e o módulo do Vuetify sozinho leva ~9s; com a máquina carregada (API .NET e
     // dev server no mesmo host) passou dos 30s e reprovava arquivos DIFERENTES a cada rodada.

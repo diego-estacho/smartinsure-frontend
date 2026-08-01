@@ -8,6 +8,7 @@
  */
 import { formatCnpj } from '~/lib/documents'
 import { fromIsoDate, toBrDate } from '~/lib/dates'
+import type { PolicyHolderBranch } from '~/composables/usePolicyHolderBranches'
 
 defineProps<{ collapsible?: boolean }>()
 
@@ -27,7 +28,16 @@ const rows = computed(() => {
   const list: { key: string, label: string, value: string }[] = []
   const holder = wizard.policyHolder
   if (holder) {
-    list.push({ key: 'holder-doc', label: 'CNPJ do tomador', value: formatCnpj(holder.documentNumber) })
+    // Com Filial marcada, o resumo mostra o CNPJ DELA; sem marcação, o estabelecimento é a matriz
+    // e mostra o CNPJ do tomador (RN-102). O rótulo é FIXO — "CNPJ do tomador" nos dois casos: no
+    // contexto da oferta o estabelecimento cotado é o tomador, então o rótulo não muda com o tipo
+    // da empresa (decisão do dono em 2026-07-28). A razão social exibida é sempre a do tomador —
+    // ele É a matriz (RN-016) — e não a da Filial, embora `PolicyHolderBranchResponse` traga
+    // `name`/`socialName` próprios: aqui a Filial é o estabelecimento da cotação, não uma segunda
+    // Pessoa a apresentar.
+    const markedBranch = wizard.branches.find((branch: PolicyHolderBranch) => branch.id === wizard.selectedBranchId)
+    const documentNumber = markedBranch?.documentNumber ?? holder.documentNumber
+    list.push({ key: 'holder-doc', label: 'CNPJ do tomador', value: formatCnpj(documentNumber) })
     list.push({ key: 'holder-name', label: 'Razão social do tomador', value: holder.name })
   }
   const insured = wizard.insured
