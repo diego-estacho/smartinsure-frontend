@@ -222,6 +222,8 @@ O `brokerageId` da oferta (origem do fan-out/seleção/minuta no Passo 4) deixou
 
 **Runtime (E2E ao vivo, worktree dev :3100 + backend :5158, login real Casdoor):** login `diegoteste01` (200); `/api/me` traz as corretoras reais da sessão (FINN + RISK CONTROL, RN-064); ao selecionar **FINN** no switcher e abrir o Passo 4 do grupo salvo, o erro "Não foi possível identificar … a corretora" **sumiu** e a store passou a carregar `brokerageId = 019f7fb4-6c07-7dd5-a971-ad1f1d223ae0` (id real da FINN, vindo da sessão — verificado via Pinia). O leque veio vazio (grupo sem Cotação persistida) e a guarda de recálculo o preservou — comportamento correto, alheio ao fix. Screenshot `0015-incr9-passo4-corretora-sessao.png`.
 
+**Fan-out real (recotar, RN-060):** alterando a IS no Passo 3 e confirmando o fork, o Passo 4 disparou o fan-out de verdade — **POST `/quotation-groups/{novoId}/quotations` com corpo `{"brokerageId":"019f7fb4-6c07-7dd5-a971-ad1f1d223ae0"}`** (FINN, da sessão), 200, seguido do polling (ADR-051). Backend abriu **7 Cotações = as 7 Habilitações ativas da FINN**, cada uma com veredito real do provedor PlugV2 QA (dedup "já existe cotação", "modalidade indisponível", "grupo econômico do tomador não definido" etc.). Prova ponta-a-ponta: switcher → sessão → `wizard.brokerageId` → POST → Habilitações da Corretora. Screenshot `0015-incr9-recotar-fanout-finn.png`.
+
 ## Aberto (registrado)
 
 - **Ponto de entrada (decidido 2026-07-24):** habilitar o item de menu "Cotações" → rota `/cotacoes` = página placeholder "em construção" (centro) + botão **"Nova oferta"** no canto superior direito que leva a `/ofertas/nova`. A listagem real de cotações segue fora de escopo.
