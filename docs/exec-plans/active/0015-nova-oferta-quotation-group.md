@@ -218,7 +218,7 @@ O `brokerageId` da oferta (origem do fan-out/seleção/minuta no Passo 4) deixou
 
 **Limpeza de harness (mesmo PR, decisão do dono):** 2 hex hardcoded **pré-existentes na main** (não introduzidas aqui) trocadas pelo token idiomático — `Step4Quotations.vue` badge de indisponível (`#991b1b`/`#fee2e2` → `rgb(var(--v-theme-error))`/`rgba(...,0.1)`, padrão de `corretoras/index.vue`) e `SiInsurerLogo.vue` (`#fff` → `rgb(var(--v-theme-surface))`). Sem isso o `check-harness` já reprovava na main.
 
-**Gates:** typecheck ✓ · lint ✓ · check-harness `harness ok` ✓ · vitest **301/301** (+3) ✓ · build ✓.
+**Gates:** typecheck ✓ · lint ✓ · check-harness `harness ok` ✓ · vitest **328/328** (pós-merge com a main; +3 desta atividade) ✓ · build ✓.
 
 **Runtime (E2E ao vivo, worktree dev :3100 + backend :5158, login real Casdoor):** login `diegoteste01` (200); `/api/me` traz as corretoras reais da sessão (FINN + RISK CONTROL, RN-064); ao selecionar **FINN** no switcher e abrir o Passo 4 do grupo salvo, o erro "Não foi possível identificar … a corretora" **sumiu** e a store passou a carregar `brokerageId = 019f7fb4-6c07-7dd5-a971-ad1f1d223ae0` (id real da FINN, vindo da sessão — verificado via Pinia). O leque veio vazio (grupo sem Cotação persistida) e a guarda de recálculo o preservou — comportamento correto, alheio ao fix. Screenshot `0015-incr9-passo4-corretora-sessao.png`.
 
