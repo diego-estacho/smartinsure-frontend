@@ -108,8 +108,8 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
   const quotationsGenerated = ref(false)
   const quotationSignature = ref<string | null>(null)
   const quotationGroupId = ref<string | null>(null)
-  // Corretora dona das Habilitações (RN-023/OPEN-03) — origem do fan-out/seleção/minuta. Ainda não há
-  // seleção de corretora no wizard (pendência OPEN-03); populável quando essa decisão for tomada.
+  // Corretora dona das Habilitações (RN-023) — origem do fan-out/seleção/minuta. Preenchida com a
+  // Corretora ativa da sessão (RN-064) na entrada da oferta; o backend valida a Habilitação ao cotar.
   const brokerageId = ref<string | null>(null)
   // Minuta (valores das tags) e cláusulas selecionadas — sincronizados entre as etapas 4 e 5.
   const minuta = ref<Record<string, string>>({})

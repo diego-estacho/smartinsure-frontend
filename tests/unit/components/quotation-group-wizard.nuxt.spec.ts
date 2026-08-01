@@ -1,6 +1,7 @@
 // @vitest-environment nuxt
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
+import { flushPromises } from '@vue/test-utils'
 import Wizard from '~/components/quotation-groups/Wizard.vue'
 import EntryStep from '~/components/quotation-groups/EntryStep.vue'
 import SummarySidebar from '~/components/quotation-groups/SummarySidebar.vue'
@@ -321,6 +322,17 @@ describe('Etapa 4 — Cotações (exec-plan 0013, RN-056..059)', () => {
     store.setBrokerageId('brk-1')
     const w = await mountSuspended(Step4Quotations)
     expect(w.find('.si-qg-step4').exists()).toBe(true)
+  })
+
+  it('etapa 4 sem corretora ativa na sessão orienta a selecionar (RN-064)', async () => {
+    // Grupo salvo, mas sessão sem Corretora ativa (brokerageId nulo): o fan-out automático do onMounted
+    // não pode resolver as Habilitações — a guarda deve orientar, não cotar às cegas.
+    const store = useQuotationGroupWizardStore()
+    store.startOffer()
+    store.setQuotationGroupId('qg-1')
+    const w = await mountSuspended(Step4Quotations)
+    await flushPromises()
+    expect(w.text()).toContain('Selecione uma corretora ativa para cotar')
   })
 })
 

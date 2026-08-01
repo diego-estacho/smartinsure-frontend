@@ -208,6 +208,20 @@ Núcleo do PR-0: sai o mock, entra a persistência real. Cross-3-repos (backend 
 
 **Pendente (infra/sessão real):** teste **E2E ao vivo** (salvar de verdade) — a API sobe, mas o fluxo real exige SQL + Casdoor configurados; o comportamento fica coberto pelos 8 testes de unidade do backend + 199 do front. Migration ainda **não aplicada** (vai por branch → merge em develop).
 
+### Incremento 9 — Corretora da oferta vem da sessão ativa (RN-064), sai o mock OPEN-03 (2026-07-31)
+
+O `brokerageId` da oferta (origem do fan-out/seleção/minuta no Passo 4) deixou de vir do runtime config mockado (`NUXT_PUBLIC_DEV_BROKERAGE_ID`, contorno OPEN-03 do Incremento 1) e passou a vir da **Corretora ativa da sessão** — `GET /api/me` → `useWorkspaces().activeWorkspace` (RN-064). O vínculo Usuário↔Corretora já é resolvido no servidor (jornada Perfis/Usuários; `GetCurrentUserContextUseCase` + `UserBrokerageMemberships`), e o `RunQuotationsUseCase` resolve a Habilitação por esse mesmo `brokerageId` (`ListActiveByBrokerageAsync`) — mesmo id-space, verificado no banco local. A guarda do Passo 4 ficou honesta: sem grupo → "Não foi possível identificar o grupo de cotação para cotar."; sem Corretora ativa → "Selecione uma corretora ativa para cotar." (antes um erro genérico mascarava o mock ausente).
+
+**Arquivos:** `pages/ofertas/nova.vue` (origem = `useWorkspaces().activeWorkspace` no `onMounted`, `loadContext` idempotente; sem Corretora ativa não inventa nada); `components/quotation-groups/Step4Quotations.vue` (guarda separada grupo × Corretora); `stores/quotationGroupWizard.ts` (comentário do `brokerageId`); `nuxt.config.ts` (removido `public.devBrokerageId`); novo `tests/unit/ofertas-nova.nuxt.spec.ts` (+2 — origem da sessão / não inventa) + **+1** no wizard spec (guarda sem Corretora).
+
+**Escopo (não fecha OPEN-03):** consome o **vínculo** já resolvido; o **isolamento multi-tenant técnico** (query filters ADR-035, claims ADR-014) e a **restrição por Perfil** de quem pode cotar seguem sob OPEN-03.
+
+**Limpeza de harness (mesmo PR, decisão do dono):** 2 hex hardcoded **pré-existentes na main** (não introduzidas aqui) trocadas pelo token idiomático — `Step4Quotations.vue` badge de indisponível (`#991b1b`/`#fee2e2` → `rgb(var(--v-theme-error))`/`rgba(...,0.1)`, padrão de `corretoras/index.vue`) e `SiInsurerLogo.vue` (`#fff` → `rgb(var(--v-theme-surface))`). Sem isso o `check-harness` já reprovava na main.
+
+**Gates:** typecheck ✓ · lint ✓ · check-harness `harness ok` ✓ · vitest **301/301** (+3) ✓ · build ✓.
+
+**Runtime (E2E ao vivo, worktree dev :3100 + backend :5158, login real Casdoor):** login `diegoteste01` (200); `/api/me` traz as corretoras reais da sessão (FINN + RISK CONTROL, RN-064); ao selecionar **FINN** no switcher e abrir o Passo 4 do grupo salvo, o erro "Não foi possível identificar … a corretora" **sumiu** e a store passou a carregar `brokerageId = 019f7fb4-6c07-7dd5-a971-ad1f1d223ae0` (id real da FINN, vindo da sessão — verificado via Pinia). O leque veio vazio (grupo sem Cotação persistida) e a guarda de recálculo o preservou — comportamento correto, alheio ao fix. Screenshot `0015-incr9-passo4-corretora-sessao.png`.
+
 ## Aberto (registrado)
 
 - **Ponto de entrada (decidido 2026-07-24):** habilitar o item de menu "Cotações" → rota `/cotacoes` = página placeholder "em construção" (centro) + botão **"Nova oferta"** no canto superior direito que leva a `/ofertas/nova`. A listagem real de cotações segue fora de escopo.
