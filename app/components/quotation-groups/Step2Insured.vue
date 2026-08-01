@@ -253,7 +253,7 @@ function addAddress(): void {
       v-if="selected"
       class="si-qg-step2__selected"
     >
-      <span class="si-qg-step2__eyebrow">Segurado</span>
+      <span class="si-qg-step2__eyebrow">Segurado selecionado</span>
       <span class="si-qg-step2__name">{{ selected.name }}</span>
       <span class="si-qg-step2__doc">CNPJ {{ formatCnpj(selected.documentNumber) }}</span>
 
@@ -438,11 +438,17 @@ function addAddress(): void {
   font-size: var(--si-fs-small);
 }
 
+/* Selecionado = ênfase verde (borda 2px + tint leve da cor primária da marca), igual ao Passo 1:
+   distingue o segurado SELECIONADO dos resultados da busca acima. */
 .si-qg-step2__selected {
   margin-top: var(--si-space-5);
   display: flex;
   flex-direction: column;
   gap: 2px;
+  padding: var(--si-space-5);
+  border: 2px solid rgb(var(--v-theme-primary));
+  border-radius: var(--si-radius-md);
+  background: rgba(var(--v-theme-primary), 0.05);
 }
 
 .si-qg-step2__eyebrow {
@@ -450,7 +456,7 @@ function addAddress(): void {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: var(--si-font-weight-semibold);
-  color: var(--si-cinza);
+  color: rgb(var(--v-theme-primary));
 }
 
 .si-qg-step2__name {

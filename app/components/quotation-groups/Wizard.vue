@@ -244,7 +244,7 @@ watch([() => wizard.currentStep, () => wizard.phase], () => {
         </h2>
         <p class="mb-5">
           Você alterou dados da oferta e já existem cotações. Ao continuar, será criada uma
-          <strong>nova cotação</strong> com os dados alterados — a cotação atual é preservada.
+          <strong>nova cotação</strong> com os dados alterados. Deseja prosseguir?
         </p>
         <div class="si-qg__fork-actions">
           <SiButton
@@ -259,7 +259,7 @@ watch([() => wizard.currentStep, () => wizard.phase], () => {
             size="small"
             @click="confirmFork"
           >
-            Iniciar nova cotação
+            Confirmar
           </SiButton>
         </div>
       </SiCard>
