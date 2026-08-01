@@ -754,6 +754,17 @@ describe('Etapa 4 — Cotações (exec-plan 0013, RN-056..059)', () => {
     const w = await mountSuspended(Step4Quotations)
     expect(w.find('.si-qg-step4').exists()).toBe(true)
   })
+
+  it('etapa 4 sem corretora ativa na sessão orienta a selecionar (RN-064)', async () => {
+    // Grupo salvo, mas sessão sem Corretora ativa (brokerageId nulo): o fan-out automático do onMounted
+    // não pode resolver as Habilitações — a guarda deve orientar, não cotar às cegas.
+    const store = useQuotationGroupWizardStore()
+    store.startOffer()
+    store.setQuotationGroupId('qg-1')
+    const w = await mountSuspended(Step4Quotations)
+    await flushPromises()
+    expect(w.text()).toContain('Selecione uma corretora ativa para cotar')
+  })
 })
 
 describe('Etapa 4b — Minuta e cláusulas (RN-062/RN-063)', () => {

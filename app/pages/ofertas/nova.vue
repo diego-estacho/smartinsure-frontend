@@ -22,10 +22,10 @@ const router = useRouter()
 const { getQuotationGroup } = useQuotationGroups()
 const { restore: restoreQuotations } = useQuotationPolling()
 
-// Contorno TEMPORÁRIO (OPEN-03): o brokerageId da oferta vem de runtime config enquanto a feature de
-// usuário→corretora não sobe. O usuário logado É uma corretora; quando a sessão trouxer o id da
-// corretora do logado, esta linha é substituída por essa origem.
-const devBrokerageId = useRuntimeConfig().public.devBrokerageId
+// A Corretora da oferta é a Corretora ativa da sessão (RN-064): o vínculo Usuário↔Corretora já é
+// resolvido no servidor e exposto por `/api/me` (workspace switcher). O fan-out/seleção/minuta usam
+// esse id; o backend valida a Habilitação ao cotar. Sem Corretora ativa, o passo 4 orienta a escolher.
+const { activeWorkspace, loadContext } = useWorkspaces()
 
 // Com o id na rota, a página começa em modo de reidratação — evita piscar a tela de entrada antes de
 // restaurar (o wizard só monta com a store já preenchida, então o passo 4 não refaz o fan-out).
@@ -96,7 +96,10 @@ async function restoreFromRoute(groupId: string): Promise<void> {
 }
 
 onMounted(async () => {
-  if (devBrokerageId) wizard.setBrokerageId(String(devBrokerageId))
+  // Corretora ativa da sessão (RN-064) → origem da Cotação. loadContext é idempotente (carrega 1x);
+  // sem Corretora ativa não inventa nada — o passo 4 orienta a selecionar uma.
+  await loadContext()
+  if (activeWorkspace.value) wizard.setBrokerageId(activeWorkspace.value.id)
 
   const groupId = routeGroupId.value
   if (!groupId) return

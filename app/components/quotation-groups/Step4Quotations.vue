@@ -138,8 +138,13 @@ async function doSelect(item: Quotation): Promise<void> {
 async function generate(): Promise<void> {
   const groupId = wizard.quotationGroupId
   const brokerageId = wizard.brokerageId
-  if (!groupId || !brokerageId) {
-    generateError.value = 'Não foi possível identificar o grupo de cotação ou a corretora para cotar.'
+  if (!groupId) {
+    generateError.value = 'Não foi possível identificar o grupo de cotação para cotar.'
+    return
+  }
+  // Sem Corretora ativa na sessão (RN-064) não há como resolver as Habilitações — orienta a escolher.
+  if (!brokerageId) {
+    generateError.value = 'Selecione uma corretora ativa para cotar.'
     return
   }
 
@@ -876,8 +881,8 @@ onMounted(() => {
 .si-qg-step4__unavail-badge {
   font-size: var(--si-fs-caption);
   font-weight: var(--si-font-weight-semibold);
-  color: #991b1b;
-  background: #fee2e2;
+  color: rgb(var(--v-theme-error));
+  background: rgba(var(--v-theme-error), 0.1);
   padding: 2px 8px;
   border-radius: 999px;
 }
