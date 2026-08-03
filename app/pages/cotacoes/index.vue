@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import type { QuotationBookItem } from '~/composables/useQuotationBook'
 import type { QuotationFilters } from '~/components/quotations/FiltersDrawer.vue'
-import { getQuotationSituationView, quotationSituationOptions } from '~/lib/status/quotations'
+import {
+  getQuotationSituationView,
+  quotationResults,
+  quotationSituationOptions,
+} from '~/lib/status/quotations'
 
 /**
  * Listagem de Cotações — o "livro" da Corretora (RN-077/RN-078). Read-only, paginado e filtrado no
  * servidor: cada linha é uma Cotação (uma Seguradora), achatando os Grupos. A situação apresentada
  * (RN-078) vem do resultado por nome estável, relabelada aqui. Mobile é lista de cards (não a tabela
- * rolando). Filtros avançados num drawer (opções = distintos no livro, Q10).
+ * rolando). Filtros avançados num drawer (opções = distintos no livro, Q10). Estrutura de tela igual
+ * às demais listagens (Corretoras): header + card de filtros (abas/busca) + card da tabela + rodapé.
  */
 definePageMeta({ layout: 'shell' })
 
@@ -55,14 +60,6 @@ function money(value: number | string | null | undefined): string {
   return Number.isNaN(n) ? '—' : brl.format(n)
 }
 
-function percent(value: number | string | null | undefined): string {
-  if (value == null || value === '') {
-    return '—'
-  }
-  const n = typeof value === 'string' ? Number(value) : value
-  return Number.isNaN(n) ? '—' : `${n.toLocaleString('pt-BR')}%`
-}
-
 // Datas do contrato chegam como "AAAA-MM-DD" (DateOnly) — formata sem depender de fuso.
 function shortDate(iso: string | null | undefined): string {
   if (!iso) {
@@ -77,6 +74,19 @@ function situationCount(value: string | null): number {
     return Object.values(counts.value).reduce((sum, n) => sum + n, 0)
   }
   return counts.value[value] ?? 0
+}
+
+// Ação primária da linha por resultado (RN-078). Só visual nesta fatia — Emitir/Continuar entram
+// com a emissão/seleção (Fatia 2). Seguível apta → "Emitir"; em análise → "Continuar"; demais sem
+// ação primária (não há proposta a seguir).
+function primaryAction(result: string | null | undefined) {
+  if (result === quotationResults.readyForEmission) {
+    return { label: 'Emitir', variant: 'flat' as const, color: 'primary' }
+  }
+  if (result === quotationResults.analysis) {
+    return { label: 'Continuar', variant: 'outlined' as const, color: 'secondary' }
+  }
+  return null
 }
 
 // Chips dos filtros avançados ativos (removíveis). Seguradora/Modalidade resolvem o rótulo pelas opções.
@@ -111,18 +121,28 @@ const isEmptyFirstUse = computed(
   () => !loading.value && !error.value && items.value.length === 0 && !hasActiveFilters.value,
 )
 
-// Larguras exatas do protótipo (01-cotacoes.md) — com table-layout:fixed (no <style>) cabem as 9
-// colunas em ~1090px; alargar uma exige estreitar outra.
+const rangeLabel = computed(() => {
+  if (totalCount.value === 0) {
+    return 'Nenhum resultado'
+  }
+  const start = (page.value - 1) * pageSize.value + 1
+  const end = Math.min(page.value * pageSize.value, totalCount.value)
+  return `Exibindo ${start}–${end} de ${totalCount.value}`
+})
+
+// Larguras com table-layout:fixed (no <style>): as colunas de texto (Tomador/Segurado/Seguradora)
+// truncam com reticências e cedem espaço para Modalidade e Status respirarem; a tabela preenche
+// a largura do card, então o que importa é a proporção.
 const headers = [
-  { title: 'Cotação', key: 'number', sortable: false, width: 118 },
-  { title: 'Tomador', key: 'policyHolderName', sortable: false, width: 150 },
-  { title: 'Segurado', key: 'insuredName', sortable: false, width: 118 },
-  { title: 'Seguradora', key: 'insurerName', sortable: false, width: 99 },
-  { title: 'Modalidade', key: 'modalityName', sortable: false, width: 104 },
-  { title: 'Valores', key: 'values', sortable: false, align: 'end', width: 149 },
-  { title: 'Status', key: 'result', sortable: false, width: 107 },
-  { title: 'Vigência', key: 'coverage', sortable: false, width: 118 },
-  { title: 'Ações', key: 'actions', sortable: false, align: 'end', width: 126 },
+  { title: 'Cotação', key: 'number', sortable: false, width: 114 },
+  { title: 'Tomador', key: 'policyHolderName', sortable: false, width: 128 },
+  { title: 'Segurado', key: 'insuredName', sortable: false, width: 110 },
+  { title: 'Seguradora', key: 'insurerName', sortable: false, width: 104 },
+  { title: 'Modalidade', key: 'modalityName', sortable: false, width: 122 },
+  { title: 'Valores', key: 'values', sortable: false, align: 'end', width: 148 },
+  { title: 'Status', key: 'result', sortable: false, width: 156 },
+  { title: 'Vigência', key: 'coverage', sortable: false, width: 114 },
+  { title: 'Ações', key: 'actions', sortable: false, align: 'end', width: 128 },
 ] as const
 
 await refresh()
@@ -162,11 +182,7 @@ function reload() {
 }
 
 watch(search, reload)
-
-function selectTab(value: string | null) {
-  situation.value = value
-  reload()
-}
+watch(situation, reload)
 
 function applyFilters(next: QuotationFilters) {
   filters.value = next
@@ -206,7 +222,7 @@ function removeFilterChip(key: string) {
   reload()
 }
 
-// "Limpar filtros" do estado vazio-filtro: zera tudo (busca, aba e drawer).
+// "Limpar filtros": zera tudo (busca, aba e drawer).
 function clearFilters() {
   situation.value = null
   filters.value = emptyFilters()
@@ -232,27 +248,18 @@ function changePageSize(size: number) {
 
 <template>
   <VContainer class="si-quotations">
-    <!-- Cabeçalho: escondido no vazio-primeiro-uso (só um CTA verde por tela). -->
-    <div
-      v-if="!isEmptyFirstUse"
-      class="si-quotations__header"
-    >
+    <!-- Cabeçalho: eyebrow + título + CTA (o CTA some no vazio-primeiro-uso, que já traz o seu próprio). -->
+    <div class="si-quotations__header">
       <div class="si-quotations__title">
-        <span class="si-quotations__eyebrow">Plataforma · Cotações</span>
-        <h1 class="text-h5">
+        <h1 class="si-quotations__h1">
           Cotações
         </h1>
       </div>
 
-      <div class="si-quotations__header-actions">
-        <SiButton
-          :prepend-icon="'refresh'"
-          variant="tonal"
-          :loading="loading"
-          @click="refresh"
-        >
-          Atualizar
-        </SiButton>
+      <div
+        v-if="!isEmptyFirstUse"
+        class="si-quotations__actions"
+      >
         <SiButton
           to="/ofertas/nova"
           :prepend-icon="'plus'"
@@ -262,35 +269,51 @@ function changePageSize(size: number) {
       </div>
     </div>
 
-    <template v-if="!isEmptyFirstUse && !error">
+    <!-- Card de filtros: abas de situação + busca + filtros avançados + chips (some no vazio-primeiro-uso). -->
+    <SiCard
+      v-if="!isEmptyFirstUse"
+      variant="flat"
+      class="si-quotations__filters"
+    >
       <SiTabs
-        :model-value="situation"
+        v-model="situation"
         class="si-quotations__tabs"
-        @update:model-value="(v) => selectTab((v ?? null) as string | null)"
       >
         <SiTab
           v-for="option in quotationSituationOptions"
-          :key="option.title"
+          :key="String(option.value)"
           :value="option.value"
-          :text="`${option.title} (${situationCount(option.value)})`"
+          :text="option.title"
+          :count="situationCount(option.value)"
         />
       </SiTabs>
 
-      <div class="si-quotations__toolbar">
-        <SiTextField
-          v-model="search"
-          placeholder="Buscar por tomador, segurado, seguradora, modalidade ou nº"
-          density="compact"
-          prepend-inner-icon="search"
-          clearable
-          class="si-quotations__search"
-        />
+      <div class="si-quotations__search-row">
+        <div class="si-quotations__search">
+          <SiTextField
+            v-model="search"
+            placeholder="Buscar por tomador, segurado ou nº da cotação"
+            :prepend-inner-icon="'search'"
+            clearable
+            hide-details
+          />
+        </div>
         <SiButton
-          variant="tonal"
-          prepend-icon="filter"
+          variant="outlined"
+          color="secondary"
+          :prepend-icon="'sliders'"
+          class="si-quotations__filters-btn"
           @click="drawerOpen = true"
         >
-          Filtros avançados<template v-if="activeFilterChips.length"> ({{ activeFilterChips.length }})</template>
+          Filtros avançados
+          <SiChip
+            v-if="activeFilterChips.length"
+            size="x-small"
+            color="success"
+            class="ml-2"
+          >
+            {{ activeFilterChips.length }}
+          </SiChip>
         </SiButton>
       </div>
 
@@ -315,94 +338,84 @@ function changePageSize(size: number) {
           Limpar filtros
         </SiButton>
       </div>
-    </template>
-
-    <!-- Estado: erro (com retry). -->
-    <SiCard
-      v-if="error"
-      variant="outlined"
-      class="si-quotations__state"
-    >
-      <SiIcon
-        icon="alertTriangle"
-        :size="40"
-        class="si-quotations__state-icon"
-      />
-      <h2 class="text-subtitle-1">
-        Não foi possível carregar as cotações
-      </h2>
-      <p class="si-quotations__state-text">
-        A consulta pode ter expirado. Tente novamente.
-      </p>
-      <SiButton
-        :prepend-icon="'refresh'"
-        @click="refresh"
-      >
-        Tentar novamente
-      </SiButton>
     </SiCard>
 
-    <!-- Estado: vazio — primeiro uso (base vazia): sem filtros, com CTA. -->
+    <!-- Card da tabela: estados (erro / vazios) OU tabela + rodapé (range + paginação). -->
     <SiCard
-      v-else-if="isEmptyFirstUse"
-      variant="outlined"
-      class="si-quotations__state"
+      variant="flat"
+      class="si-quotations__table-card"
     >
-      <SiIcon
-        icon="fileText"
-        :size="40"
-        class="si-quotations__state-icon"
-      />
-      <h2 class="text-subtitle-1">
-        Você ainda não tem cotações
-      </h2>
-      <p class="si-quotations__state-text">
-        Quando você cotar uma oferta, cada retorno das seguradoras aparece aqui.
-      </p>
-      <SiButton
-        to="/ofertas/nova"
-        :prepend-icon="'plus'"
+      <!-- Estado: erro (com retry). -->
+      <div
+        v-if="error"
+        class="si-quotations__state"
       >
-        Nova oferta
-      </SiButton>
-    </SiCard>
-
-    <!-- Estado: vazio — filtro sem resultado. -->
-    <SiCard
-      v-else-if="!loading && items.length === 0"
-      variant="outlined"
-      class="si-quotations__state"
-    >
-      <SiIcon
-        icon="search"
-        :size="40"
-        class="si-quotations__state-icon"
-      />
-      <h2 class="text-subtitle-1">
-        Nenhuma cotação encontrada
-      </h2>
-      <p class="si-quotations__state-text">
-        {{ search ? `Nada corresponde a "${search}".` : 'Nenhuma cotação para os filtros aplicados.' }}
-      </p>
-      <SiButton
-        variant="tonal"
-        @click="clearFilters"
-      >
-        Limpar filtros
-      </SiButton>
-    </SiCard>
-
-    <!-- Dados (+ carregando inline). -->
-    <template v-else>
-      <div class="si-quotations__count">
-        {{ totalCount }} cotação{{ totalCount === 1 ? '' : 'es' }}
+        <div class="si-quotations__state-icon si-quotations__state-icon--danger">
+          <SiIcon icon="alertTriangle" />
+        </div>
+        <h2 class="si-quotations__state-title">
+          Não foi possível carregar as cotações
+        </h2>
+        <p class="si-quotations__state-text">
+          A consulta expirou. Isso costuma ser instabilidade momentânea do serviço de cotação.
+        </p>
+        <SiButton
+          :prepend-icon="'refresh'"
+          @click="refresh"
+        >
+          Tentar novamente
+        </SiButton>
       </div>
 
-      <!-- Desktop: tabela (escondida no mobile por CSS). -->
-      <SiCard
-        variant="outlined"
-        class="si-quotations__table-card"
+      <!-- Estado: vazio — primeiro uso (base vazia), com CTA. -->
+      <div
+        v-else-if="isEmptyFirstUse"
+        class="si-quotations__state"
       >
+        <div class="si-quotations__state-icon">
+          <SiIcon icon="fileText" />
+        </div>
+        <h2 class="si-quotations__state-title">
+          Você ainda não tem cotações
+        </h2>
+        <p class="si-quotations__state-text">
+          Comece uma oferta para cotar com as seguradoras habilitadas. As cotações geradas aparecem
+          aqui para você acompanhar até a emissão.
+        </p>
+        <SiButton
+          to="/ofertas/nova"
+          :prepend-icon="'plus'"
+        >
+          Nova oferta
+        </SiButton>
+      </div>
+
+      <!-- Estado: vazio — filtro sem resultado. -->
+      <div
+        v-else-if="!loading && items.length === 0"
+        class="si-quotations__state"
+      >
+        <div class="si-quotations__state-icon">
+          <SiIcon icon="search" />
+        </div>
+        <h2 class="si-quotations__state-title">
+          Nenhuma cotação encontrada
+        </h2>
+        <p class="si-quotations__state-text">
+          {{ search ? `Nada corresponde a "${search}". Revise o termo ou remova os filtros aplicados.` : 'Nenhuma cotação atende aos filtros aplicados. Remova algum deles para ampliar o resultado.' }}
+        </p>
+        <SiButton
+          variant="outlined"
+          color="secondary"
+          @click="clearFilters"
+        >
+          Limpar filtros
+        </SiButton>
+      </div>
+
+      <!-- Dados (+ carregando inline). -->
+      <template v-else>
+        <!-- Desktop: tabela (escondida no mobile por CSS). -->
         <SiDataTable
           :headers="headers"
           :items="items"
@@ -416,38 +429,62 @@ function changePageSize(size: number) {
           </template>
 
           <template #[`item.policyHolderName`]="{ item }">
-            <span class="si-cell-strong">{{ item.policyHolderName }}</span>
+            <span
+              class="si-cell-strong si-quotations__truncate"
+              :title="item.policyHolderName"
+            >{{ item.policyHolderName }}</span>
           </template>
 
           <template #[`item.insuredName`]="{ item }">
-            <span class="si-quotations__muted">{{ item.insuredName }}</span>
+            <span
+              class="si-quotations__muted si-quotations__truncate"
+              :title="item.insuredName"
+            >{{ item.insuredName }}</span>
           </template>
 
           <template #[`item.insurerName`]="{ item }">
-            {{ item.insurerName }}
+            <span
+              class="si-quotations__truncate"
+              :title="item.insurerName"
+            >{{ item.insurerName }}</span>
           </template>
 
           <template #[`item.modalityName`]="{ item }">
-            <span class="si-quotations__muted">{{ item.modalityName }}</span>
+            <span
+              class="si-quotations__muted si-quotations__truncate"
+              :title="item.modalityName"
+            >{{ item.modalityName }}</span>
           </template>
 
           <template #[`item.values`]="{ item }">
             <div class="si-quotations__values">
-              <span class="si-quotations__values-label">IS</span>
-              <span class="si-quotations__values-is">{{ money(item.insuredAmount) }}</span>
-              <span class="si-quotations__values-sub">
-                Prêmio {{ money(item.premium) }} · Comissão {{ percent(item.commissionPercentage) }}
+              <span class="si-quotations__values-is">
+                <span class="si-quotations__values-label">IS</span>{{ money(item.insuredAmount) }}
               </span>
+              <span class="si-quotations__values-sub">Prêmio {{ money(item.premium) }}</span>
             </div>
           </template>
 
           <template #[`item.result`]="{ item }">
-            <SiChip
-              :color="getQuotationSituationView(item.result).color"
-              size="small"
-            >
-              {{ getQuotationSituationView(item.result).short }}
-            </SiChip>
+            <div class="si-quotations__status">
+              <SiChip
+                :color="getQuotationSituationView(item.result).color"
+                size="small"
+              >
+                {{ getQuotationSituationView(item.result).label }}
+              </SiChip>
+              <!-- CCG é flag ORTOGONAL (RN-058/059), não status: badge outline distinto da pill preenchida. -->
+              <SiChip
+                v-if="item.requiresCcg"
+                variant="outlined"
+                color="warning"
+                size="x-small"
+                class="si-quotations__ccg"
+                title="Exige contragarantia (CCG)"
+              >
+                CCG
+              </SiChip>
+            </div>
           </template>
 
           <template #[`item.coverage`]="{ item }">
@@ -457,68 +494,120 @@ function changePageSize(size: number) {
             </div>
           </template>
 
-          <!-- Ações reservadas (fatias futuras: detalhes/continuar/cancelar). -->
-          <template #[`item.actions`]>
-            <span class="si-quotations__muted">—</span>
+          <!-- Ações (RN-077): botão primário por situação + kebab. Só visual nesta fatia; detalhes,
+               emissão e cancelamento entram na Fatia 2 (sem efeito por ora). -->
+          <template #[`item.actions`]="{ item }">
+            <div
+              class="si-quotations__row-actions"
+              @click.stop
+            >
+              <SiButton
+                v-if="primaryAction(item.result)"
+                :variant="primaryAction(item.result)!.variant"
+                :color="primaryAction(item.result)!.color"
+                size="small"
+                class="si-quotations__row-btn"
+              >
+                {{ primaryAction(item.result)!.label }}
+              </SiButton>
+              <SiMenu location="bottom end">
+                <template #activator="{ props }">
+                  <SiIconButton
+                    v-bind="props"
+                    icon="dotsHorizontal"
+                    aria-label="Mais ações"
+                  />
+                </template>
+                <SiList
+                  density="compact"
+                  class="si-rowmenu"
+                >
+                  <SiListItem
+                    title="Ver detalhes"
+                    prepend-icon="eye"
+                  />
+                  <SiListItem
+                    title="Cancelar cotação"
+                    prepend-icon="circleX"
+                    class="si-rowmenu__danger"
+                  />
+                </SiList>
+              </SiMenu>
+            </div>
           </template>
         </SiDataTable>
-      </SiCard>
 
-      <!-- Mobile: cards (escondidos no desktop por CSS). -->
-      <div class="si-quotations__cards">
-        <SiCard
-          v-for="item in items"
-          :key="item.quotationId"
-          variant="outlined"
-          class="si-quotations__card"
-        >
-          <div class="si-quotations__card-top">
-            <span class="si-quotations__mono">{{ item.number ?? '—' }}</span>
-            <SiChip
-              :color="getQuotationSituationView(item.result).color"
-              size="small"
-            >
-              {{ getQuotationSituationView(item.result).short }}
-            </SiChip>
-          </div>
-          <div class="si-quotations__card-holder">
-            {{ item.policyHolderName }}
-          </div>
-          <div class="si-quotations__muted">
-            Segurado · {{ item.insuredName }}
-          </div>
-          <div class="si-quotations__card-grid">
-            <div>
-              <span class="si-quotations__card-key">Seguradora</span>
-              <span>{{ item.insurerName }}</span>
+        <!-- Mobile: cards (escondidos no desktop por CSS). -->
+        <div class="si-quotations__cards">
+          <SiCard
+            v-for="item in items"
+            :key="item.quotationId"
+            variant="outlined"
+            class="si-quotations__card"
+          >
+            <div class="si-quotations__card-top">
+              <span class="si-quotations__mono">{{ item.number ?? '—' }}</span>
+              <div class="si-quotations__status-inline">
+                <SiChip
+                  :color="getQuotationSituationView(item.result).color"
+                  size="small"
+                >
+                  {{ getQuotationSituationView(item.result).label }}
+                </SiChip>
+                <SiChip
+                  v-if="item.requiresCcg"
+                  variant="outlined"
+                  color="warning"
+                  size="x-small"
+                  class="si-quotations__ccg"
+                  title="Exige contragarantia (CCG)"
+                >
+                  CCG
+                </SiChip>
+              </div>
             </div>
-            <div>
-              <span class="si-quotations__card-key">Modalidade</span>
-              <span>{{ item.modalityName }}</span>
+            <div class="si-quotations__card-holder">
+              {{ item.policyHolderName }}
             </div>
-            <div>
-              <span class="si-quotations__card-key">Imp. segurada</span>
-              <span>{{ money(item.insuredAmount) }}</span>
+            <div class="si-quotations__muted">
+              Segurado · {{ item.insuredName }}
             </div>
-            <div>
-              <span class="si-quotations__card-key">Prêmio</span>
-              <span>{{ money(item.premium) }}</span>
+            <div class="si-quotations__card-grid">
+              <div>
+                <span class="si-quotations__card-key">Seguradora</span>
+                <span>{{ item.insurerName }}</span>
+              </div>
+              <div>
+                <span class="si-quotations__card-key">Modalidade</span>
+                <span>{{ item.modalityName }}</span>
+              </div>
+              <div>
+                <span class="si-quotations__card-key">Imp. segurada</span>
+                <span>{{ money(item.insuredAmount) }}</span>
+              </div>
+              <div>
+                <span class="si-quotations__card-key">Prêmio</span>
+                <span>{{ money(item.premium) }}</span>
+              </div>
             </div>
-          </div>
-          <div class="si-quotations__muted">
-            Vigência {{ shortDate(item.coverageStartDate) }} até {{ shortDate(item.coverageEndDate) }}
-          </div>
-        </SiCard>
-      </div>
+            <div class="si-quotations__muted">
+              Vigência {{ shortDate(item.coverageStartDate) }} até {{ shortDate(item.coverageEndDate) }}
+            </div>
+          </SiCard>
+        </div>
 
-      <SiPagination
-        :page="page"
-        :items-per-page="pageSize"
-        :total="totalCount"
-        @update:page="goToPage"
-        @update:items-per-page="changePageSize"
-      />
-    </template>
+        <div class="si-quotations__footer">
+          <span class="si-quotations__range">{{ rangeLabel }}</span>
+          <SiPagination
+            :page="page"
+            :items-per-page="pageSize"
+            :total="totalCount"
+            @update:page="goToPage"
+            @update:items-per-page="changePageSize"
+          />
+        </div>
+      </template>
+    </SiCard>
 
     <QuotationsFiltersDrawer
       v-model="drawerOpen"
@@ -535,6 +624,9 @@ function changePageSize(size: number) {
 <style scoped>
 .si-quotations {
   max-width: var(--si-container-wide);
+  display: flex;
+  flex-direction: column;
+  gap: var(--si-space-5);
 }
 
 .si-quotations__header {
@@ -542,59 +634,68 @@ function changePageSize(size: number) {
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--si-space-4);
-  margin-block: var(--si-space-6) var(--si-space-4);
+  margin-top: var(--si-space-6);
 }
 
 .si-quotations__title {
   min-width: 0;
 }
 
-.si-quotations__eyebrow {
-  display: block;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: var(--si-fs-caption);
-  color: var(--si-cinza);
-  white-space: nowrap;
-}
-
-.si-quotations__title h1 {
+/* Título igual às demais listagens (Corretoras): 28px, semibold, tracking apertado. */
+.si-quotations__h1 {
   margin: 0;
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: var(--si-font-weight-semibold);
 }
 
-.si-quotations__header-actions {
+.si-quotations__actions {
   display: flex;
   align-items: center;
   gap: var(--si-space-2);
+  flex-shrink: 0;
 }
 
 .si-quotations__tabs {
-  margin-bottom: var(--si-space-3);
+  padding: 0 var(--si-space-5);
 }
 
-.si-quotations__toolbar {
+.si-quotations__search-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--si-space-3);
-  margin-bottom: var(--si-space-3);
+  padding: var(--si-space-4) var(--si-space-5);
+  flex-wrap: wrap;
 }
 
+/* Wrapper é o item flex: estica a busca e empurra "Filtros avançados" para a direita
+ * (o flex:1 fica aqui, não no VTextField — o SiFieldShell é o filho flex). */
 .si-quotations__search {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 280px;
+}
+
+/* Busca em branco (surface), não o cinza translúcido do outlined padrão: campo limpo sobre o card. */
+.si-quotations__search :deep(.v-field) {
+  min-height: 48px;
+  background: rgb(var(--v-theme-surface));
+}
+
+.si-quotations__search :deep(.v-field__overlay) {
+  opacity: 0;
+}
+
+.si-quotations__filters-btn.v-btn {
+  --v-btn-height: 48px;
 }
 
 .si-quotations__chips {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--si-space-2);
-  margin-bottom: var(--si-space-3);
-}
-
-.si-quotations__count {
-  color: rgba(var(--v-theme-on-surface), 0.7);
-  font-size: var(--si-fs-small);
-  margin-bottom: var(--si-space-2);
+  padding: 0 var(--si-space-5) var(--si-space-4);
 }
 
 .si-quotations__table-card {
@@ -610,37 +711,53 @@ function changePageSize(size: number) {
 .si-quotations__table :deep(th),
 .si-quotations__table :deep(td) {
   padding-inline: 10px !important;
+  overflow: hidden;
+}
+
+/* Nomes longos (Tomador/Segurado/Seguradora/Modalidade) truncam em 1 linha com reticências;
+   o texto completo aparece no tooltip nativo (atributo title da célula). */
+.si-quotations__truncate {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .si-quotations__mono {
   font-family: var(--si-font-mono);
-  font-size: var(--si-fs-small);
+  font-size: var(--si-fs-caption);
   white-space: nowrap;
 }
 
 .si-quotations__muted {
-  color: rgba(var(--v-theme-on-surface), 0.6);
+  color: var(--si-cinza);
 }
 
 .si-quotations__values {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-}
-
-.si-quotations__values-label {
-  font-size: var(--si-fs-caption);
-  color: var(--si-cinza);
+  gap: 2px;
 }
 
 .si-quotations__values-is {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--si-space-1);
   font-weight: var(--si-font-weight-semibold);
   font-variant-numeric: tabular-nums;
 }
 
+.si-quotations__values-label {
+  font-size: 11px;
+  font-weight: var(--si-font-weight-semibold);
+  color: var(--si-cinza);
+}
+
 .si-quotations__values-sub {
   font-size: var(--si-fs-caption);
-  color: rgba(var(--v-theme-on-surface), 0.6);
+  color: var(--si-cinza);
+  font-variant-numeric: tabular-nums;
 }
 
 .si-quotations__coverage {
@@ -649,13 +766,65 @@ function changePageSize(size: number) {
   font-variant-numeric: tabular-nums;
 }
 
+/* Status = pill (resultado) em cima; badge CCG (flag ortogonal) embaixo, tratamento distinto. */
+.si-quotations__status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--si-space-1);
+}
+
+.si-quotations__status-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--si-space-1);
+}
+
+/* Badge CCG compacto: outline âmbar, sem preenchimento — lê como marcador, não como estado. */
+.si-quotations__ccg.v-chip {
+  height: 18px;
+  font-size: 10.5px;
+  font-weight: var(--si-font-weight-semibold);
+  letter-spacing: 0.02em;
+  padding-inline: var(--si-space-2);
+}
+
+.si-quotations__row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--si-space-1);
+}
+
+/* Botão de ação da linha compacto (DS compactBtn): fonte menor e caixa justa, como Corretoras. */
+.si-quotations__row-btn.v-btn {
+  font-size: var(--si-fs-caption);
+  font-weight: var(--si-font-weight-semibold);
+  letter-spacing: 0;
+  text-transform: none;
+  padding-inline: 12px;
+}
+
+/* Kebab menor (34px), proporcional ao botão compacto — evita o ícone dominar a coluna. */
+.si-quotations__row-actions :deep(.si-icon-button.v-btn) {
+  --v-btn-height: 34px;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+}
+
+.si-rowmenu__danger :deep(.v-list-item-title),
+.si-rowmenu__danger :deep(.v-list-item__prepend .v-icon) {
+  color: var(--si-danger-strong);
+}
+
 /* Toggle desktop/mobile no breakpoint 1024px (AppShell). */
 .si-quotations__cards {
   display: none;
 }
 
 @media (max-width: 1023.98px) {
-  .si-quotations__table-card {
+  .si-quotations__table {
     display: none;
   }
 
@@ -663,11 +832,12 @@ function changePageSize(size: number) {
     display: flex;
     flex-direction: column;
     gap: var(--si-space-3);
+    padding: var(--si-space-4);
   }
 
   .si-quotations__header,
-  .si-quotations__header-actions,
-  .si-quotations__toolbar {
+  .si-quotations__actions,
+  .si-quotations__search-row {
     flex-direction: column;
     align-items: stretch;
   }
@@ -710,23 +880,55 @@ function changePageSize(size: number) {
   color: var(--si-cinza);
 }
 
+.si-quotations__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--si-space-3);
+  padding: var(--si-space-3) var(--si-space-5);
+  background: rgb(var(--v-theme-background));
+  flex-wrap: wrap;
+}
+
+.si-quotations__range {
+  color: var(--si-cinza);
+  font-size: var(--si-fs-small);
+}
+
 .si-quotations__state {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: var(--si-space-2);
-  padding: var(--si-space-10) var(--si-space-6);
+  gap: var(--si-space-3);
+  padding: 64px 24px;
 }
 
 .si-quotations__state-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--si-radius-pill);
+  background: var(--si-cinza-claro);
   color: var(--si-cinza);
+}
+
+.si-quotations__state-icon--danger {
+  background: rgba(var(--v-theme-error), 0.1);
+  color: rgb(var(--v-theme-error));
+}
+
+.si-quotations__state-title {
+  margin: 0;
+  font-size: var(--si-fs-h4);
+  font-weight: var(--si-font-weight-semibold);
 }
 
 .si-quotations__state-text {
   margin: 0;
-  max-width: 46ch;
-  color: rgba(var(--v-theme-on-surface), 0.7);
+  max-width: 420px;
+  color: var(--si-cinza);
   font-size: var(--si-fs-small);
 }
 </style>

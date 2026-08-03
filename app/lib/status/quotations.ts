@@ -15,19 +15,18 @@ export type QuotationResult = typeof quotationResults[keyof typeof quotationResu
 
 type QuotationSituationView = {
   label: string
-  short: string
   color: string
   known: boolean
 }
 
 // Q7: verde (success) fica reservado para "Emitida" (Passo 5); azul (info) = "Pronta para emissão".
-// `short` é o rótulo da pill na tabela (a coluna Status é estreita — o protótipo encurta de propósito);
-// `label` é o rótulo completo (abas, detalhe).
+// `label` é o rótulo canônico (RN-078), usado tanto nas abas quanto na pill da coluna Status — sem
+// abreviar: a coluna é alargada o suficiente para caber "Pronta para emissão".
 const quotationSituationViews = {
-  [quotationResults.readyForEmission]: { label: 'Pronta para emissão', short: 'Pronta', color: 'info' },
-  [quotationResults.analysis]: { label: 'Em análise', short: 'Análise', color: 'warning' },
-  [quotationResults.unavailable]: { label: 'Indisponível', short: 'Indisponível', color: 'secondary' },
-  [quotationResults.unrecognized]: { label: 'Não reconhecida', short: 'Não reconh.', color: 'error' },
+  [quotationResults.readyForEmission]: { label: 'Pronta para emissão', color: 'info' },
+  [quotationResults.analysis]: { label: 'Em análise', color: 'warning' },
+  [quotationResults.unavailable]: { label: 'Indisponível', color: 'secondary' },
+  [quotationResults.unrecognized]: { label: 'Não reconhecida', color: 'error' },
 } as const satisfies Record<QuotationResult, Omit<QuotationSituationView, 'known'>>
 
 export function isQuotationResult(result: string | null | undefined): result is QuotationResult {
@@ -39,7 +38,7 @@ export function isQuotationResult(result: string | null | undefined): result is 
 
 export function getQuotationSituationView(result: string | null | undefined): QuotationSituationView {
   if (!isQuotationResult(result)) {
-    return { label: 'Desconhecida', short: 'Desconhec.', color: 'warning', known: false }
+    return { label: 'Desconhecida', color: 'warning', known: false }
   }
 
   return { ...quotationSituationViews[result], known: true }

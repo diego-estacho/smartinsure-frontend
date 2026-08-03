@@ -84,7 +84,7 @@ function clear() {
     :model-value="modelValue"
     :location="isMobile ? 'bottom' : 'right'"
     temporary
-    :width="isMobile ? undefined : 420"
+    :width="isMobile ? undefined : 400"
     :height="isMobile ? 'auto' : undefined"
     :class="['si-quotation-filters', { 'si-quotation-filters--sheet': isMobile }]"
     @update:model-value="(v) => emit('update:modelValue', Boolean(v))"
@@ -101,53 +101,58 @@ function clear() {
     </div>
 
     <div class="si-quotation-filters__body">
-      <SiSelect
-        v-model="draft.insurerId"
-        label="Seguradora"
-        :items="[{ title: 'Todas', value: null }, ...insurers]"
-        density="compact"
-      />
-      <SiSelect
-        v-model="draft.modalityId"
-        label="Modalidade"
-        :items="[{ title: 'Todas', value: null }, ...modalities]"
-        density="compact"
-      />
+      <div class="si-quotation-filters__group">
+        <span class="si-quotation-filters__group-label">Seguradora</span>
+        <SiSelect
+          v-model="draft.insurerId"
+          :items="[{ title: 'Todas as seguradoras', value: null }, ...insurers]"
+          density="compact"
+        />
+      </div>
 
-      <div class="si-quotation-filters__range">
-        <span class="si-quotation-filters__range-label">Valor do prêmio (R$)</span>
+      <div class="si-quotation-filters__group">
+        <span class="si-quotation-filters__group-label">Modalidade</span>
+        <SiSelect
+          v-model="draft.modalityId"
+          :items="[{ title: 'Todas as modalidades', value: null }, ...modalities]"
+          density="compact"
+        />
+      </div>
+
+      <div class="si-quotation-filters__group">
+        <span class="si-quotation-filters__group-label">Valor do prêmio (R$)</span>
         <div class="si-quotation-filters__range-fields">
           <SiCurrencyField
             v-model="draft.premiumMin"
-            label="Mínimo"
+            placeholder="Mín."
             density="compact"
           />
           <SiCurrencyField
             v-model="draft.premiumMax"
-            label="Máximo"
+            placeholder="Máx."
             density="compact"
           />
         </div>
       </div>
 
-      <div class="si-quotation-filters__range">
-        <span class="si-quotation-filters__range-label">Importância segurada (R$)</span>
+      <div class="si-quotation-filters__group">
+        <span class="si-quotation-filters__group-label">Importância segurada (R$)</span>
         <div class="si-quotation-filters__range-fields">
           <SiCurrencyField
             v-model="draft.insuredAmountMin"
-            label="Mínimo"
+            placeholder="Mín."
             density="compact"
           />
           <SiCurrencyField
             v-model="draft.insuredAmountMax"
-            label="Máximo"
+            placeholder="Máx."
             density="compact"
           />
         </div>
       </div>
 
-      <div class="si-quotation-filters__range">
-        <span class="si-quotation-filters__range-label">Período de criação</span>
+      <div class="si-quotation-filters__group">
+        <span class="si-quotation-filters__group-label">Período de criação</span>
         <div class="si-quotation-filters__range-fields">
           <SiDateField
             v-model="draft.createdFrom"
@@ -164,8 +169,8 @@ function clear() {
         </div>
       </div>
 
-      <div class="si-quotation-filters__range">
-        <span class="si-quotation-filters__range-label">Início da vigência</span>
+      <div class="si-quotation-filters__group">
+        <span class="si-quotation-filters__group-label">Início da vigência</span>
         <div class="si-quotation-filters__range-fields">
           <SiDateField
             v-model="draft.coverageStartFrom"
@@ -183,7 +188,7 @@ function clear() {
       </div>
 
       <p class="si-quotation-filters__note">
-        Número da cotação, tomador e segurado você encontra pela busca, acima.
+        Para achar por número da cotação, tomador ou segurado, use o campo de busca da listagem — ele procura por esses três.
       </p>
     </div>
 
@@ -200,7 +205,7 @@ function clear() {
         class="si-quotation-filters__apply"
         @click="apply"
       >
-        Ver {{ resultCount }} resultado{{ resultCount === 1 ? '' : 's' }}
+        Aplicar filtros
       </SiButton>
     </div>
   </SiNavigationDrawer>
@@ -227,11 +232,15 @@ function clear() {
   overflow-y: auto;
 }
 
-.si-quotation-filters__range-label {
+/* Rótulo de grupo do drawer = fieldLabel do protótipo: caixa alta, tracking, 11px, cinza. */
+.si-quotation-filters__group-label {
   display: block;
   margin-bottom: var(--si-space-2);
-  font-size: var(--si-fs-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 11px;
   font-weight: var(--si-font-weight-semibold);
+  color: var(--si-cinza);
 }
 
 .si-quotation-filters__range-fields {
@@ -259,7 +268,7 @@ function clear() {
 }
 
 .si-quotation-filters__apply {
-  flex: 2;
+  flex: 1;
 }
 
 /* Mobile: bottom sheet (location="bottom") — topo arredondado, altura limitada, corpo rolável. */

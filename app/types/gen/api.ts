@@ -3950,6 +3950,7 @@ export interface components {
             /** Format: double */
             commissionPercentage: null | number | string;
             result: string;
+            requiresCcg: boolean;
             /** Format: date */
             coverageStartDate: string;
             /** Format: date */
