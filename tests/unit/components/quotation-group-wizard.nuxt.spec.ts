@@ -1,6 +1,8 @@
 // @vitest-environment nuxt
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mountSuspended } from '@nuxt/test-utils/runtime'
+import { flushPromises } from '@vue/test-utils'
+import { createError, setResponseStatus } from 'h3'
+import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import Wizard from '~/components/quotation-groups/Wizard.vue'
 import EntryStep from '~/components/quotation-groups/EntryStep.vue'
 import SummarySidebar from '~/components/quotation-groups/SummarySidebar.vue'
@@ -8,11 +10,13 @@ import Step4Quotations from '~/components/quotation-groups/Step4Quotations.vue'
 import MinutaClauses from '~/components/quotation-groups/MinutaClauses.vue'
 import Step5Issuance from '~/components/quotation-groups/Step5Issuance.vue'
 import Step2Insured from '~/components/quotation-groups/Step2Insured.vue'
+import Step1PolicyHolder from '~/components/quotation-groups/Step1PolicyHolder.vue'
 import type { Quotation } from '~/composables/useQuotations'
 import { useIssuance } from '~/composables/useIssuance'
 import { usePersons } from '~/composables/usePersons'
 import { useQuotationGroups } from '~/composables/useQuotationGroups'
 import { buildObjetoTemplate, parseTemplate } from '~/lib/minuta'
+import { formatCnpj } from '~/lib/documents'
 import { useQuotationGroupWizardStore, WIZARD_STEPS } from '~/stores/quotationGroupWizard'
 
 /** Força o desktop (>=1024) para o wizard nascer em 2 colunas com o SiStepper (não o compacto). */
@@ -236,6 +240,481 @@ describe('Etapa 1 — Dados do tomador (exec-plan 0015, incremento 2)', () => {
   })
 })
 
+describe('Etapa 1 — Filial do tomador (RN-102)', () => {
+  const HOLDER = {
+    id: 'ph-1',
+    name: 'Construtora Aurora Engenharia LTDA',
+    documentNumber: '12345678000190',
+    mainAddress: 'Av. das Nações Unidas, 1200 · São Paulo - SP',
+    branches: [
+      { id: 'br-1', documentNumber: '11222333000262', name: 'Filial SP', socialName: null },
+      { id: 'br-2', documentNumber: '11222333000343', name: 'Filial RJ', socialName: null },
+    ],
+    selectedBranchId: null,
+  }
+
+  beforeEach(() => {
+    useQuotationGroupWizardStore().reset()
+    forceDesktopViewport()
+  })
+
+  it('marca uma filial e limpa a anterior (RN-102)', () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER)
+    store.setBranch('br-1')
+    expect(store.selectedBranchId).toBe('br-1')
+    store.setBranch('br-2')
+    expect(store.selectedBranchId).toBe('br-2')
+    expect(store.policyHolder?.selectedBranchId).toBe('br-2')
+  })
+
+  it('desmarcar a filial volta o estabelecimento para a matriz (RN-102)', () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER)
+    store.setBranch('br-1')
+    store.clearBranch()
+    expect(store.selectedBranchId).toBeNull()
+  })
+
+  it('trocar o tomador limpa a filial marcada (RN-102)', () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER)
+    store.setBranch('br-1')
+    // Novo tomador — objeto novo, sem filial marcada (é assim que a etapa 1 constrói ao selecionar).
+    store.setPolicyHolder({ ...HOLDER, id: 'ph-2', name: 'Outro Tomador LTDA' })
+    expect(store.selectedBranchId).toBeNull()
+  })
+
+  it('a filial entra na assinatura de recálculo (RN-051)', () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER)
+    store.risk.modalityId = 'm1'
+    store.risk.insuredAmount = 1000
+    store.markQuotationsGenerated()
+    expect(store.signatureChanged).toBe(false)
+    store.setBranch('br-1')
+    expect(store.signatureChanged).toBe(true)
+  })
+
+  it('retomar um rascunho com filial já persistida nasce marcada (RN-102)', () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder({ ...HOLDER, selectedBranchId: 'br-2' })
+    expect(store.selectedBranchId).toBe('br-2')
+  })
+
+  it('reset limpa a filial marcada e a lista de filiais', () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER)
+    store.setBranch('br-1')
+    store.reset()
+    expect(store.policyHolder).toBeNull()
+    expect(store.selectedBranchId).toBeNull()
+    expect(store.branches).toEqual([])
+  })
+
+  it('o resumo mostra o CNPJ da matriz sem marcação e o da filial quando marcada', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER)
+    let w = await mountSuspended(SummarySidebar)
+    expect(w.text()).toContain(formatCnpj(HOLDER.documentNumber))
+    // O rótulo é fixo nos dois estados: no contexto da oferta o estabelecimento cotado é o
+    // tomador, então "CNPJ do tomador" não muda com o tipo da empresa. Só o VALOR troca (RN-102).
+    expect(w.text()).toContain('CNPJ do tomador')
+    expect(w.text()).not.toContain('CNPJ da filial')
+
+    store.setBranch('br-1')
+    w = await mountSuspended(SummarySidebar)
+    expect(w.text()).toContain(formatCnpj('11222333000262'))
+    expect(w.text()).not.toContain(formatCnpj(HOLDER.documentNumber))
+    expect(w.text()).toContain('CNPJ do tomador')
+    expect(w.text()).not.toContain('CNPJ da filial')
+  })
+
+  it('a etapa 1 lista as filiais com marcação exclusiva; marcar uma desmarca a outra', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER)
+    const w = await mountSuspended(Step1PolicyHolder)
+    const checkboxes = w.findAllComponents({ name: 'VCheckbox' })
+    expect(checkboxes.length).toBe(2)
+
+    await checkboxes[0]!.find('input').setValue(true)
+    expect(store.selectedBranchId).toBe('br-1')
+
+    await checkboxes[1]!.find('input').setValue(true)
+    expect(store.selectedBranchId).toBe('br-2')
+  })
+
+  it('desmarcar o checkbox da filial volta o estabelecimento para a matriz', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER)
+    store.setBranch('br-1')
+    const w = await mountSuspended(Step1PolicyHolder)
+    const checkboxes = w.findAllComponents({ name: 'VCheckbox' })
+    await checkboxes[0]!.find('input').setValue(false)
+    expect(store.selectedBranchId).toBeNull()
+  })
+})
+
+describe('Etapa 1 — select() nasce marcada/desmarcada conforme preSelectedBranchId (RN-102)', () => {
+  beforeEach(() => {
+    useQuotationGroupWizardStore().reset()
+    forceDesktopViewport()
+  })
+
+  /** Busca e seleciona o único item da lista de resultados — caminho real (search → select()),
+   * não a store direto: é o único jeito de exercitar `select()` de verdade (os testes de RN-102
+   * acima montam o tomador via `setPolicyHolder`, que nunca passa por `select()`). */
+  async function searchAndSelectFirstResult(w: Awaited<ReturnType<typeof mountSuspended>>, term: string) {
+    await w.find('input').setValue(term)
+    await w.find('form').trigger('submit')
+    // Item 3: com um único resultado, `search()` chama `select()` automaticamente (sem clique na
+    // lista). Espera a seleção refletir na store em vez de contar ticks: o `$api` tem interceptors
+    // (`onRequest` encaminha o cookie no SSR, `onResponseError` trata 401 — plugins/api.ts), então a
+    // resposta chega alguns microtasks depois do submit.
+    await vi.waitFor(() => expect(useQuotationGroupWizardStore().policyHolder).not.toBeNull())
+    await flushPromises()
+  }
+
+  it('CNPJ de Filial na busca: select() nasce com a Filial marcada (RN-102, "born marked")', async () => {
+    const store = useQuotationGroupWizardStore()
+    registerEndpoint('/api/persons', {
+      method: 'GET',
+      once: true,
+      handler: () => ({
+        items: [{
+          id: 'ph-born',
+          documentNumber: '12345678000190',
+          name: 'Construtora Aurora Engenharia LTDA',
+          socialName: null,
+          type: 'PJ',
+          isPrivateSector: null,
+          roles: ['PolicyHolder'],
+          mainAddress: null,
+          preSelectedBranchId: 'br-1',
+          preSelectedBranchDocumentNumber: '11222333000262',
+        }],
+        notice: null,
+      }),
+    })
+    registerEndpoint('/api/policy-holders/ph-born/branches', {
+      method: 'GET',
+      once: true,
+      handler: () => ({
+        branches: [{ id: 'br-1', documentNumber: '11222333000262', name: 'Filial SP', socialName: null }],
+      }),
+    })
+
+    const w = await mountSuspended(Step1PolicyHolder)
+    await searchAndSelectFirstResult(w, '11222333000262')
+
+    expect(store.policyHolder?.id).toBe('ph-born')
+    // `select()` já marca a Filial de forma síncrona a partir de `preSelectedBranchId` do item de
+    // busca — não depende do `loadBranches` (GET) em segundo plano ter terminado.
+    expect(store.selectedBranchId).toBe('br-1')
+  })
+
+  it('busca sem preSelectedBranchId: select() abre a lista de Filiais desmarcada (RN-102)', async () => {
+    const store = useQuotationGroupWizardStore()
+    registerEndpoint('/api/persons', {
+      method: 'GET',
+      once: true,
+      handler: () => ({
+        items: [{
+          id: 'ph-unmarked',
+          documentNumber: '98765432000110',
+          name: 'Outra Construtora LTDA',
+          socialName: null,
+          type: 'PJ',
+          isPrivateSector: null,
+          roles: ['PolicyHolder'],
+          mainAddress: null,
+        }],
+        notice: null,
+      }),
+    })
+    registerEndpoint('/api/policy-holders/ph-unmarked/branches', {
+      method: 'GET',
+      once: true,
+      handler: () => ({
+        branches: [{ id: 'br-9', documentNumber: '11222333000262', name: 'Filial SP', socialName: null }],
+      }),
+    })
+
+    const w = await mountSuspended(Step1PolicyHolder)
+    await searchAndSelectFirstResult(w, 'Outra Construtora')
+
+    expect(store.policyHolder?.id).toBe('ph-unmarked')
+    expect(store.selectedBranchId).toBeNull()
+    // Drena o `loadBranches` em segundo plano (GET) antes de sair — evita que a resposta chegue
+    // atrasada e vaze efeito colateral para o próximo teste (mesmo singleton do Pinia no arquivo).
+    await vi.waitFor(() => expect(store.branches.map(b => b.id)).toContain('br-9'))
+  })
+
+  it('GET de Filiais falha com uma Filial pré-selecionada: a marcação nunca fica invisível nem sem como desmarcar (revisão final, Finding 2)', async () => {
+    const store = useQuotationGroupWizardStore()
+    registerEndpoint('/api/persons', {
+      method: 'GET',
+      once: true,
+      handler: () => ({
+        items: [{
+          id: 'ph-fail',
+          documentNumber: '12345678000190',
+          name: 'Construtora Aurora Engenharia LTDA',
+          socialName: null,
+          type: 'PJ',
+          isPrivateSector: null,
+          roles: ['PolicyHolder'],
+          mainAddress: null,
+          preSelectedBranchId: 'br-1',
+          preSelectedBranchDocumentNumber: '11222333000262',
+        }],
+        notice: null,
+      }),
+    })
+    registerEndpoint('/api/policy-holders/ph-fail/branches', {
+      method: 'GET',
+      once: true,
+      handler: () => {
+        throw createError({ statusCode: 500, statusMessage: 'Erro interno simulado' })
+      },
+    })
+
+    const w = await mountSuspended(Step1PolicyHolder)
+    await searchAndSelectFirstResult(w, '11222333000262')
+
+    // `select()` já marcou br-1 de forma síncrona (RN-102, "born marked"); o GET que traria a lista
+    // completa falhou em seguida — a marcação não pode ter sido apagada nem ter ficado sem
+    // checkbox pra vê-la/desmarcá-la, e a falha não pode ter sido engolida silenciosamente.
+    await vi.waitFor(() => {
+      expect(w.findAllComponents({ name: 'VAlert' }).some(a => a.classes().includes('si-alert--error'))).toBe(true)
+    })
+    expect(store.selectedBranchId).toBe('br-1')
+
+    const checkboxes = w.findAllComponents({ name: 'VCheckbox' })
+    expect(checkboxes).toHaveLength(1)
+    expect(checkboxes[0]!.props('modelValue')).toBe(true)
+
+    // O corretor consegue desmarcar o que seria enviado ao servidor mesmo com a listagem quebrada.
+    await checkboxes[0]!.find('input').setValue(false)
+    expect(store.selectedBranchId).toBeNull()
+  })
+})
+
+describe('Etapa 1 — seleção do tomador (item 3: auto-select, lista e limpar)', () => {
+  beforeEach(() => {
+    useQuotationGroupWizardStore().reset()
+    forceDesktopViewport()
+  })
+
+  const TWO_RESULTS = {
+    items: [
+      { id: 'ph-a', documentNumber: '78016003000100', name: 'A Yoshii Engenharia e Construcoes LTDA', socialName: null, type: 'PJ', isPrivateSector: null, roles: ['PolicyHolder'], mainAddress: null },
+      { id: 'ph-b', documentNumber: '01294872000172', name: 'Pilao Engenharia e Construcoes LTDA', socialName: null, type: 'PJ', isPrivateSector: null, roles: ['PolicyHolder'], mainAddress: null },
+    ],
+    notice: null,
+  }
+
+  it('2+ resultados: NÃO auto-seleciona — a lista aparece para o corretor escolher', async () => {
+    const store = useQuotationGroupWizardStore()
+    registerEndpoint('/api/persons', { method: 'GET', once: true, handler: () => TWO_RESULTS })
+    registerEndpoint('/api/policy-holders/ph-b/branches', { method: 'GET', once: true, handler: () => ({ branches: [] }) })
+
+    const w = await mountSuspended(Step1PolicyHolder)
+    await w.find('input').setValue('constru')
+    await w.find('form').trigger('submit')
+    await vi.waitFor(() => expect(w.findAllComponents({ name: 'SiListItem' }).length).toBe(2))
+
+    // Com mais de um resultado a seleção é sempre do corretor — nada é escolhido sozinho.
+    expect(store.policyHolder).toBeNull()
+
+    await w.findAllComponents({ name: 'SiListItem' })[1]!.trigger('click')
+    await flushPromises()
+    expect(store.policyHolder?.id).toBe('ph-b')
+  })
+
+  it('limpar o campo de busca recolhe os resultados abaixo', async () => {
+    const store = useQuotationGroupWizardStore()
+    registerEndpoint('/api/persons', { method: 'GET', once: true, handler: () => TWO_RESULTS })
+
+    const w = await mountSuspended(Step1PolicyHolder)
+    await w.find('input').setValue('constru')
+    await w.find('form').trigger('submit')
+    await vi.waitFor(() => expect(w.findAllComponents({ name: 'SiListItem' }).length).toBe(2))
+
+    await w.find('input').setValue('')
+    await vi.waitFor(() => expect(w.findAllComponents({ name: 'SiListItem' }).length).toBe(0))
+    // Não havia tomador selecionado: limpar não deixa nada pendurado abaixo.
+    expect(store.policyHolder).toBeNull()
+  })
+})
+
+describe('Etapa 1 — addBranch() e seus três desfechos (Task 9/10, RN-102)', () => {
+  const HOLDER_FOR_MODAL = {
+    id: 'ph-modal',
+    name: 'Empresa Cedro LTDA',
+    documentNumber: '12345678000190',
+    mainAddress: null,
+  }
+
+  beforeEach(() => {
+    useQuotationGroupWizardStore().reset()
+    forceDesktopViewport()
+  })
+
+  /** Abre o modal "Adicionar filial", preenche o CNPJ e clica no botão de submissão do modal —
+   * distinto do botão homônimo que abre o modal (mesmo texto, elemento diferente: VDialog
+   * teleporta o conteúdo para fora da árvore DOM do wrapper, então localizamos por componente,
+   * não por seletor DOM, e desambiguamos comparando o elemento). */
+  async function openFillAndSubmitBranchModal(w: Awaited<ReturnType<typeof mountSuspended>>, cnpj: string) {
+    const openBtn = w.findAllComponents({ name: 'VBtn' }).find(b => b.text().includes('Adicionar filial'))
+    await openBtn!.trigger('click')
+    const cnpjField = w.findAllComponents({ name: 'VTextField' }).at(-1)
+    await cnpjField!.find('input').setValue(cnpj)
+    const submitBtn = w.findAllComponents({ name: 'VBtn' })
+      .find(b => b.text().includes('Adicionar filial') && b.element !== openBtn!.element)
+    await submitBtn!.trigger('click')
+    await flushPromises()
+  }
+
+  it('branchId presente: recarrega as filiais, marca a recém-criada e fecha o modal', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER_FOR_MODAL)
+    registerEndpoint(`/api/policy-holders/${HOLDER_FOR_MODAL.id}/branches`, {
+      method: 'POST',
+      once: true,
+      handler: () => ({ headquartersId: HOLDER_FOR_MODAL.id, branchId: 'br-new', notice: null }),
+    })
+    registerEndpoint(`/api/policy-holders/${HOLDER_FOR_MODAL.id}/branches`, {
+      method: 'GET',
+      once: true,
+      handler: () => ({
+        branches: [{ id: 'br-new', documentNumber: '11222333000262', name: 'Filial Nova', socialName: null }],
+      }),
+    })
+
+    const w = await mountSuspended(Step1PolicyHolder)
+    await openFillAndSubmitBranchModal(w, '11222333000262')
+
+    // Caminho feliz encadeia DOIS fetches (POST cria, depois GET recarrega) dentro do mesmo
+    // `addBranch()` — um único `flushPromises()` no helper pode não drenar as duas rodadas de
+    // microtasks; `vi.waitFor` espera até o encadeamento assentar, sem acoplar no nº de hops.
+    await vi.waitFor(() => expect(store.selectedBranchId).toBe('br-new'))
+    expect(store.branches.map(b => b.id)).toContain('br-new')
+  })
+
+  it('branchId nulo + notice: Birô não achou o CNPJ — mostra o aviso (info), modal continua aberto, matriz continua usável', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER_FOR_MODAL)
+    registerEndpoint(`/api/policy-holders/${HOLDER_FOR_MODAL.id}/branches`, {
+      method: 'POST',
+      once: true,
+      handler: () => ({ headquartersId: HOLDER_FOR_MODAL.id, branchId: null, notice: 'CNPJ não encontrado no Birô.' }),
+    })
+
+    const w = await mountSuspended(Step1PolicyHolder)
+    await openFillAndSubmitBranchModal(w, '99999999000199')
+
+    const infoAlert = await vi.waitFor(() => {
+      const alert = w.findAllComponents({ name: 'VAlert' }).find(a => a.classes().includes('si-alert--info'))
+      expect(alert).toBeTruthy()
+      return alert!
+    })
+    expect(infoAlert.text()).toContain('CNPJ não encontrado no Birô.')
+    // Não é erro: nenhuma marcação muda, a matriz segue sendo o estabelecimento, e o modal
+    // permanece aberto. Checar por um VTextField qualquer não provaria nada — a busca (SEMPRE
+    // visível, fora do modal) já é um; o que discrimina é o `modelValue` da própria SiDialog "Adicionar
+    // filial" (a segunda no template — a primeira é a de "Limites e taxas" — ambas estáticas, não
+    // v-for), que só é `true` enquanto o modal segue aberto.
+    expect(store.selectedBranchId).toBeNull()
+    expect(store.policyHolder?.id).toBe(HOLDER_FOR_MODAL.id)
+    const branchDialog = w.findAllComponents({ name: 'SiDialog' }).at(1)!
+    expect(branchDialog.props('modelValue')).toBe(true)
+  })
+
+  it('falha de rede (exceção): mostra o aviso de erro, distinto do notice do Birô', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER_FOR_MODAL)
+    registerEndpoint(`/api/policy-holders/${HOLDER_FOR_MODAL.id}/branches`, {
+      method: 'POST',
+      once: true,
+      // `createError` (em vez de `throw new Error`) produz um H3Error já "reconhecido": o handler
+      // ainda falha e o cliente ainda recebe 500 (o composable ainda lança, cai no catch de erro de
+      // rede), mas o h3 não marca `unhandled: true` nem loga "[h3] [unhandled]" no stderr — barulho
+      // que não tem nada a ver com o que este teste prova.
+      handler: () => {
+        throw createError({ statusCode: 500, statusMessage: 'Erro interno simulado' })
+      },
+    })
+
+    const w = await mountSuspended(Step1PolicyHolder)
+    await openFillAndSubmitBranchModal(w, '11222333000262')
+
+    const errorAlert = await vi.waitFor(() => {
+      const alert = w.findAllComponents({ name: 'VAlert' }).find(a => a.classes().includes('si-alert--error'))
+      expect(alert).toBeTruthy()
+      return alert!
+    })
+    expect(errorAlert.text()).toContain('Não foi possível registrar a filial.')
+    expect(store.selectedBranchId).toBeNull()
+  })
+
+  it('422 com detail (RN-101): mostra o motivo do backend em vez da mensagem genérica', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER_FOR_MODAL)
+    registerEndpoint(`/api/policy-holders/${HOLDER_FOR_MODAL.id}/branches`, {
+      method: 'POST',
+      once: true,
+      // Reproduz o contrato do BFF (`proxyBackend`): na via de erro ele NÃO lança — define o status
+      // original do backend via `setResponseStatus` e devolve o corpo (ProblemDetails) tal como veio,
+      // então `detail` chega intacto na raiz de `err.data` do cliente (sem o envelope `{data: ...}`
+      // que `createError`/`sendError` do h3 produziriam).
+      handler: (event) => {
+        setResponseStatus(event, 422)
+        return {
+          title: 'CNPJ inválido para Filial',
+          status: 422,
+          detail: 'O CNPJ informado pertence a uma raiz diferente da do tomador.',
+        }
+      },
+    })
+
+    const w = await mountSuspended(Step1PolicyHolder)
+    await openFillAndSubmitBranchModal(w, '99888777000199')
+
+    const errorAlert = await vi.waitFor(() => {
+      const alert = w.findAllComponents({ name: 'VAlert' }).find(a => a.classes().includes('si-alert--error'))
+      expect(alert).toBeTruthy()
+      return alert!
+    })
+    expect(errorAlert.text()).toContain('O CNPJ informado pertence a uma raiz diferente da do tomador.')
+    expect(store.selectedBranchId).toBeNull()
+  })
+
+  it('422 sem detail no corpo: cai na mensagem genérica (RN-101, corpo sem o campo esperado)', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.setPolicyHolder(HOLDER_FOR_MODAL)
+    registerEndpoint(`/api/policy-holders/${HOLDER_FOR_MODAL.id}/branches`, {
+      method: 'POST',
+      once: true,
+      handler: (event) => {
+        setResponseStatus(event, 422)
+        return { title: 'Unprocessable Entity', status: 422 }
+      },
+    })
+
+    const w = await mountSuspended(Step1PolicyHolder)
+    await openFillAndSubmitBranchModal(w, '99888777000199')
+
+    const errorAlert = await vi.waitFor(() => {
+      const alert = w.findAllComponents({ name: 'VAlert' }).find(a => a.classes().includes('si-alert--error'))
+      expect(alert).toBeTruthy()
+      return alert!
+    })
+    expect(errorAlert.text()).toContain('Não foi possível registrar a filial.')
+    expect(store.selectedBranchId).toBeNull()
+  })
+})
+
 describe('Etapa 3 — Dados de risco (exec-plan 0015, incremento 3)', () => {
   type WizardStore = ReturnType<typeof useQuotationGroupWizardStore>
 
@@ -321,6 +800,17 @@ describe('Etapa 4 — Cotações (exec-plan 0013, RN-056..059)', () => {
     store.setBrokerageId('brk-1')
     const w = await mountSuspended(Step4Quotations)
     expect(w.find('.si-qg-step4').exists()).toBe(true)
+  })
+
+  it('etapa 4 sem corretora ativa na sessão orienta a selecionar (RN-064)', async () => {
+    // Grupo salvo, mas sessão sem Corretora ativa (brokerageId nulo): o fan-out automático do onMounted
+    // não pode resolver as Habilitações — a guarda deve orientar, não cotar às cegas.
+    const store = useQuotationGroupWizardStore()
+    store.startOffer()
+    store.setQuotationGroupId('qg-1')
+    const w = await mountSuspended(Step4Quotations)
+    await flushPromises()
+    expect(w.text()).toContain('Selecione uma corretora ativa para cotar')
   })
 })
 
@@ -462,9 +952,69 @@ describe('Etapa 2 — Dados do segurado (exec-plan 0015, incremento 6)', () => {
   })
 })
 
+describe('Etapa 2 — seleção do segurado (auto-select, lista e limpar)', () => {
+  beforeEach(() => {
+    useQuotationGroupWizardStore().reset()
+    forceDesktopViewport()
+  })
+
+  const ONE_INSURED = {
+    items: [{ id: 'in-x', documentNumber: '33333333000133', name: 'Unica Servicos LTDA', socialName: null, type: 'PJ', isPrivateSector: null, roles: ['Insured'], mainAddress: null }],
+    notice: null,
+  }
+  const TWO_INSURED = {
+    items: [
+      { id: 'in-a', documentNumber: '11111111000111', name: 'Aurora Servicos LTDA', socialName: null, type: 'PJ', isPrivateSector: null, roles: ['Insured'], mainAddress: null },
+      { id: 'in-b', documentNumber: '22222222000122', name: 'Aurora Comercio LTDA', socialName: null, type: 'PJ', isPrivateSector: null, roles: ['Insured'], mainAddress: null },
+    ],
+    notice: null,
+  }
+
+  it('1 resultado: auto-seleciona o segurado sem clique', async () => {
+    const store = useQuotationGroupWizardStore()
+    registerEndpoint('/api/persons', { method: 'GET', once: true, handler: () => ONE_INSURED })
+
+    const w = await mountSuspended(Step2Insured)
+    await w.find('input').setValue('unica')
+    await w.find('form').trigger('submit')
+    await vi.waitFor(() => expect(store.insured).not.toBeNull())
+    expect(store.insured?.id).toBe('in-x')
+  })
+
+  it('2+ resultados: NÃO auto-seleciona — a lista aparece para o corretor escolher', async () => {
+    const store = useQuotationGroupWizardStore()
+    registerEndpoint('/api/persons', { method: 'GET', once: true, handler: () => TWO_INSURED })
+
+    const w = await mountSuspended(Step2Insured)
+    await w.find('input').setValue('aurora')
+    await w.find('form').trigger('submit')
+    await vi.waitFor(() => expect(w.findAllComponents({ name: 'SiListItem' }).length).toBe(2))
+    expect(store.insured).toBeNull()
+
+    await w.findAllComponents({ name: 'SiListItem' })[1]!.trigger('click')
+    await flushPromises()
+    expect(store.insured?.id).toBe('in-b')
+  })
+
+  it('limpar o campo de busca recolhe os resultados', async () => {
+    const store = useQuotationGroupWizardStore()
+    registerEndpoint('/api/persons', { method: 'GET', once: true, handler: () => TWO_INSURED })
+
+    const w = await mountSuspended(Step2Insured)
+    await w.find('input').setValue('aurora')
+    await w.find('form').trigger('submit')
+    await vi.waitFor(() => expect(w.findAllComponents({ name: 'SiListItem' }).length).toBe(2))
+
+    await w.find('input').setValue('')
+    await vi.waitFor(() => expect(w.findAllComponents({ name: 'SiListItem' }).length).toBe(0))
+    expect(store.insured).toBeNull()
+  })
+})
+
 describe('Salvar QuotationGroup + recálculo inteligente (exec-plan 0015)', () => {
   const payload = {
     policyHolderId: 'p',
+    branchId: null,
     insuredId: 'i',
     scope: { mode: 'all', insurerIds: [] },
     risk: { modalityId: 'm', insuredAmount: 1000, startDate: '2026-01-01', endDate: '2026-02-01', coverageMulta: false, coverageLabor: false },
@@ -486,6 +1036,7 @@ describe('Salvar QuotationGroup + recálculo inteligente (exec-plan 0015)', () =
       method: 'POST',
       body: {
         policyHolderId: 'p',
+        branchId: null,
         insuredId: 'i',
         modalityId: 'm',
         insuredAmount: 1000,
