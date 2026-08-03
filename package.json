@@ -14,7 +14,8 @@
     "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --project=ui",
+    "test:e2e:jornadas": "playwright test --project=jornadas",
     "types:gen": "node scripts/types-gen.mjs"
   },
   "dependencies": {
