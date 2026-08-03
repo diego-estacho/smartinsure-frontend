@@ -80,6 +80,17 @@ export const quotationStatusView: Record<QuotationStatus, { label: string, color
   analise: { label: 'Requer análise de subscrição', color: 'warning' },
 }
 
+/**
+ * CCG pendente (RequiresCcg) numa Cotação Pronta para emissão: rótulo próprio "Pendência de CCG" no
+ * lugar de "Emissão automática". As AÇÕES continuam as da emissão automática (seguível) — a validação
+ * real do CCG é no passo de emissão (regra validada pela PO); não bloqueamos o corretor aqui. O
+ * backend segue ADR-064 (CCG ortogonal, resultado permanece ReadyForEmission); é só apresentação.
+ */
+export const ccgPendingStatusView: { label: string, color: string } = {
+  label: 'Pendência de CCG',
+  color: 'info',
+}
+
 /** Esteira (EAnalysisTrack) → rótulo pt-BR (RN-058). */
 export const analysisTrackLabel: Record<string, string> = {
   Underwriting: 'Análise de subscrição',
@@ -87,6 +98,19 @@ export const analysisTrackLabel: Record<string, string> = {
   Pep: 'Análise de PEP',
   Reinsurance: 'Análise de resseguro',
   Registration: 'Análise de cadastro',
+}
+
+/**
+ * Classificação EXIBIDA da Cotação seguível (RN-058): Pronta para emissão = "Emissão automática";
+ * com CCG pendente vira "Pendência de CCG" (as ações seguem as da emissão automática — a validação do
+ * CCG é no passo de emissão, PO). Análise = a esteira específica.
+ */
+export function classificationView(
+  item: Pick<Quotation, 'status' | 'requiresCcg' | 'analysisTrack'>,
+): { label: string, color: string } {
+  if (item.status === 'auto') return item.requiresCcg ? ccgPendingStatusView : quotationStatusView.auto
+  const track = item.analysisTrack ? analysisTrackLabel[item.analysisTrack] : null
+  return { label: track ?? quotationStatusView.analise.label, color: 'warning' }
 }
 
 /** Números do contrato podem vir como `number | string` (openapi-typescript, Format:double). */

@@ -29,6 +29,52 @@ const showFooter = computed(() => !(wizard.isLastStep && wizard.issuanceState !=
 const { saveQuotationGroup } = useQuotationGroups()
 const stepError = ref<string | null>(null)
 const saving = ref(false)
+// RN-060: confirmação bloqueante do fork (grupo já cotado + dado-base alterado → nova cotação).
+const forkDialogOpen = ref(false)
+
+/** Estado do wizard → payload do grupo (dados-base). */
+function groupPayload() {
+  return {
+    policyHolderId: wizard.policyHolder?.id ?? null,
+    branchId: wizard.selectedBranchId,
+    insuredId: wizard.insured?.id ?? null,
+    scope: { mode: wizard.scope.mode, insurerIds: wizard.scope.insurerIds },
+    risk: {
+      modalityId: wizard.risk.modalityId,
+      insuredAmount: wizard.risk.insuredAmount,
+      startDate: wizard.risk.startDate,
+      endDate: wizard.risk.endDate,
+      coverageMulta: wizard.risk.coverageMulta,
+      coverageLabor: wizard.risk.coverageLabor,
+    },
+  }
+}
+
+/**
+ * Persiste o grupo ao sair do passo de risco. `fork=true` (RN-060): Grupo já cotado com dado-base
+ * alterado → cria um Grupo NOVO (POST, sem id) e zera o estado de cotação, preservando o anterior.
+ * `fork=false`: enquanto sem cotações, atualiza no lugar (POST cria / PUT atualiza). Retorna sucesso.
+ */
+async function persistGroup(fork: boolean): Promise<boolean> {
+  saving.value = true
+  try {
+    const result = await saveQuotationGroup(groupPayload(), fork ? null : wizard.quotationGroupId)
+    if (fork) {
+      wizard.resetQuotationsForFork(result.id)
+    }
+    else {
+      wizard.setQuotationGroupId(result.id)
+    }
+    return true
+  }
+  catch (err) {
+    stepError.value = extractApiErrorMessage(err, 'Não foi possível salvar a oferta. Tente novamente.')
+    return false
+  }
+  finally {
+    saving.value = false
+  }
+}
 
 async function onPrimary(): Promise<void> {
   // Validação de FORMA da etapa atual (a de negócio é do servidor — ADR-004).
@@ -40,37 +86,22 @@ async function onPrimary(): Promise<void> {
     wizard.termOpen = true
     return
   }
-  // Ao sair do passo de risco, salva o grupo de cotação (mock: POST cria / PUT atualiza).
+  // Ao sair do passo de risco, persiste o grupo.
   if (wizard.currentStep === 2) {
-    saving.value = true
-    try {
-      const result = await saveQuotationGroup(
-        {
-          policyHolderId: wizard.policyHolder?.id ?? null,
-          insuredId: wizard.insured?.id ?? null,
-          scope: { mode: wizard.scope.mode, insurerIds: wizard.scope.insurerIds },
-          risk: {
-            modalityId: wizard.risk.modalityId,
-            insuredAmount: wizard.risk.insuredAmount,
-            startDate: wizard.risk.startDate,
-            endDate: wizard.risk.endDate,
-            coverageMulta: wizard.risk.coverageMulta,
-            coverageLabor: wizard.risk.coverageLabor,
-          },
-        },
-        wizard.quotationGroupId,
-      )
-      wizard.setQuotationGroupId(result.id)
-    }
-    catch (err) {
-      stepError.value = extractApiErrorMessage(err, 'Não foi possível salvar a oferta. Tente novamente.')
+    // RN-060: Grupo já cotado + dado-base mudou → confirmação bloqueante antes de criar um Grupo novo.
+    if (wizard.signatureChanged) {
+      forkDialogOpen.value = true
       return
     }
-    finally {
-      saving.value = false
-    }
+    if (!await persistGroup(false)) return
   }
   wizard.goNext()
+}
+
+/** Confirmação do fork (RN-060): cria o Grupo novo e avança para as cotações. */
+async function confirmFork(): Promise<void> {
+  forkDialogOpen.value = false
+  if (await persistGroup(true)) wizard.goNext()
 }
 
 /** Ao trocar de etapa/fase, leva o usuário suavemente ao topo (perfumaria pedida pelo dono). */
@@ -146,7 +177,7 @@ watch([() => wizard.currentStep, () => wizard.phase], () => {
             <SiAlert
               v-if="wizard.signatureChanged && wizard.currentStep <= 2"
               type="warning"
-              text="Você alterou dados da oferta — as cotações serão recalculadas ao voltar para a etapa de cotações."
+              text="Você alterou dados da oferta. Como já existem cotações, ao continuar será criada uma nova cotação com os dados alterados — a atual é preservada."
               class="mb-4"
             />
 
@@ -204,6 +235,35 @@ watch([() => wizard.currentStep, () => wizard.phase], () => {
         </div>
       </div>
     </div>
+
+    <!-- RN-060: confirmação bloqueante do fork — cria uma nova cotação com os dados alterados. -->
+    <SiDialog v-model="forkDialogOpen">
+      <SiCard class="si-qg__fork-dialog">
+        <h2 class="text-h6 mb-3">
+          Iniciar uma nova cotação?
+        </h2>
+        <p class="mb-5">
+          Você alterou dados da oferta e já existem cotações. Ao continuar, será criada uma
+          <strong>nova cotação</strong> com os dados alterados. Deseja prosseguir?
+        </p>
+        <div class="si-qg__fork-actions">
+          <SiButton
+            variant="text"
+            size="small"
+            @click="forkDialogOpen = false"
+          >
+            Cancelar
+          </SiButton>
+          <SiButton
+            :loading="saving"
+            size="small"
+            @click="confirmFork"
+          >
+            Confirmar
+          </SiButton>
+        </div>
+      </SiCard>
+    </SiDialog>
   </div>
 </template>
 
@@ -317,5 +377,16 @@ watch([() => wizard.currentStep, () => wizard.phase], () => {
   .si-qg__title-main {
     font-size: var(--si-fs-h3);
   }
+}
+
+.si-qg__fork-dialog {
+  padding: var(--si-space-5);
+}
+
+.si-qg__fork-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--si-space-2);
 }
 </style>

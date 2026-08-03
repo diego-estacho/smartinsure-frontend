@@ -34,6 +34,7 @@ const stepperSteps = [
 ]
 
 const options = ['Cliente', 'Corretora', 'Seguradora']
+const autoSelected = ref<string | null>(null)
 
 // Formulário (onda 2) — composição dos campos Si + validação nativa.
 const formRef = ref()
@@ -151,6 +152,9 @@ const items = [
             </VCol>
             <VCol cols="12" md="6">
               <SiSelect v-model="selected" :items="options" label="Tipo" clearable />
+            </VCol>
+            <VCol cols="12" md="6">
+              <SiAutocomplete v-model="autoSelected" :items="options" label="Tipo (com busca)" clearable />
             </VCol>
             <VCol cols="12">
               <SiTextarea v-model="notes" label="Observações" auto-grow />

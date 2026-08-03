@@ -85,7 +85,7 @@ onMounted(async () => {
       Modalidade, importância segurada e vigência definem a cotação.
     </p>
 
-    <SiSelect
+    <SiAutocomplete
       v-model="modalityId"
       label="Modalidade"
       required
@@ -93,7 +93,7 @@ onMounted(async () => {
       item-title="name"
       item-value="id"
       :loading="loadingModalities"
-      placeholder="Selecione a modalidade"
+      placeholder="Busque ou selecione a modalidade"
     />
 
     <div class="si-qg-step3__row">
@@ -154,14 +154,14 @@ onMounted(async () => {
       </div>
     </fieldset>
 
-    <SiSelect
+    <SiAutocomplete
       v-model="wizard.risk.complementaryModalityId"
       label="Modalidade complementar (opcional)"
       :items="modalities"
       item-title="name"
       item-value="id"
       :loading="loadingModalities"
-      placeholder="Nenhuma"
+      placeholder="Busque ou selecione (nenhuma)"
       clearable
       class="si-qg-step3__complementary"
     />

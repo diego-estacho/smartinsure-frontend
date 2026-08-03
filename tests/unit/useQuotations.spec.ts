@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { components } from '../../app/types/gen/api'
-import { mapQuotations, useQuotations } from '../../app/composables/useQuotations'
+import { classificationView, mapQuotations, useQuotations } from '../../app/composables/useQuotations'
 
 type Item = components['schemas']['QuotationListItemResponse']
 type ListResponse = components['schemas']['ListQuotationsResponse']
@@ -126,5 +126,22 @@ describe('RN-056/057/059 — composable useQuotations (BFF)', () => {
     await selectQuotation('g-1', 'q-9')
 
     expect(fetchMock).toHaveBeenCalledWith('/api/quotation-groups/g-1/quotations/q-9/select', { method: 'POST' })
+  })
+})
+
+describe('classificationView (RN-058 + CCG pendente)', () => {
+  it('Pronta para emissão sem CCG → "Emissão automática" (success)', () => {
+    expect(classificationView({ status: 'auto', requiresCcg: false, analysisTrack: null }))
+      .toEqual({ label: 'Emissão automática', color: 'success' })
+  })
+
+  it('Pronta para emissão COM CCG pendente → "Pendência de CCG" (info), não "Emissão automática"', () => {
+    expect(classificationView({ status: 'auto', requiresCcg: true, analysisTrack: null }))
+      .toEqual({ label: 'Pendência de CCG', color: 'info' })
+  })
+
+  it('Análise não muda de rótulo por CCG — segue a esteira', () => {
+    expect(classificationView({ status: 'analise', requiresCcg: true, analysisTrack: 'Underwriting' }))
+      .toEqual({ label: 'Análise de subscrição', color: 'warning' })
   })
 })

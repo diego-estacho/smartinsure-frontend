@@ -1910,6 +1910,77 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/policy-holders/{id}/branches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ListPolicyHolderBranchesResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreatePolicyHolderBranchBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CreatePolicyHolderBranchResponse"];
+                    };
+                };
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CreatePolicyHolderBranchResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/profiles": {
         parameters: {
             query?: never;
@@ -3150,6 +3221,16 @@ export interface components {
             /** Format: date-time */
             endedAt: null | string;
         };
+        CreatePolicyHolderBranchBody: {
+            documentNumber: string;
+        };
+        CreatePolicyHolderBranchResponse: {
+            /** Format: uuid */
+            headquartersId: string;
+            /** Format: uuid */
+            branchId: null | string;
+            notice: null | string;
+        };
         CreatePolicyHolderRequest: {
             cnpj: string;
         };
@@ -3167,6 +3248,8 @@ export interface components {
         CreateQuotationGroupRequest: {
             /** Format: uuid */
             policyHolderId: string;
+            /** Format: uuid */
+            branchId: null | string;
             /** Format: uuid */
             insuredId: string;
             /** Format: uuid */
@@ -3371,6 +3454,7 @@ export interface components {
             isPrivateSector: null | boolean;
             addresses: components["schemas"]["PolicyHolderAddressResponse"][];
             appointments: components["schemas"]["PolicyHolderAppointmentResponse"][];
+            branches: components["schemas"]["PolicyHolderBranchResponse"][];
         };
         GetProfileResponse: {
             /** Format: uuid */
@@ -3558,6 +3642,9 @@ export interface components {
             /** Format: int64 */
             totalPages?: number | string;
         };
+        ListPolicyHolderBranchesResponse: {
+            branches: components["schemas"]["PolicyHolderBranchResponse"][];
+        };
         ListQuotationsResponse: {
             /** Format: uuid */
             quotationGroupId: string;
@@ -3726,6 +3813,8 @@ export interface components {
             roles: string[];
             mainAddress: null | components["schemas"]["PersonAddressResponse"];
             preSelectedBranchDocumentNumber?: null | string;
+            /** Format: uuid */
+            preSelectedBranchId?: null | string;
         };
         PolicyHolderAddressResponse: {
             /** Format: uuid */
@@ -3755,6 +3844,13 @@ export interface components {
             startedAt: string;
             /** Format: date-time */
             endedAt: null | string;
+        };
+        PolicyHolderBranchResponse: {
+            /** Format: uuid */
+            id: string;
+            documentNumber: string;
+            name: string;
+            socialName: null | string;
         };
         PolicyHolderListItemResponse: {
             /** Format: uuid */
@@ -4012,6 +4108,8 @@ export interface components {
         UpdateQuotationGroupBody: {
             /** Format: uuid */
             policyHolderId: string;
+            /** Format: uuid */
+            branchId: null | string;
             /** Format: uuid */
             insuredId: string;
             /** Format: uuid */

@@ -10,6 +10,7 @@
  * `defineStore`/`ref`/`computed` são auto-importados (Nuxt + @pinia/nuxt) — não importar à mão.
  */
 import type { Quotation, QuotationsResult } from '~/composables/useQuotations'
+import type { PolicyHolderBranch } from '~/composables/usePolicyHolderBranches'
 
 export type QuotationScopeMode = 'all' | 'specific'
 
@@ -19,12 +20,20 @@ export interface QuotationScope {
   insurerIds: string[]
 }
 
-/** Tomador selecionado na etapa 1 (subset consumido pela UI: card + resumo). */
+/**
+ * Tomador selecionado na etapa 1 (subset consumido pela UI: card + resumo). `branches` e
+ * `selectedBranchId` são opcionais na entrada (quem chama `setPolicyHolder` pode omiti-los — ex.:
+ * literais de teste já existentes) — a store normaliza para `[]`/`null` (matriz), RN-102.
+ */
 export interface SelectedPolicyHolder {
   id: string
   name: string
   documentNumber: string
   mainAddress: string | null
+  /** Filiais já registradas para este tomador — carregada ao selecioná-lo (Task 9/RN-102). */
+  branches?: PolicyHolderBranch[]
+  /** Filial marcada nesta oferta (no máx. uma); null/ausente = estabelecimento é a matriz. */
+  selectedBranchId?: string | null
 }
 
 /** Segurado selecionado na etapa 2 (papel `Insured` de uma Pessoa). */
@@ -108,8 +117,8 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
   const quotationsGenerated = ref(false)
   const quotationSignature = ref<string | null>(null)
   const quotationGroupId = ref<string | null>(null)
-  // Corretora dona das Habilitações (RN-023/OPEN-03) — origem do fan-out/seleção/minuta. Ainda não há
-  // seleção de corretora no wizard (pendência OPEN-03); populável quando essa decisão for tomada.
+  // Corretora dona das Habilitações (RN-023) — origem do fan-out/seleção/minuta. Preenchida com a
+  // Corretora ativa da sessão (RN-064) na entrada da oferta; o backend valida a Habilitação ao cotar.
   const brokerageId = ref<string | null>(null)
   // Minuta (valores das tags) e cláusulas selecionadas — sincronizados entre as etapas 4 e 5.
   const minuta = ref<Record<string, string>>({})
@@ -153,8 +162,42 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     if (index >= 0 && index <= currentStep.value) currentStep.value = index
   }
 
+  /**
+   * Substitui o tomador selecionado. Normaliza `branches`/`selectedBranchId` (default `[]`/`null`
+   * — matriz) quando o chamador não os informa; como este método sempre troca o objeto inteiro
+   * (nunca funde com o anterior), trocar de tomador já limpa a Filial marcada de saída (RN-102).
+   */
   function setPolicyHolder(value: SelectedPolicyHolder | null): void {
     policyHolder.value = value
+      ? { ...value, branches: value.branches ?? [], selectedBranchId: value.selectedBranchId ?? null }
+      : null
+  }
+
+  /** Filial marcada (no máx. uma) — RN-102; null = estabelecimento é a matriz. */
+  const selectedBranchId = computed(() => policyHolder.value?.selectedBranchId ?? null)
+
+  /** Filiais do tomador selecionado, para a lista de marcação da etapa 1. */
+  const branches = computed<PolicyHolderBranch[]>(() => policyHolder.value?.branches ?? [])
+
+  /**
+   * Marca a Filial `id` como estabelecimento da oferta — substitui qualquer marcação anterior
+   * (exclusividade: no máx. uma, RN-102). Não-op sem tomador selecionado.
+   */
+  function setBranch(id: string): void {
+    if (!policyHolder.value) return
+    policyHolder.value.selectedBranchId = id
+  }
+
+  /** Desmarca a Filial — o estabelecimento volta a ser a matriz (RN-102). */
+  function clearBranch(): void {
+    if (!policyHolder.value) return
+    policyHolder.value.selectedBranchId = null
+  }
+
+  /** Atualiza a lista de Filiais do tomador selecionado (após listar/registrar via BFF). */
+  function setBranches(list: PolicyHolderBranch[]): void {
+    if (!policyHolder.value) return
+    policyHolder.value.branches = list
   }
 
   function setInsured(value: SelectedInsured | null): void {
@@ -180,6 +223,23 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     quotationGroupId.value = id
   }
 
+  /**
+   * RN-060 — fork por mudança de dado-base num Grupo já cotado: os dados-base (tomador/segurado/risco/
+   * escopo) já refletem a mudança na store; aqui só se troca para o Grupo NOVO e zera-se o estado de
+   * cotação (cotações, assinatura, seleção e minuta) para a nova cotação começar limpa. O Grupo
+   * anterior e suas Cotações ficam preservados no backend (não são tocados).
+   */
+  function resetQuotationsForFork(newGroupId: string): void {
+    quotationGroupId.value = newGroupId
+    quotations.value = null
+    quotationsGenerated.value = false
+    quotationSignature.value = null
+    selectedQuotation.value = null
+    minuta.value = {}
+    clauses.value = {}
+    clauseTags.value = {}
+  }
+
   function setBrokerageId(id: string | null): void {
     brokerageId.value = id
   }
@@ -189,6 +249,8 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     const r = risk.value
     return JSON.stringify([
       policyHolder.value?.id ?? null,
+      // Filial marcada alimenta o motor de cotação (RN-051) — entra na assinatura junto do tomador.
+      policyHolder.value?.selectedBranchId ?? null,
       insured.value?.id ?? null,
       scope.value.mode,
       [...scope.value.insurerIds].sort(),
@@ -275,6 +337,8 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     currentStep,
     scope,
     policyHolder,
+    selectedBranchId,
+    branches,
     insured,
     risk,
     selectedQuotation,
@@ -299,10 +363,14 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     goBack,
     goToStep,
     setPolicyHolder,
+    setBranch,
+    clearBranch,
+    setBranches,
     setInsured,
     setSelectedQuotation,
     setQuotations,
     setQuotationGroupId,
+    resetQuotationsForFork,
     setBrokerageId,
     markQuotationsGenerated,
     validateCurrentStep,

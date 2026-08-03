@@ -53,7 +53,7 @@ const sizeStyle = computed(() => ({ width: `${props.size}px`, height: `${props.s
   align-items: center;
   justify-content: center;
   border-radius: var(--si-radius-sm);
-  background: #fff;
+  background: rgb(var(--v-theme-surface));
   border: 1px solid var(--si-cinza-claro);
   padding: 3px;
   overflow: hidden;
