@@ -316,15 +316,6 @@ onMounted(() => {
                   :logo-url="item.logoUrl"
                 />
                 <span class="si-cell-strong">{{ item.name }}</span>
-                <!-- Selo "CCG" ao lado do nome só quando a classificação NÃO já diz CCG (ou seja, em
-                Análise com CCG). Na Pronta para emissão o rótulo já vira "Pendência de CCG". -->
-                <SiChip
-                  v-if="item.requiresCcg && item.status !== 'auto'"
-                  size="x-small"
-                  color="info"
-                >
-                  CCG
-                </SiChip>
               </div>
             </template>
             <template #[`item.premio`]="{ item }">

@@ -80,4 +80,33 @@ describe('RN-064 escopo ativo — composable useWorkspaces', () => {
     expect(workspaces.value).toHaveLength(0)
     expect(activeWorkspace.value).toBeNull()
   })
+
+  it('auto-ativa quando há exatamente UMA corretora e nenhuma ativa (item C)', async () => {
+    const only = { id: '01980000-0000-7000-8000-000000000021', documentNumber: '11222333000181', name: 'Corretora Única', profileName: 'BrokerageAdministrator', isActive: false }
+    const single = { ...contextPayload, activeBrokerageId: null, brokerages: [only] }
+    // 1) GET /api/me (sem ativa) → 2) POST active-scope (auto) → 3) GET /api/me (ativa reemitida)
+    fetchMock.mockResolvedValueOnce(single)
+    fetchMock.mockResolvedValueOnce({})
+    fetchMock.mockResolvedValueOnce({ ...single, activeBrokerageId: only.id })
+
+    const { loadContext, activeWorkspace } = useWorkspaces(api)
+    await loadContext(true)
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/me/active-scope', {
+      method: 'POST',
+      body: { brokerageId: only.id, policyHolderId: null },
+    })
+    expect(activeWorkspace.value?.id).toBe(only.id)
+  })
+
+  it('NÃO auto-ativa quando há 2+ corretoras e nenhuma ativa — a escolha é do usuário (gate)', async () => {
+    fetchMock.mockResolvedValueOnce({ ...contextPayload, activeBrokerageId: null })
+
+    const { loadContext, activeWorkspace } = useWorkspaces(api)
+    await loadContext(true)
+
+    // Só o GET do contexto; nenhum POST de active-scope (não escolhe sozinho quando há mais de uma).
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(activeWorkspace.value).toBeNull()
+  })
 })
