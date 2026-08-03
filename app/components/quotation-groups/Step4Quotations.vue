@@ -11,7 +11,7 @@
  * seguradora retorna cotação seguível: o corretor precisa ver por que cada uma recusou, não um beco sem saída.
  */
 import type { Quotation } from '~/composables/useQuotations'
-import { analysisTrackLabel, quotationStatusView } from '~/composables/useQuotations'
+import { classificationView } from '~/composables/useQuotations'
 import { formatCurrencyBRL } from '~/lib/currency'
 
 const wizard = useQuotationGroupWizardStore()
@@ -81,13 +81,6 @@ const headers = [
   { title: 'Classificação', key: 'status' },
   { title: '', key: 'actions', sortable: false, align: 'end' },
 ] as const
-
-// Classificação exibida (RN-058): Pronta para emissão = sucesso; Análise = aviso com a esteira específica.
-function classification(item: Quotation): { label: string, color: string } {
-  if (item.status === 'auto') return quotationStatusView.auto
-  const track = item.analysisTrack ? analysisTrackLabel[item.analysisTrack] : null
-  return { label: track ?? quotationStatusView.analise.label, color: 'warning' }
-}
 
 // Motivo legível: tira o invólucro técnico da falha de integração e deixa a mensagem da seguradora.
 function cleanReason(reason: string): string {
@@ -323,8 +316,10 @@ onMounted(() => {
                   :logo-url="item.logoUrl"
                 />
                 <span class="si-cell-strong">{{ item.name }}</span>
+                <!-- Selo "CCG" ao lado do nome só quando a classificação NÃO já diz CCG (ou seja, em
+                Análise com CCG). Na Pronta para emissão o rótulo já vira "Pendência de CCG". -->
                 <SiChip
-                  v-if="item.requiresCcg"
+                  v-if="item.requiresCcg && item.status !== 'auto'"
                   size="x-small"
                   color="info"
                 >
@@ -343,10 +338,10 @@ onMounted(() => {
             </template>
             <template #[`item.status`]="{ item }">
               <SiChip
-                :color="classification(item).color"
+                :color="classificationView(item).color"
                 size="small"
               >
-                {{ classification(item).label }}
+                {{ classificationView(item).label }}
               </SiChip>
             </template>
             <template #[`item.actions`]="{ item }">
@@ -383,10 +378,10 @@ onMounted(() => {
                   <span class="si-qg-step4__card-name">{{ item.name }}</span>
                 </div>
                 <SiChip
-                  :color="classification(item).color"
+                  :color="classificationView(item).color"
                   size="small"
                 >
-                  {{ classification(item).label }}
+                  {{ classificationView(item).label }}
                 </SiChip>
               </div>
               <div class="si-qg-step4__card-facts">
