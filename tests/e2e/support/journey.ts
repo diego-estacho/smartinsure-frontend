@@ -181,15 +181,48 @@ export function userStatus(email: string): string | null {
   return sqlScalar(`SELECT Status FROM Users WHERE Email = '${sqlLiteral(email)}'`)
 }
 
+/**
+ * Preenche o campo e confirma que o valor sobreviveu. Até a hidratação terminar (SSR + Suspense),
+ * o Vue reidrata o input e descarta o que o `fill` escreveu — o formulário seguia vazio.
+ */
+async function fillHydrated(page: Page, selector: string, value: string): Promise<void> {
+  const field = page.locator(selector)
+
+  await field.fill(value)
+  await expect(field).toHaveValue(value, { timeout: 2_000 })
+}
+
+/**
+ * Preenche e submete reintentando, mesmo motivo do `openDialog`: antes da hidratação o valor é
+ * descartado e o clique cai sem handler. Cada tentativa refaz o preenchimento do zero.
+ */
+async function submitFormUntilLeaves(
+  page: Page,
+  fields: readonly (readonly [string, string])[],
+  buttonName: string,
+  stayedPattern: RegExp,
+): Promise<void> {
+  await expect(async () => {
+    for (const [selector, value] of fields) {
+      await fillHydrated(page, selector, value)
+    }
+
+    await page.getByRole('button', { name: buttonName }).click()
+    await expect(page).not.toHaveURL(stayedPattern, { timeout: 8_000 })
+  }).toPass({ timeout: 45_000 })
+}
+
 /** Login pela tela, com as credenciais reais validadas no provedor de identidade (RN-005). */
 export async function loginViaUi(page: Page, email: string, password: string): Promise<void> {
   await page.goto('/login')
-  await page.locator('#login-email').fill(email)
-  await page.locator('#login-password').fill(password)
-  await page.getByRole('button', { name: 'Entrar' }).click()
 
   // Sessão estabelecida: o servidor emitiu o acesso e o app saiu da tela de login.
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 })
+  await submitFormUntilLeaves(
+    page,
+    [['#login-email', email], ['#login-password', password]],
+    'Entrar',
+    /\/login/,
+  )
 }
 
 /** Primeiro acesso pela tela: o convidado define a própria senha e passa de Pendente a Ativo. */
@@ -199,12 +232,14 @@ export async function completeFirstAccess(
   password: string,
 ): Promise<void> {
   await page.goto(`/invite?token=${encodeURIComponent(plainToken)}`)
-  await page.locator('#invite-password').fill(password)
-  await page.locator('#invite-password-confirmation').fill(password)
-  await page.getByRole('button', { name: 'Concluir primeiro acesso' }).click()
 
   // RN-065: concluída a definição, o Usuário entra direto — a tela de convite fica para trás.
-  await expect(page).not.toHaveURL(/\/invite/, { timeout: 30_000 })
+  await submitFormUntilLeaves(
+    page,
+    [['#invite-password', password], ['#invite-password-confirmation', password]],
+    'Concluir primeiro acesso',
+    /\/invite/,
+  )
 }
 
 /** Abre o dialog reclicando quando a hidratação ainda não anexou o handler (SSR + Suspense). */

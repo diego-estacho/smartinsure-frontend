@@ -56,6 +56,12 @@ const policyHolderProfileName = `E2E Perfil Tomador ${suffix}`
 
 let target: ReturnType<typeof findBrokerageWithActiveAppointment>
 
+/**
+ * Token que o Corretor Administrador usou no primeiro acesso. Guardado porque o uso único é
+ * verificado reabrindo ESTE link: depois de consumido não há convite pendente para forçar de novo.
+ */
+let consumedBrokerageInviteToken: string
+
 test.describe.configure({ mode: 'serial' })
 
 test.describe('Jornada de Perfis e Usuários (RN-062..RN-074)', () => {
@@ -92,9 +98,9 @@ test.describe('Jornada de Perfis e Usuários (RN-062..RN-074)', () => {
   })
 
   test('RN-065: Corretor Administrador define a senha no primeiro acesso e entra', async ({ page }) => {
-    const token = forceInvitationToken(brokerageAdministrator.email)
+    consumedBrokerageInviteToken = forceInvitationToken(brokerageAdministrator.email)
 
-    await completeFirstAccess(page, token, brokerageAdministrator.password)
+    await completeFirstAccess(page, consumedBrokerageInviteToken, brokerageAdministrator.password)
 
     expect(userStatus(brokerageAdministrator.email)).toBe('Active')
 
@@ -105,9 +111,7 @@ test.describe('Jornada de Perfis e Usuários (RN-062..RN-074)', () => {
   })
 
   test('RN-065: convite é de uso único — reabrir o link recusa', async ({ page }) => {
-    const consumedToken = forceInvitationToken(brokerageAdministrator.email)
-
-    await page.goto(`/invite?token=${encodeURIComponent(consumedToken)}`)
+    await page.goto(`/invite?token=${encodeURIComponent(consumedBrokerageInviteToken)}`)
     await page.locator('#invite-password').fill('OutraSenha@2026')
     await page.locator('#invite-password-confirmation').fill('OutraSenha@2026')
     await page.getByRole('button', { name: 'Concluir primeiro acesso' }).click()
@@ -136,8 +140,9 @@ test.describe('Jornada de Perfis e Usuários (RN-062..RN-074)', () => {
     await page.waitForLoadState('networkidle')
 
     const row = page.getByRole('row', { name: new RegExp(brokerageProfileName) })
-    await expect(row.getByText('Corretora')).toBeVisible()
-    await expect(row.getByText('Customizado')).toBeVisible()
+    // `exact` porque o nome do Perfil também contém "Corretora" — sem isso casa nome e chip.
+    await expect(row.getByText('Corretora', { exact: true })).toBeVisible()
+    await expect(row.getByText('Customizado', { exact: true })).toBeVisible()
   })
 
   test('RN-069/RN-072: Corretor Administrador cria Usuário da Corretora com o Perfil novo', async ({ page }) => {
@@ -175,7 +180,8 @@ test.describe('Jornada de Perfis e Usuários (RN-062..RN-074)', () => {
     await expect(page.getByRole('option', { name: 'Corretor Administrador', exact: true }))
       .toHaveCount(0)
     // RN-068: o Tomador Administrador está entre os oferecidos.
-    await expect(page.getByRole('option', { name: 'Tomador Administrador' })).toBeVisible()
+    await expect(page.getByRole('option', { name: 'Tomador Administrador', exact: true }))
+      .toBeVisible()
   })
 
   test('RN-068: Corretor Administrador convida Tomador Administrador do Tomador nomeado', async ({ page }) => {
@@ -230,8 +236,9 @@ test.describe('Jornada de Perfis e Usuários (RN-062..RN-074)', () => {
     await page.waitForLoadState('networkidle')
 
     const row = page.getByRole('row', { name: new RegExp(policyHolderProfileName) })
-    await expect(row.getByText('Tomador')).toBeVisible()
-    await expect(row.getByText('Customizado')).toBeVisible()
+    // `exact` porque o nome do Perfil também contém "Tomador" — sem isso casa nome e chip.
+    await expect(row.getByText('Tomador', { exact: true })).toBeVisible()
+    await expect(row.getByText('Customizado', { exact: true })).toBeVisible()
   })
 
   test('RN-070/RN-072: Tomador Administrador cria Usuário do Tomador ativo', async ({ page }) => {
@@ -265,7 +272,9 @@ test.describe('Jornada de Perfis e Usuários (RN-062..RN-074)', () => {
     await page.locator('.v-dialog').getByLabel('Perfil').click({ force: true })
 
     await expect(page.getByRole('option', { name: 'Tomador Administrador' })).toHaveCount(0)
-    // Perfil fixo do escopo continua oferecido — a lista nunca fica vazia por si só.
-    await expect(page.getByRole('option', { name: 'Tomador' })).toBeVisible()
+    // Perfil fixo do escopo continua oferecido — a lista nunca fica vazia por si só. Aparece pelo
+    // nome técnico: o rótulo em português do Perfil fixo Tomador depende da OPEN-17, e o app não
+    // inventa rótulo para Perfil fora do mapa (`app/lib/status/profiles.ts`).
+    await expect(page.getByRole('option', { name: 'PolicyHolderUser', exact: true })).toBeVisible()
   })
 })

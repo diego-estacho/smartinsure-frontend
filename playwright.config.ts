@@ -17,7 +17,12 @@ export default defineConfig({
    */
   projects: [
     { name: 'ui', testIgnore: JOURNEY_SPECS },
-    { name: 'jornadas', testMatch: JOURNEY_SPECS },
+    /*
+     * Timeout maior que o padrão de 30s: cada passo fala com a API e o Casdoor reais, e o dev
+     * server compila as rotas sob demanda na primeira visita. Com 30s, a jornada reprovava por
+     * orçamento de tempo, não por defeito.
+     */
+    { name: 'jornadas', testMatch: JOURNEY_SPECS, timeout: 120_000 },
   ],
   webServer: {
     command: 'pnpm dev',
