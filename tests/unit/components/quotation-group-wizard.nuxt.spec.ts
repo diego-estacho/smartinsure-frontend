@@ -367,12 +367,11 @@ describe('Etapa 1 — select() nasce marcada/desmarcada conforme preSelectedBran
   async function searchAndSelectFirstResult(w: Awaited<ReturnType<typeof mountSuspended>>, term: string) {
     await w.find('input').setValue(term)
     await w.find('form').trigger('submit')
-    // Espera a lista aparecer em vez de contar ticks: o `$api` tem interceptors (`onRequest`
-    // encaminha o cookie no SSR, `onResponseError` trata 401 — plugins/api.ts), então a resposta
-    // chega alguns microtasks depois do submit. Um `flushPromises()` fixo já bastou um dia e
-    // parou de bastar quando o `onRequest` entrou; condição não quebra de novo nesse caso.
-    await vi.waitFor(() => expect(w.findComponent({ name: 'SiListItem' }).exists()).toBe(true))
-    await w.findComponent({ name: 'SiListItem' }).trigger('click')
+    // Item 3: com um único resultado, `search()` chama `select()` automaticamente (sem clique na
+    // lista). Espera a seleção refletir na store em vez de contar ticks: o `$api` tem interceptors
+    // (`onRequest` encaminha o cookie no SSR, `onResponseError` trata 401 — plugins/api.ts), então a
+    // resposta chega alguns microtasks depois do submit.
+    await vi.waitFor(() => expect(useQuotationGroupWizardStore().policyHolder).not.toBeNull())
     await flushPromises()
   }
 
@@ -498,6 +497,54 @@ describe('Etapa 1 — select() nasce marcada/desmarcada conforme preSelectedBran
     // O corretor consegue desmarcar o que seria enviado ao servidor mesmo com a listagem quebrada.
     await checkboxes[0]!.find('input').setValue(false)
     expect(store.selectedBranchId).toBeNull()
+  })
+})
+
+describe('Etapa 1 — seleção do tomador (item 3: auto-select, lista e limpar)', () => {
+  beforeEach(() => {
+    useQuotationGroupWizardStore().reset()
+    forceDesktopViewport()
+  })
+
+  const TWO_RESULTS = {
+    items: [
+      { id: 'ph-a', documentNumber: '78016003000100', name: 'A Yoshii Engenharia e Construcoes LTDA', socialName: null, type: 'PJ', isPrivateSector: null, roles: ['PolicyHolder'], mainAddress: null },
+      { id: 'ph-b', documentNumber: '01294872000172', name: 'Pilao Engenharia e Construcoes LTDA', socialName: null, type: 'PJ', isPrivateSector: null, roles: ['PolicyHolder'], mainAddress: null },
+    ],
+    notice: null,
+  }
+
+  it('2+ resultados: NÃO auto-seleciona — a lista aparece para o corretor escolher', async () => {
+    const store = useQuotationGroupWizardStore()
+    registerEndpoint('/api/persons', { method: 'GET', once: true, handler: () => TWO_RESULTS })
+    registerEndpoint('/api/policy-holders/ph-b/branches', { method: 'GET', once: true, handler: () => ({ branches: [] }) })
+
+    const w = await mountSuspended(Step1PolicyHolder)
+    await w.find('input').setValue('constru')
+    await w.find('form').trigger('submit')
+    await vi.waitFor(() => expect(w.findAllComponents({ name: 'SiListItem' }).length).toBe(2))
+
+    // Com mais de um resultado a seleção é sempre do corretor — nada é escolhido sozinho.
+    expect(store.policyHolder).toBeNull()
+
+    await w.findAllComponents({ name: 'SiListItem' })[1]!.trigger('click')
+    await flushPromises()
+    expect(store.policyHolder?.id).toBe('ph-b')
+  })
+
+  it('limpar o campo de busca recolhe os resultados abaixo', async () => {
+    const store = useQuotationGroupWizardStore()
+    registerEndpoint('/api/persons', { method: 'GET', once: true, handler: () => TWO_RESULTS })
+
+    const w = await mountSuspended(Step1PolicyHolder)
+    await w.find('input').setValue('constru')
+    await w.find('form').trigger('submit')
+    await vi.waitFor(() => expect(w.findAllComponents({ name: 'SiListItem' }).length).toBe(2))
+
+    await w.find('input').setValue('')
+    await vi.waitFor(() => expect(w.findAllComponents({ name: 'SiListItem' }).length).toBe(0))
+    // Não havia tomador selecionado: limpar não deixa nada pendurado abaixo.
+    expect(store.policyHolder).toBeNull()
   })
 })
 
@@ -753,6 +800,17 @@ describe('Etapa 4 — Cotações (exec-plan 0013, RN-056..059)', () => {
     const w = await mountSuspended(Step4Quotations)
     expect(w.find('.si-qg-step4').exists()).toBe(true)
   })
+
+  it('etapa 4 sem corretora ativa na sessão orienta a selecionar (RN-064)', async () => {
+    // Grupo salvo, mas sessão sem Corretora ativa (brokerageId nulo): o fan-out automático do onMounted
+    // não pode resolver as Habilitações — a guarda deve orientar, não cotar às cegas.
+    const store = useQuotationGroupWizardStore()
+    store.startOffer()
+    store.setQuotationGroupId('qg-1')
+    const w = await mountSuspended(Step4Quotations)
+    await flushPromises()
+    expect(w.text()).toContain('Selecione uma corretora ativa para cotar')
+  })
 })
 
 describe('Etapa 4b — Minuta e cláusulas (RN-062/RN-063)', () => {
@@ -890,6 +948,65 @@ describe('Etapa 2 — Dados do segurado (exec-plan 0015, incremento 6)', () => {
     store.setInsured(insured)
     const w = await mountSuspended(SummarySidebar)
     expect(w.text()).toContain('Segurado Aurora LTDA')
+  })
+})
+
+describe('Etapa 2 — seleção do segurado (auto-select, lista e limpar)', () => {
+  beforeEach(() => {
+    useQuotationGroupWizardStore().reset()
+    forceDesktopViewport()
+  })
+
+  const ONE_INSURED = {
+    items: [{ id: 'in-x', documentNumber: '33333333000133', name: 'Unica Servicos LTDA', socialName: null, type: 'PJ', isPrivateSector: null, roles: ['Insured'], mainAddress: null }],
+    notice: null,
+  }
+  const TWO_INSURED = {
+    items: [
+      { id: 'in-a', documentNumber: '11111111000111', name: 'Aurora Servicos LTDA', socialName: null, type: 'PJ', isPrivateSector: null, roles: ['Insured'], mainAddress: null },
+      { id: 'in-b', documentNumber: '22222222000122', name: 'Aurora Comercio LTDA', socialName: null, type: 'PJ', isPrivateSector: null, roles: ['Insured'], mainAddress: null },
+    ],
+    notice: null,
+  }
+
+  it('1 resultado: auto-seleciona o segurado sem clique', async () => {
+    const store = useQuotationGroupWizardStore()
+    registerEndpoint('/api/persons', { method: 'GET', once: true, handler: () => ONE_INSURED })
+
+    const w = await mountSuspended(Step2Insured)
+    await w.find('input').setValue('unica')
+    await w.find('form').trigger('submit')
+    await vi.waitFor(() => expect(store.insured).not.toBeNull())
+    expect(store.insured?.id).toBe('in-x')
+  })
+
+  it('2+ resultados: NÃO auto-seleciona — a lista aparece para o corretor escolher', async () => {
+    const store = useQuotationGroupWizardStore()
+    registerEndpoint('/api/persons', { method: 'GET', once: true, handler: () => TWO_INSURED })
+
+    const w = await mountSuspended(Step2Insured)
+    await w.find('input').setValue('aurora')
+    await w.find('form').trigger('submit')
+    await vi.waitFor(() => expect(w.findAllComponents({ name: 'SiListItem' }).length).toBe(2))
+    expect(store.insured).toBeNull()
+
+    await w.findAllComponents({ name: 'SiListItem' })[1]!.trigger('click')
+    await flushPromises()
+    expect(store.insured?.id).toBe('in-b')
+  })
+
+  it('limpar o campo de busca recolhe os resultados', async () => {
+    const store = useQuotationGroupWizardStore()
+    registerEndpoint('/api/persons', { method: 'GET', once: true, handler: () => TWO_INSURED })
+
+    const w = await mountSuspended(Step2Insured)
+    await w.find('input').setValue('aurora')
+    await w.find('form').trigger('submit')
+    await vi.waitFor(() => expect(w.findAllComponents({ name: 'SiListItem' }).length).toBe(2))
+
+    await w.find('input').setValue('')
+    await vi.waitFor(() => expect(w.findAllComponents({ name: 'SiListItem' }).length).toBe(0))
+    expect(store.insured).toBeNull()
   })
 })
 

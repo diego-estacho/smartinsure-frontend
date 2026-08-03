@@ -93,7 +93,12 @@ async function onPrimary(): Promise<void> {
       forkDialogOpen.value = true
       return
     }
-    if (!await persistGroup(false)) return
+    // Grupo já cotado e nada mudou (ex.: voltar do passo 4 e avançar de novo): NÃO re-persiste — o
+    // servidor recusa atualizar um grupo já cotado (RN-060) e não há o que atualizar. Só avança para
+    // as cotações que já existem. Persiste apenas na 1ª ida ao passo 4 (grupo ainda sem cotações).
+    if (!wizard.quotationsGenerated && !await persistGroup(false)) {
+      return
+    }
   }
   wizard.goNext()
 }
@@ -142,9 +147,6 @@ watch([() => wizard.currentStep, () => wizard.phase], () => {
             <h1 class="si-qg__title-main">
               Nova oferta
             </h1>
-            <p class="si-qg__title-sub">
-              Seguro Garantia · cotação e emissão
-            </p>
           </header>
 
           <QuotationGroupsEntryStep v-if="wizard.phase === 'entry'" />
@@ -244,7 +246,7 @@ watch([() => wizard.currentStep, () => wizard.phase], () => {
         </h2>
         <p class="mb-5">
           Você alterou dados da oferta e já existem cotações. Ao continuar, será criada uma
-          <strong>nova cotação</strong> com os dados alterados — a cotação atual é preservada.
+          <strong>nova cotação</strong> com os dados alterados. Deseja prosseguir?
         </p>
         <div class="si-qg__fork-actions">
           <SiButton
@@ -259,11 +261,12 @@ watch([() => wizard.currentStep, () => wizard.phase], () => {
             size="small"
             @click="confirmFork"
           >
-            Iniciar nova cotação
+            Confirmar
           </SiButton>
         </div>
       </SiCard>
     </SiDialog>
+
   </div>
 </template>
 
@@ -321,12 +324,6 @@ watch([() => wizard.currentStep, () => wizard.phase], () => {
   margin: 0;
   font-size: var(--si-fs-h2);
   font-weight: var(--si-font-weight-bold);
-}
-
-.si-qg__title-sub {
-  margin: var(--si-space-1) 0 0;
-  color: rgba(var(--v-theme-on-surface), 0.6);
-  font-size: var(--si-fs-small);
 }
 
 .si-qg__stepper {

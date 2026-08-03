@@ -11,7 +11,7 @@
  * seguradora retorna cotação seguível: o corretor precisa ver por que cada uma recusou, não um beco sem saída.
  */
 import type { Quotation } from '~/composables/useQuotations'
-import { analysisTrackLabel, quotationStatusView } from '~/composables/useQuotations'
+import { classificationView } from '~/composables/useQuotations'
 import { formatCurrencyBRL } from '~/lib/currency'
 
 const wizard = useQuotationGroupWizardStore()
@@ -82,13 +82,6 @@ const headers = [
   { title: '', key: 'actions', sortable: false, align: 'end' },
 ] as const
 
-// Classificação exibida (RN-058): Pronta para emissão = sucesso; Análise = aviso com a esteira específica.
-function classification(item: Quotation): { label: string, color: string } {
-  if (item.status === 'auto') return quotationStatusView.auto
-  const track = item.analysisTrack ? analysisTrackLabel[item.analysisTrack] : null
-  return { label: track ?? quotationStatusView.analise.label, color: 'warning' }
-}
-
 // Motivo legível: tira o invólucro técnico da falha de integração e deixa a mensagem da seguradora.
 function cleanReason(reason: string): string {
   const cleaned = reason
@@ -137,8 +130,15 @@ async function doSelect(item: Quotation): Promise<void> {
 
 async function generate(): Promise<void> {
   const groupId = wizard.quotationGroupId
+  const brokerageId = wizard.brokerageId
   if (!groupId) {
     generateError.value = 'Não foi possível identificar o grupo de cotação para cotar.'
+    return
+  }
+  // UX: sem Corretora ativa na sessão (RN-064) o gate orienta a escolher antes de cotar. A cotação em si
+  // não envia a Corretora — o backend a resolve pelo claim do Escopo ativo (RN-103); isto é só pré-check.
+  if (!brokerageId) {
+    generateError.value = 'Selecione uma corretora ativa para cotar.'
     return
   }
 
@@ -317,13 +317,6 @@ onMounted(() => {
                   :logo-url="item.logoUrl"
                 />
                 <span class="si-cell-strong">{{ item.name }}</span>
-                <SiChip
-                  v-if="item.requiresCcg"
-                  size="x-small"
-                  color="info"
-                >
-                  CCG
-                </SiChip>
               </div>
             </template>
             <template #[`item.premio`]="{ item }">
@@ -337,10 +330,10 @@ onMounted(() => {
             </template>
             <template #[`item.status`]="{ item }">
               <SiChip
-                :color="classification(item).color"
+                :color="classificationView(item).color"
                 size="small"
               >
-                {{ classification(item).label }}
+                {{ classificationView(item).label }}
               </SiChip>
             </template>
             <template #[`item.actions`]="{ item }">
@@ -377,10 +370,10 @@ onMounted(() => {
                   <span class="si-qg-step4__card-name">{{ item.name }}</span>
                 </div>
                 <SiChip
-                  :color="classification(item).color"
+                  :color="classificationView(item).color"
                   size="small"
                 >
-                  {{ classification(item).label }}
+                  {{ classificationView(item).label }}
                 </SiChip>
               </div>
               <div class="si-qg-step4__card-facts">
@@ -875,8 +868,8 @@ onMounted(() => {
 .si-qg-step4__unavail-badge {
   font-size: var(--si-fs-caption);
   font-weight: var(--si-font-weight-semibold);
-  color: #991b1b;
-  background: #fee2e2;
+  color: rgb(var(--v-theme-error));
+  background: rgba(var(--v-theme-error), 0.1);
   padding: 2px 8px;
   border-radius: 999px;
 }

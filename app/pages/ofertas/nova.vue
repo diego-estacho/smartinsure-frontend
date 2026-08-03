@@ -22,10 +22,23 @@ const router = useRouter()
 const { getQuotationGroup } = useQuotationGroups()
 const { restore: restoreQuotations } = useQuotationPolling()
 
-// Com o id na rota, a página começa em modo de reidratação — evita piscar a tela de entrada antes de
-// restaurar (o wizard só monta com a store já preenchida, então o passo 4 não refaz o fan-out).
+// A Corretora da oferta é a Corretora ativa da sessão (RN-064): o vínculo Usuário↔Corretora já é
+// resolvido no servidor e exposto por `/api/me` (workspace switcher). O fan-out/seleção/minuta usam
+// esse id; o backend valida a Habilitação ao cotar. Sem Corretora ativa, o passo 4 orienta a escolher.
+const { activeWorkspace, hasWorkspaces, loadContext } = useWorkspaces()
+
 const routeGroupId = computed(() => (typeof route.query.grupo === 'string' ? route.query.grupo : null))
-const restoring = ref(Boolean(routeGroupId.value))
+// `preparing`: até resolver a Corretora ativa e uma eventual reidratação — evita piscar o wizard antes
+// de decidir se precisa do gate de corretora (item C) ou de restaurar um grupo salvo.
+const preparing = ref(true)
+// Item C: gate de corretora — 2+ vínculos e nenhuma ativa → escolher a corretora antes do Passo 1,
+// para nunca fazer todo o fluxo e só descobrir a falta no Passo 4.
+const pickingBrokerage = ref(false)
+
+function onBrokerageSelected(): void {
+  pickingBrokerage.value = false
+  if (activeWorkspace.value) wizard.setBrokerageId(activeWorkspace.value.id)
+}
 
 type PersonAddress = NonNullable<GetQuotationGroupResponse['policyHolder']['mainAddress']>
 
@@ -91,8 +104,17 @@ async function restoreFromRoute(groupId: string): Promise<void> {
 }
 
 onMounted(async () => {
+  // Corretora ativa da sessão (RN-064) → origem da Cotação. loadContext auto-ativa quando há só uma
+  // (item C). Com ativa, propaga; sem ativa e com 2+ vínculos, abre o gate de corretora.
+  await loadContext()
+  if (activeWorkspace.value) wizard.setBrokerageId(activeWorkspace.value.id)
+
   const groupId = routeGroupId.value
-  if (!groupId) return
+  if (!groupId) {
+    if (!activeWorkspace.value && hasWorkspaces.value) pickingBrokerage.value = true
+    preparing.value = false
+    return
+  }
 
   try {
     await restoreFromRoute(groupId)
@@ -103,7 +125,7 @@ onMounted(async () => {
     await router.replace('/ofertas/nova')
   }
   finally {
-    restoring.value = false
+    preparing.value = false
   }
 })
 
@@ -118,7 +140,7 @@ watch(() => wizard.quotationGroupId, (id) => {
 
 <template>
   <div
-    v-if="restoring"
+    v-if="preparing"
     class="nova-oferta__restoring"
   >
     <SiProgressCircular
@@ -126,7 +148,15 @@ watch(() => wizard.quotationGroupId, (id) => {
       :size="28"
       :width="3"
     />
-    <span>Recuperando sua cotação…</span>
+    <span v-if="routeGroupId">Recuperando sua cotação…</span>
+  </div>
+  <div
+    v-else-if="pickingBrokerage"
+    class="nova-oferta__gate"
+  >
+    <SiCard class="nova-oferta__gate-card">
+      <QuotationGroupsBrokeragePicker @selected="onBrokerageSelected" />
+    </SiCard>
   </div>
   <QuotationGroupsWizard v-else />
 </template>
@@ -141,5 +171,19 @@ watch(() => wizard.quotationGroupId, (id) => {
   gap: var(--si-space-3);
   color: rgba(var(--v-theme-on-surface), 0.6);
   font-size: var(--si-fs-small);
+}
+
+.nova-oferta__gate {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--si-space-5);
+}
+
+.nova-oferta__gate-card {
+  width: 100%;
+  max-width: 520px;
+  padding: var(--si-space-5) var(--si-space-6) var(--si-space-6);
 }
 </style>

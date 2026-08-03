@@ -41,6 +41,19 @@ const branchSaving = ref(false)
 
 const selected = computed(() => wizard.policyHolder)
 
+// Item 3: esvaziar/limpar o campo de busca recolhe a lista de resultados e os estados transitórios
+// abaixo — deixa de "parecer" que algo continua pesquisado. NÃO desfaz um tomador já selecionado
+// (estado commitado na store que alimenta o resumo e a assinatura de recálculo): trocar o tomador
+// continua sendo buscar de novo.
+watch(query, (value) => {
+  if (!value?.trim()) {
+    results.value = []
+    searched.value = false
+    error.value = null
+    notice.value = null
+  }
+})
+
 function formatCep(zip: string): string {
   const digits = zip.replace(/\D/g, '')
   return digits.length === 8 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : zip
@@ -68,8 +81,16 @@ async function search(): Promise<void> {
   searched.value = true
   try {
     const response = await searchPersons({ term, role: 'PolicyHolder' })
-    results.value = response.items
     notice.value = response.notice ?? null
+    // Item 3: exatamente 1 resultado → seleciona sozinho (caso dominante: CNPJ → 1 matriz, ou
+    // recém-importado do Birô), poupando o clique. Com 2+ a escolha é SEMPRE do corretor — nunca
+    // automática (`select()` já limpa a lista de resultados).
+    if (response.items.length === 1 && response.items[0]) {
+      select(response.items[0])
+    }
+    else {
+      results.value = response.items
+    }
   }
   catch (err) {
     error.value = extractApiErrorMessage(err, 'Não foi possível buscar o tomador.')
@@ -237,19 +258,27 @@ function closeBranchModal(): void {
       :text="notice"
     />
 
-    <SiList
+    <!-- 2+ resultados: a escolha é do corretor. Rótulo explícito ("selecione um") + chevron de
+    ação por linha deixam claro que os itens são clicáveis e ainda não estão selecionados. -->
+    <div
       v-if="results.length"
-      class="si-qg-step1__results"
+      class="si-qg-step1__results-wrap"
     >
-      <SiListItem
-        v-for="item in results"
-        :key="item.id"
-        :title="item.name"
-        :subtitle="`CNPJ ${formatCnpj(item.documentNumber)}`"
-        prepend-icon="building"
-        @click="select(item)"
-      />
-    </SiList>
+      <p class="si-qg-step1__results-label">
+        {{ results.length }} tomadores encontrados — selecione um para continuar:
+      </p>
+      <SiList class="si-qg-step1__results">
+        <SiListItem
+          v-for="item in results"
+          :key="item.id"
+          :title="item.name"
+          :subtitle="`CNPJ ${formatCnpj(item.documentNumber)}`"
+          prepend-icon="building"
+          append-icon="chevronRight"
+          @click="select(item)"
+        />
+      </SiList>
+    </div>
 
     <p
       v-else-if="searched && !searching && !error && !selected"
@@ -271,7 +300,7 @@ function closeBranchModal(): void {
           />
         </span>
         <div class="si-qg-step1__card-id">
-          <span class="si-qg-step1__card-eyebrow">Tomador encontrado</span>
+          <span class="si-qg-step1__card-eyebrow">Tomador selecionado</span>
           <span class="si-qg-step1__card-name">{{ selected.name }}</span>
           <span class="si-qg-step1__card-doc">CNPJ {{ formatCnpj(selected.documentNumber) }}</span>
         </div>
@@ -428,8 +457,18 @@ function closeBranchModal(): void {
   height: 48px;
 }
 
+.si-qg-step1__results-wrap {
+  margin-top: var(--si-space-3);
+}
+
+.si-qg-step1__results-label {
+  margin: 0 0 var(--si-space-2);
+  font-size: var(--si-fs-small);
+  font-weight: var(--si-font-weight-semibold);
+  color: var(--si-cinza);
+}
+
 .si-qg-step1__results {
-  margin-top: var(--si-space-2);
   border: 1px solid var(--si-cinza-claro);
   border-radius: var(--si-radius-md);
   overflow: hidden;
@@ -441,9 +480,14 @@ function closeBranchModal(): void {
   font-size: var(--si-fs-small);
 }
 
+/* Selecionado = ênfase verde (borda 2px + tint leve da cor primária da marca), o mesmo idioma do
+   `__address--selected`. Distingue à primeira vista o tomador SELECIONADO (abaixo) dos resultados
+   da busca (acima), que são apenas candidatos clicáveis. */
 .si-qg-step1__card {
   margin-top: var(--si-space-4);
   padding: var(--si-space-5);
+  border: 2px solid rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-primary), 0.05);
 }
 
 .si-qg-step1__card-head {
@@ -476,7 +520,7 @@ function closeBranchModal(): void {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: var(--si-font-weight-semibold);
-  color: var(--si-cinza);
+  color: rgb(var(--v-theme-primary));
 }
 
 .si-qg-step1__card-name {

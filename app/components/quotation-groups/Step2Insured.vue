@@ -49,6 +49,17 @@ const newAddress = reactive({
 
 const selected = computed(() => wizard.insured)
 
+// Limpar o campo de busca recolhe a lista de resultados e os estados transitórios (igual ao Passo 1).
+// NÃO desfaz um segurado já selecionado (estado commitado que alimenta o resumo).
+watch(query, (value) => {
+  if (!value?.trim()) {
+    results.value = []
+    searched.value = false
+    error.value = null
+    notice.value = null
+  }
+})
+
 function formatCep(zip: string): string {
   const digits = zip.replace(/\D/g, '')
   return digits.length === 8 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : zip
@@ -82,8 +93,15 @@ async function search(): Promise<void> {
   searched.value = true
   try {
     const response = await searchPersons({ term, role: 'Insured' })
-    results.value = response.items
     notice.value = response.notice ?? null
+    // Passo 2 (igual ao Passo 1): exatamente 1 resultado → seleciona sozinho, poupando o clique; com
+    // 2+ a escolha é SEMPRE do corretor (`select()` já limpa a lista de resultados).
+    if (response.items.length === 1 && response.items[0]) {
+      select(response.items[0])
+    }
+    else {
+      results.value = response.items
+    }
   }
   catch (err) {
     error.value = extractApiErrorMessage(err, 'Não foi possível buscar o segurado.')
@@ -228,19 +246,26 @@ function addAddress(): void {
       :text="notice"
     />
 
-    <SiList
+    <!-- 2+ resultados: escolha do corretor. Rótulo explícito + chevron por linha (igual ao Passo 1). -->
+    <div
       v-if="results.length"
-      class="si-qg-step2__results"
+      class="si-qg-step2__results-wrap"
     >
-      <SiListItem
-        v-for="item in results"
-        :key="item.id"
-        :title="item.name"
-        :subtitle="`CNPJ ${formatCnpj(item.documentNumber)}`"
-        prepend-icon="building"
-        @click="select(item)"
-      />
-    </SiList>
+      <p class="si-qg-step2__results-label">
+        {{ results.length }} segurados encontrados — selecione um para continuar:
+      </p>
+      <SiList class="si-qg-step2__results">
+        <SiListItem
+          v-for="item in results"
+          :key="item.id"
+          :title="item.name"
+          :subtitle="`CNPJ ${formatCnpj(item.documentNumber)}`"
+          prepend-icon="building"
+          append-icon="chevronRight"
+          @click="select(item)"
+        />
+      </SiList>
+    </div>
 
     <p
       v-else-if="searched && !searching && !error && !selected"
@@ -253,7 +278,7 @@ function addAddress(): void {
       v-if="selected"
       class="si-qg-step2__selected"
     >
-      <span class="si-qg-step2__eyebrow">Segurado</span>
+      <span class="si-qg-step2__eyebrow">Segurado selecionado</span>
       <span class="si-qg-step2__name">{{ selected.name }}</span>
       <span class="si-qg-step2__doc">CNPJ {{ formatCnpj(selected.documentNumber) }}</span>
 
@@ -425,8 +450,18 @@ function addAddress(): void {
   margin-top: var(--si-space-4);
 }
 
+.si-qg-step2__results-wrap {
+  margin-top: var(--si-space-3);
+}
+
+.si-qg-step2__results-label {
+  margin: 0 0 var(--si-space-2);
+  font-size: var(--si-fs-small);
+  font-weight: var(--si-font-weight-semibold);
+  color: var(--si-cinza);
+}
+
 .si-qg-step2__results {
-  margin-top: var(--si-space-2);
   border: 1px solid var(--si-cinza-claro);
   border-radius: var(--si-radius-md);
   overflow: hidden;
@@ -438,11 +473,17 @@ function addAddress(): void {
   font-size: var(--si-fs-small);
 }
 
+/* Selecionado = ênfase verde (borda 2px + tint leve da cor primária da marca), igual ao Passo 1:
+   distingue o segurado SELECIONADO dos resultados da busca acima. */
 .si-qg-step2__selected {
   margin-top: var(--si-space-5);
   display: flex;
   flex-direction: column;
   gap: 2px;
+  padding: var(--si-space-5);
+  border: 2px solid rgb(var(--v-theme-primary));
+  border-radius: var(--si-radius-md);
+  background: rgba(var(--v-theme-primary), 0.05);
 }
 
 .si-qg-step2__eyebrow {
@@ -450,7 +491,7 @@ function addAddress(): void {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: var(--si-font-weight-semibold);
-  color: var(--si-cinza);
+  color: rgb(var(--v-theme-primary));
 }
 
 .si-qg-step2__name {

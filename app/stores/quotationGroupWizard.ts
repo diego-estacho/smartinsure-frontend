@@ -117,8 +117,9 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
   const quotationsGenerated = ref(false)
   const quotationSignature = ref<string | null>(null)
   const quotationGroupId = ref<string | null>(null)
-  // RN-103: a Corretora do fan-out/minuta é a do Escopo ativo do acesso, resolvida no servidor pelo
-  // claim — o wizard não a guarda nem a envia.
+  // Corretora dona das Habilitações (RN-023) — origem do fan-out/seleção/minuta. Preenchida com a
+  // Corretora ativa da sessão (RN-064) na entrada da oferta; o backend valida a Habilitação ao cotar.
+  const brokerageId = ref<string | null>(null)
   // Minuta (valores das tags) e cláusulas selecionadas — sincronizados entre as etapas 4 e 5.
   const minuta = ref<Record<string, string>>({})
   const clauses = ref<Record<string, boolean>>({})
@@ -239,6 +240,10 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     clauseTags.value = {}
   }
 
+  function setBrokerageId(id: string | null): void {
+    brokerageId.value = id
+  }
+
   /** Assinatura dos dados que alimentam o motor de cotação (base do recálculo inteligente). */
   function computeSignature(): string {
     const r = risk.value
@@ -316,6 +321,7 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     quotationsGenerated.value = false
     quotationSignature.value = null
     quotationGroupId.value = null
+    brokerageId.value = null
     minuta.value = {}
     clauses.value = {}
     clauseTags.value = {}
@@ -339,6 +345,7 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     quotations,
     quotationsGenerated,
     quotationGroupId,
+    brokerageId,
     signatureChanged,
     minuta,
     clauses,
@@ -364,6 +371,7 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     setQuotations,
     setQuotationGroupId,
     resetQuotationsForFork,
+    setBrokerageId,
     markQuotationsGenerated,
     validateCurrentStep,
     reset,

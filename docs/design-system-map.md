@@ -107,6 +107,7 @@ em forma e registre aqui.
 | `<button class="pill-btn/btn">` | `SiButton` (`color`, `variant`, `size`, `:prepend-icon`) |
 | `<button class="iconbtn">` (ação de linha, ícone só) | `SiIconButton` (`:icon`, `tone="view"` = hover verde; ativador de SiMenu/SiTooltip via `v-bind="props"`) |
 | `<input>` | `SiTextField` (`:prepend-inner-icon`, `:rules`) |
+| `<select>` (lista curta) / lista longa com busca | `SiSelect` / `SiAutocomplete` (filtra por digitação — listas longas em que rolar é ruim) |
 | card / `.panel` / `.kpi` | `SiCard` (`variant="outlined"` p/ hairline; `charcoal` p/ card escuro) |
 | status pill | `SiChip` (`color`, `size`) |
 | `<i data-lucide>` | `SiIcon :icon="<chave-lucide>"` (ADR-021) |
