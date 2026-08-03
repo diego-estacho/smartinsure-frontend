@@ -23,6 +23,7 @@ import {
   openDialog,
   requireRunningApi,
   selectOption,
+  submitFirstAccessOnce,
   uniqueSuffix,
   userStatus,
 } from './support/journey'
@@ -111,10 +112,7 @@ test.describe('Jornada de Perfis e Usuários (RN-062..RN-074)', () => {
   })
 
   test('RN-065: convite é de uso único — reabrir o link recusa', async ({ page }) => {
-    await page.goto(`/invite?token=${encodeURIComponent(consumedBrokerageInviteToken)}`)
-    await page.locator('#invite-password').fill('OutraSenha@2026')
-    await page.locator('#invite-password-confirmation').fill('OutraSenha@2026')
-    await page.getByRole('button', { name: 'Concluir primeiro acesso' }).click()
+    await submitFirstAccessOnce(page, consumedBrokerageInviteToken, 'OutraSenha@2026')
 
     await expect(page.getByText(/expirado|já foi aceito|já ter sido usado/i))
       .toBeVisible({ timeout: 30_000 })

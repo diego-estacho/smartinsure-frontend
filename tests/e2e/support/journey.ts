@@ -194,15 +194,33 @@ async function fillHydrated(page: Page, selector: string, value: string): Promis
 
 /**
  * Preenche e submete reintentando, mesmo motivo do `openDialog`: antes da hidratação o valor é
- * descartado e o clique cai sem handler. Cada tentativa refaz o preenchimento do zero.
+ * descartado e o clique cai sem handler.
+ *
+ * `renavigate` existe porque as duas telas exigem o oposto. O convite PRECISA renavegar: ele tira
+ * o token da URL depois de lê-lo, e uma segunda tentativa sobre a mesma página cairia em "Link de
+ * convite sem token", com o botão desabilitado para sempre. O login NÃO pode renavegar: se o
+ * acesso já foi emitido, `/login` redireciona para a landing e os campos somem.
  */
 async function submitFormUntilLeaves(
   page: Page,
+  url: string,
   fields: readonly (readonly [string, string])[],
   buttonName: string,
   stayedPattern: RegExp,
+  { renavigate = false }: { renavigate?: boolean } = {},
 ): Promise<void> {
+  if (!renavigate) {
+    await page.goto(url)
+  }
+
   await expect(async () => {
+    if (renavigate) {
+      await page.goto(url)
+    }
+
+    // Só digita com a página quieta: durante a hidratação o Vue ainda reescreve os inputs.
+    await page.waitForLoadState('networkidle')
+
     for (const [selector, value] of fields) {
       await fillHydrated(page, selector, value)
     }
@@ -214,15 +232,32 @@ async function submitFormUntilLeaves(
 
 /** Login pela tela, com as credenciais reais validadas no provedor de identidade (RN-005). */
 export async function loginViaUi(page: Page, email: string, password: string): Promise<void> {
-  await page.goto('/login')
-
   // Sessão estabelecida: o servidor emitiu o acesso e o app saiu da tela de login.
   await submitFormUntilLeaves(
     page,
+    '/login',
     [['#login-email', email], ['#login-password', password]],
     'Entrar',
     /\/login/,
   )
+}
+
+/**
+ * Submete o primeiro acesso UMA vez, sem exigir que a tela seja deixada. É o que o caso do link
+ * recusado precisa: ali o esperado é continuar em `/invite` com a mensagem do servidor.
+ */
+export async function submitFirstAccessOnce(
+  page: Page,
+  plainToken: string,
+  password: string,
+): Promise<void> {
+  await page.goto(`/invite?token=${encodeURIComponent(plainToken)}`)
+  await page.waitForLoadState('networkidle')
+
+  await fillHydrated(page, '#invite-password', password)
+  await fillHydrated(page, '#invite-password-confirmation', password)
+
+  await page.getByRole('button', { name: 'Concluir primeiro acesso' }).click()
 }
 
 /** Primeiro acesso pela tela: o convidado define a própria senha e passa de Pendente a Ativo. */
@@ -231,14 +266,14 @@ export async function completeFirstAccess(
   plainToken: string,
   password: string,
 ): Promise<void> {
-  await page.goto(`/invite?token=${encodeURIComponent(plainToken)}`)
-
   // RN-065: concluída a definição, o Usuário entra direto — a tela de convite fica para trás.
   await submitFormUntilLeaves(
     page,
+    `/invite?token=${encodeURIComponent(plainToken)}`,
     [['#invite-password', password], ['#invite-password-confirmation', password]],
     'Concluir primeiro acesso',
     /\/invite/,
+    { renavigate: true },
   )
 }
 
