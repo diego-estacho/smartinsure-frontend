@@ -952,6 +952,65 @@ describe('Etapa 2 — Dados do segurado (exec-plan 0015, incremento 6)', () => {
   })
 })
 
+describe('Etapa 2 — seleção do segurado (auto-select, lista e limpar)', () => {
+  beforeEach(() => {
+    useQuotationGroupWizardStore().reset()
+    forceDesktopViewport()
+  })
+
+  const ONE_INSURED = {
+    items: [{ id: 'in-x', documentNumber: '33333333000133', name: 'Unica Servicos LTDA', socialName: null, type: 'PJ', isPrivateSector: null, roles: ['Insured'], mainAddress: null }],
+    notice: null,
+  }
+  const TWO_INSURED = {
+    items: [
+      { id: 'in-a', documentNumber: '11111111000111', name: 'Aurora Servicos LTDA', socialName: null, type: 'PJ', isPrivateSector: null, roles: ['Insured'], mainAddress: null },
+      { id: 'in-b', documentNumber: '22222222000122', name: 'Aurora Comercio LTDA', socialName: null, type: 'PJ', isPrivateSector: null, roles: ['Insured'], mainAddress: null },
+    ],
+    notice: null,
+  }
+
+  it('1 resultado: auto-seleciona o segurado sem clique', async () => {
+    const store = useQuotationGroupWizardStore()
+    registerEndpoint('/api/persons', { method: 'GET', once: true, handler: () => ONE_INSURED })
+
+    const w = await mountSuspended(Step2Insured)
+    await w.find('input').setValue('unica')
+    await w.find('form').trigger('submit')
+    await vi.waitFor(() => expect(store.insured).not.toBeNull())
+    expect(store.insured?.id).toBe('in-x')
+  })
+
+  it('2+ resultados: NÃO auto-seleciona — a lista aparece para o corretor escolher', async () => {
+    const store = useQuotationGroupWizardStore()
+    registerEndpoint('/api/persons', { method: 'GET', once: true, handler: () => TWO_INSURED })
+
+    const w = await mountSuspended(Step2Insured)
+    await w.find('input').setValue('aurora')
+    await w.find('form').trigger('submit')
+    await vi.waitFor(() => expect(w.findAllComponents({ name: 'SiListItem' }).length).toBe(2))
+    expect(store.insured).toBeNull()
+
+    await w.findAllComponents({ name: 'SiListItem' })[1]!.trigger('click')
+    await flushPromises()
+    expect(store.insured?.id).toBe('in-b')
+  })
+
+  it('limpar o campo de busca recolhe os resultados', async () => {
+    const store = useQuotationGroupWizardStore()
+    registerEndpoint('/api/persons', { method: 'GET', once: true, handler: () => TWO_INSURED })
+
+    const w = await mountSuspended(Step2Insured)
+    await w.find('input').setValue('aurora')
+    await w.find('form').trigger('submit')
+    await vi.waitFor(() => expect(w.findAllComponents({ name: 'SiListItem' }).length).toBe(2))
+
+    await w.find('input').setValue('')
+    await vi.waitFor(() => expect(w.findAllComponents({ name: 'SiListItem' }).length).toBe(0))
+    expect(store.insured).toBeNull()
+  })
+})
+
 describe('Salvar QuotationGroup + recálculo inteligente (exec-plan 0015)', () => {
   const payload = {
     policyHolderId: 'p',

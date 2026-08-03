@@ -64,6 +64,14 @@ export function useWorkspaces(api: typeof $fetch = useNuxtApp().$api as typeof $
 
     try {
       context.value = await api<CurrentUserContext>('/api/me', { method: 'GET' })
+
+      // RN-064: com exatamente UMA Corretora vinculada e nenhuma ativa, ativa sozinho — quem tem um
+      // único vínculo nunca precisa escolher. `selectWorkspace` reemite o acesso e recarrega o contexto
+      // (a condição deixa de valer na recarga, então não recorre).
+      const brokerages = context.value?.brokerages ?? []
+      if (brokerages.length === 1 && !context.value?.activeBrokerageId && brokerages[0]) {
+        await selectWorkspace(brokerages[0].id)
+      }
     }
     catch {
       // Sem contexto (sessão expirada ou usuário fora da plataforma): o switcher fica vazio,

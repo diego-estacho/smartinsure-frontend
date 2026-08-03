@@ -140,7 +140,12 @@ describe('classificationView (RN-058 + CCG pendente)', () => {
       .toEqual({ label: 'Pendência de CCG', color: 'info' })
   })
 
-  it('Análise não muda de rótulo por CCG — segue a esteira', () => {
+  it('Análise SEM CCG → rótulo da esteira (warning)', () => {
+    expect(classificationView({ status: 'analise', requiresCcg: false, analysisTrack: 'Underwriting' }))
+      .toEqual({ label: 'Análise de subscrição', color: 'warning' })
+  })
+
+  it('SUBSCRIÇÃO tem prioridade: análise COM CCG mostra "Análise de subscrição" (confirmado c/ a PO)', () => {
     expect(classificationView({ status: 'analise', requiresCcg: true, analysisTrack: 'Underwriting' }))
       .toEqual({ label: 'Análise de subscrição', color: 'warning' })
   })

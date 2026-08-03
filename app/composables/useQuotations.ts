@@ -81,10 +81,10 @@ export const quotationStatusView: Record<QuotationStatus, { label: string, color
 }
 
 /**
- * CCG pendente (RequiresCcg) numa Cotação Pronta para emissão: rótulo próprio "Pendência de CCG" no
- * lugar de "Emissão automática". As AÇÕES continuam as da emissão automática (seguível) — a validação
- * real do CCG é no passo de emissão (regra validada pela PO); não bloqueamos o corretor aqui. O
- * backend segue ADR-064 (CCG ortogonal, resultado permanece ReadyForEmission); é só apresentação.
+ * CCG pendente (RequiresCcg): rótulo próprio "Pendência de CCG" quando a cotação está pronta para
+ * emissão mas exige CCG. O CCG é uma FLAG ortogonal (não um status do gateway); quando há também
+ * Análise/subscrição, ESTA tem prioridade no rótulo (ver classificationView). As AÇÕES seguem o
+ * resultado real (seguível); a validação do CCG é no passo de emissão (PO). É só apresentação.
  */
 export const ccgPendingStatusView: { label: string, color: string } = {
   label: 'Pendência de CCG',
@@ -101,9 +101,11 @@ export const analysisTrackLabel: Record<string, string> = {
 }
 
 /**
- * Classificação EXIBIDA da Cotação seguível (RN-058): Pronta para emissão = "Emissão automática";
- * com CCG pendente vira "Pendência de CCG" (as ações seguem as da emissão automática — a validação do
- * CCG é no passo de emissão, PO). Análise = a esteira específica.
+ * Classificação EXIBIDA da Cotação seguível (RN-058). PRIORIDADE (confirmada com a PO): a SUBSCRIÇÃO/
+ * Análise vence o CCG — uma cotação em análise mostra "Análise de subscrição" mesmo com CCG pendente
+ * (a subscrição é o gate mais forte). Sem análise: Pronta para emissão com CCG pendente → "Pendência de
+ * CCG"; sem CCG → "Emissão automática". (O CCG é uma flag ortogonal, não um status do gateway.)
+ * TODO(PO): confirmar se, no caso análise+CCG, é preciso sinalizar o CCG (ex.: selo) além do status.
  */
 export function classificationView(
   item: Pick<Quotation, 'status' | 'requiresCcg' | 'analysisTrack'>,
