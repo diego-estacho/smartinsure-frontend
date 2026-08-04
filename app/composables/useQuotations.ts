@@ -31,7 +31,7 @@ export interface Quotation {
   status: QuotationStatus
   /** Taxa aplicada. */
   taxa: number
-  /** Compat com a minuta antiga; a minuta real vem do endpoint próprio (RN-062). */
+  /** Compat com a minuta antiga; a minuta real vem do endpoint próprio (RN-079). */
   tags: string[]
   /** Classificação estável do backend (ADR-064): 'ReadyForEmission' | 'Analysis'. */
   result: string
