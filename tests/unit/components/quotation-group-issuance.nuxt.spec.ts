@@ -1,7 +1,37 @@
 // @vitest-environment nuxt
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises } from '@vue/test-utils'
+import { mountSuspended } from '@nuxt/test-utils/runtime'
+import type { Quotation } from '~/composables/useQuotations'
+import Step5Issuance from '~/components/quotation-groups/Step5Issuance.vue'
 import { useIssuance } from '~/composables/useIssuance'
 import { useQuotationGroupWizardStore } from '~/stores/quotationGroupWizard'
+
+/** Cotação Pronta para emissão, com as opções de pagamento que a Seguradora informou (RN-505). */
+function makeReadyQuotation(over: Partial<Quotation> = {}): Quotation {
+  return {
+    id: 'q-ready',
+    insurerId: 'ins-1',
+    name: 'Sancor Seguros',
+    logoUrl: null,
+    premio: 412.5,
+    comissao: 22,
+    limite: null,
+    status: 'auto',
+    taxa: 1.8,
+    tags: [],
+    result: 'ReadyForEmission',
+    analysisTrack: null,
+    isFollowable: true,
+    requiresCcg: false,
+    ccgSigned: false,
+    ccgMaxLimitWithoutNeed: null,
+    installmentOptions: [{ number: 1, description: 'À vista', value: 412.5, hasInterest: false }],
+    possibleGracePeriodsInDays: [0, 30],
+    requiredDocuments: [],
+    ...over,
+  }
+}
 
 /**
  * RN-500..RN-514 — Passo 5 real: a emissão é solicitada ao servidor com o parcelamento e o vencimento
@@ -109,5 +139,63 @@ describe('RN-500/RN-514 emissão real da apólice', () => {
 
     expect(store.issuanceState).toBe('requested')
     expect(store.issuedProposalNumber).toBe('PROP-77')
+  })
+})
+
+/**
+ * RN-501 — Contragarantia exigida sem assinatura é beco sem saída nesta fase: a tela avisa antes de o
+ * corretor preencher o resto, em vez de deixá-lo bater no erro do servidor depois de aceitar o Termo.
+ */
+describe('RN-501 Contragarantia exigida bloqueia a emissão', () => {
+  // A store é a do contexto Nuxt, compartilhada entre os testes: reset para nascer no formulário.
+  beforeEach(() => useQuotationGroupWizardStore().reset())
+
+  it('avisa quando a seguradora exige Contragarantia sem assinatura', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.setSelectedQuotation(makeReadyQuotation({ requiresCcg: true, ccgSigned: false }))
+
+    const w = await mountSuspended(Step5Issuance)
+
+    expect(w.text()).toContain('Contragarantia')
+  })
+
+  it('não avisa quando a Contragarantia já está assinada', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.setSelectedQuotation(makeReadyQuotation({ requiresCcg: true, ccgSigned: true }))
+
+    const w = await mountSuspended(Step5Issuance)
+
+    expect(w.text()).not.toContain('Emissão indisponível')
+  })
+})
+
+/**
+ * RN-506 — o aceite do Termo é ato explícito: sem ele o emitir não é liberado, e o texto exibido é o do
+ * servidor (o mesmo que o aceite registra), nunca uma cópia guardada na tela.
+ */
+describe('RN-506 aceite do Termo é obrigatório para emitir', () => {
+  beforeEach(() => useQuotationGroupWizardStore().reset())
+
+  /** O diálogo do kit é teleportado para fora do wrapper — o botão é procurado no documento. */
+  function emitirDoTermo(): HTMLButtonElement | undefined {
+    return [...document.querySelectorAll('button')]
+      .find(button => button.textContent?.includes('Emitir apólice')) as HTMLButtonElement | undefined
+  }
+
+  it('mantém "Emitir apólice" desabilitado enquanto o Termo não é aceito', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.setSelectedQuotation(makeReadyQuotation())
+    store.termAccepted = false
+    store.termOpen = true
+
+    await mountSuspended(Step5Issuance)
+    await flushPromises()
+
+    expect(emitirDoTermo()?.disabled).toBe(true)
+
+    store.termAccepted = true
+    await flushPromises()
+
+    expect(emitirDoTermo()?.disabled).toBe(false)
   })
 })
