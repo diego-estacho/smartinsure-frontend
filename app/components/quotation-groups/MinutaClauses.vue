@@ -1,12 +1,12 @@
 <script setup lang="ts">
 /**
  * QuotationGroupsMinutaClauses — blocos "Informação de contrato" (tags do objeto) e "Cláusulas
- * particulares" do painel da Cotação selecionada (RN-062) — **dados reais** do catálogo importado
+ * particulares" do painel da Cotação selecionada (RN-079) — **dados reais** do catálogo importado
  * (GET .../minuta). Cada cláusula traz um texto em HTML (renderizado como HTML) com placeholders
  * `[TAG_X]` e o desenho das suas próprias tags (JsonTag): ao marcar a cláusula, o corretor preenche
  * campos e os valores substituem os placeholders no texto ao vivo. O preenchimento vive na store
  * (`minuta` por tag do objeto; `clauses` por id externo; `clauseTags` por id externo → tag), então
- * segue sincronizado e é o que "Baixar minuta" envia (RN-063). Sem catálogo, os blocos não aparecem.
+ * segue sincronizado e é o que "Baixar minuta" envia (RN-080). Sem catálogo, os blocos não aparecem.
  */
 import type { QuotationMinutaClause } from '~/composables/useQuotationMinuta'
 
@@ -53,7 +53,7 @@ function safeParseArray(json: string | null | undefined): Record<string, unknown
 }
 
 /**
- * Reidrata o preenchimento salvo (RN-062, "Baixar minuta") na store: valores do objeto por nome de tag e
+ * Reidrata o preenchimento salvo (RN-079, "Baixar minuta") na store: valores do objeto por nome de tag e
  * cláusulas marcadas por id externo com suas tags. Só semeia o que ainda não foi preenchido nesta sessão —
  * não sobrescreve edições em andamento. É o que faz o formulário sobreviver a um refresh (F5).
  */
@@ -95,7 +95,7 @@ async function load(): Promise<void> {
   try {
     const minuta = await getMinuta(groupId, quotation.id)
     // A seleção mudou enquanto o GET estava em voo: descarta este resultado — senão hidrataríamos a store
-    // da seguradora ANTIGA sob a nova seleção (vazamento entre seguradoras que o reset foi evitar, RN-062).
+    // da seguradora ANTIGA sob a nova seleção (vazamento entre seguradoras que o reset foi evitar, RN-079).
     if (wizard.selectedQuotation?.id !== requestedId) return
     clauses.value = minuta.clauses
     // Repeater é lista dinâmica (fora do formulário simples) — filtrado aqui igual às tags de cláusula.
@@ -103,7 +103,7 @@ async function load(): Promise<void> {
     clauseTagDefs.value = Object.fromEntries(
       minuta.clauses.map(clause => [clause.externalId, parseTags(clause.jsonTag)]),
     )
-    // RN-062: reidrata o preenchimento salvo (sobrevive a um F5); roda após o reset por troca de seguradora.
+    // RN-079: reidrata o preenchimento salvo (sobrevive a um F5); roda após o reset por troca de seguradora.
     hydrateFilled(minuta.filledTagsJson, minuta.filledClausesJson)
   }
   catch {

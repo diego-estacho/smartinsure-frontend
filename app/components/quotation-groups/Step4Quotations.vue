@@ -5,7 +5,7 @@
  * classificada pela ACL do backend (ADR-064) — Pronta para emissão, Análise (com esteira), Indisponível (com
  * motivos) ou Não reconhecida. Selecionar só é permitido nas seguíveis (RN-059); a Análise de
  * subscrição pede confirmação (vai para a esteira da Seguradora). Recálculo por mudança real de dado
- * (RN-060) descarta a seleção e recota. "Baixar minuta" envia os termos e abre o documento (RN-063).
+ * (RN-060) descarta a seleção e recota. "Baixar minuta" envia os termos e abre o documento (RN-080).
  *
  * Sempre mostramos o MOTIVO por Seguradora quando não é seguível (RN-058) — inclusive quando nenhuma
  * seguradora retorna cotação seguível: o corretor precisa ver por que cada uma recusou, não um beco sem saída.
@@ -89,10 +89,11 @@ const cotando = computed(() => pending.value.length > 0)
 
 const headers = [
   { title: 'Seguradora', key: 'name' },
+  { title: 'Cotação', key: 'number' },
   { title: 'Prêmio', key: 'premio', align: 'end' },
   { title: 'Comissão', key: 'comissao', align: 'end' },
-  { title: 'Limite', key: 'limite', align: 'end' },
-  { title: 'Classificação', key: 'status' },
+  { title: 'Limite', key: 'limite' },
+  { title: 'Status', key: 'status' },
   { title: '', key: 'actions', sortable: false, align: 'end' },
 ] as const
 
@@ -179,7 +180,7 @@ async function baixarMinuta(): Promise<void> {
     .filter(([, on]) => on)
     .map(([externalId]) => ({
       particularClauseExternalId: externalId,
-      // Tags próprias da cláusula preenchidas pelo corretor (RN-062): nome → valor (só as não vazias).
+      // Tags próprias da cláusula preenchidas pelo corretor (RN-079): nome → valor (só as não vazias).
       tags: Object.entries(wizard.clauseTags[externalId] ?? {})
         .map(([name, value]) => ({ name, value: String(value ?? '') }))
         .filter(tag => tag.value.trim().length > 0),
@@ -333,6 +334,9 @@ onMounted(() => {
                 <span class="si-cell-strong">{{ item.name }}</span>
               </div>
             </template>
+            <template #[`item.number`]="{ item }">
+              <span class="si-qg-step4__number">{{ item.number ?? '—' }}</span>
+            </template>
             <template #[`item.premio`]="{ item }">
               <span class="si-qg-step4__premio">{{ item.status === 'auto' ? formatCurrencyBRL(item.premio) : '—' }}</span>
             </template>
@@ -393,7 +397,13 @@ onMounted(() => {
                     :name="item.name"
                     :logo-url="item.logoUrl"
                   />
-                  <span class="si-qg-step4__card-name">{{ item.name }}</span>
+                  <div class="si-qg-step4__card-insurer-text">
+                    <span class="si-qg-step4__card-name">{{ item.name }}</span>
+                    <span
+                      v-if="item.number"
+                      class="si-qg-step4__number"
+                    >{{ item.number }}</span>
+                  </div>
                 </div>
                 <div class="si-qg-step4__status-cell">
                   <SiChip
@@ -714,6 +724,21 @@ onMounted(() => {
   align-items: center;
   gap: var(--si-space-2);
   min-width: 0;
+}
+
+.si-qg-step4__card-insurer-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Nº da proposta (mesma âncora da listagem): monoespaçado, discreto — identifica a Cotação sem
+ * competir com o Prêmio (o destaque da linha). */
+.si-qg-step4__number {
+  font-family: var(--si-font-mono);
+  font-size: var(--si-fs-caption);
+  color: rgba(var(--v-theme-on-surface), 0.7);
+  white-space: nowrap;
 }
 
 /* ── Progresso + skeletons nomeados (cotando) ── */

@@ -122,7 +122,7 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
   // Minuta (valores das tags) e cláusulas selecionadas — sincronizados entre as etapas 4 e 5.
   const minuta = ref<Record<string, string>>({})
   const clauses = ref<Record<string, boolean>>({})
-  // Valores das tags próprias de cada cláusula particular (RN-062): externalId → (nome da tag → valor).
+  // Valores das tags próprias de cada cláusula particular (RN-079): externalId → (nome da tag → valor).
   // As cláusulas trazem placeholders [TAG_X] no texto; o corretor preenche e o valor entra na minuta.
   const clauseTags = ref<Record<string, Record<string, string>>>({})
   // Emissão (etapa 5): dados do formulário, estado do processo, apólice e o termo de aceite.
@@ -205,7 +205,7 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
 
   function setSelectedQuotation(value: Quotation | null): void {
     // Trocar (ou limpar) a Cotação escolhida descarta o preenchimento da minuta da anterior: cada
-    // seguradora tem a sua (RN-062); sem isso, termos/cláusulas de uma seguradora vazariam para outra.
+    // seguradora tem a sua (RN-079); sem isso, termos/cláusulas de uma seguradora vazariam para outra.
     if (value?.id !== selectedQuotation.value?.id) {
       minuta.value = {}
       clauses.value = {}

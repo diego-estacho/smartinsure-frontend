@@ -13,7 +13,7 @@ const props = withDefaults(defineProps<{
   size?: number
 }>(), {
   logoUrl: null,
-  size: 30,
+  size: 44,
 })
 
 const failed = ref(false)
@@ -26,7 +26,12 @@ const showLogo = computed(() => Boolean(props.logoUrl) && !failed.value)
 // Monograma: reusa o `initials` compartilhado; cai nas 2 primeiras letras quando não há palavras.
 const monogram = computed(() => initials(props.name) || props.name.slice(0, 2).toUpperCase())
 
-const sizeStyle = computed(() => ({ width: `${props.size}px`, height: `${props.size}px` }))
+const sizeStyle = computed(() => ({
+  width: `${props.size}px`,
+  height: `${props.size}px`,
+  // Monograma proporcional ao tile — o fixo de 10px sumia nos tamanhos maiores; mínimo legível de 11px.
+  fontSize: `${Math.max(11, Math.round(props.size * 0.34))}px`,
+}))
 </script>
 
 <template>
@@ -52,13 +57,12 @@ const sizeStyle = computed(() => ({ width: `${props.size}px`, height: `${props.s
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--si-radius-sm);
+  border-radius: var(--si-radius-md);
   background: rgb(var(--v-theme-surface));
   border: 1px solid var(--si-cinza-claro);
-  padding: 3px;
+  padding: 4px;
   overflow: hidden;
   color: rgba(var(--v-theme-on-surface), 0.6);
-  font-size: 10px;
   font-weight: var(--si-font-weight-bold);
 }
 
