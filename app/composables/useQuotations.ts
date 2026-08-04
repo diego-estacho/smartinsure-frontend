@@ -18,6 +18,8 @@ export type QuotationStatus = 'auto' | 'analise'
 export interface Quotation {
   /** Id da Cotação (Quotation) — chave de seleção. */
   id: string
+  /** Nº da proposta (ProposalNumber), o mesmo da listagem — âncora do usuário; null se a Seguradora ainda não atribuiu. */
+  number: string | null
   insurerId: string
   name: string
   /** Logo da Seguradora (URL), quando cadastrado; null cai no monograma. */
@@ -76,7 +78,9 @@ export interface QuotationsResult {
 
 /** Rótulo/cor do status seguível por nome estável (ADR-004). */
 export const quotationStatusView: Record<QuotationStatus, { label: string, color: string }> = {
-  auto: { label: 'Emissão automática', color: 'success' },
+  // "Pronta para emissão" (RN-078): a Cotação está APTA a ser emitida pelo corretor — não é emissão
+  // automática. Rótulo canônico único com a listagem (ver app/lib/status/quotations.ts).
+  auto: { label: 'Pronta para emissão', color: 'success' },
   analise: { label: 'Requer análise de subscrição', color: 'warning' },
 }
 
@@ -104,7 +108,7 @@ export const analysisTrackLabel: Record<string, string> = {
  * Classificação EXIBIDA da Cotação seguível (RN-058). PRIORIDADE (confirmada com a PO): a SUBSCRIÇÃO/
  * Análise vence o CCG — uma cotação em análise mostra "Análise de subscrição" mesmo com CCG pendente
  * (a subscrição é o gate mais forte). Sem análise: Pronta para emissão com CCG pendente → "Pendência de
- * CCG"; sem CCG → "Emissão automática". (O CCG é uma flag ortogonal, não um status do gateway.)
+ * CCG"; sem CCG → "Pronta para emissão". (O CCG é uma flag ortogonal, não um status do gateway.)
  * TODO(PO): confirmar se, no caso análise+CCG, é preciso sinalizar o CCG (ex.: selo) além do status.
  */
 export function classificationView(
@@ -131,6 +135,7 @@ function numOrNull(value: number | string | null | undefined): number | null {
 function toAvailable(item: ItemResponse): Quotation {
   return {
     id: item.quotationId,
+    number: item.number,
     insurerId: item.insurerId,
     name: item.insurerName,
     logoUrl: item.insurerLogoUrl,

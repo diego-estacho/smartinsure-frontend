@@ -735,9 +735,12 @@ function changePageSize(size: number) {
   white-space: nowrap;
 }
 
+/* Nº da Cotação (proposta): é a âncora que o usuário usa pra se localizar (PO) — ganha peso bold e
+ * um passo a mais de tamanho (caption → small) para virar a informação mais legível da linha. */
 .si-quotations__mono {
   font-family: var(--si-font-mono);
-  font-size: var(--si-fs-caption);
+  font-size: var(--si-fs-small);
+  font-weight: var(--si-font-weight-bold);
   white-space: nowrap;
 }
 
