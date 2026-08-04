@@ -28,6 +28,20 @@ const { error: selectError, run: runSelect } = useApiError()
 // Acompanhamento do fan-out (timer/timeout/estado terminal) no composable dedicado.
 const { timedOut, start: startPolling, refresh: refreshQuotations, resume: resumePolling } = useQuotationPolling()
 
+/**
+ * RN-106: rótulo do aviso de Cobertura Adicional não contemplada. Uma cobertura mostra o nome; mais
+ * de uma mostra a contagem (o detalhe vai no title). Sinaliza escopo menor que o pedido, para que
+ * prêmios de coberturas diferentes não sejam comparados sem aviso.
+ */
+function coberturasNaoContempladasLabel(item: Quotation): string {
+  const nomes = item.coberturasNaoContempladas
+  return nomes.length === 1 ? `sem ${nomes[0]}` : `sem ${nomes.length} coberturas`
+}
+
+function coberturasNaoContempladasTitle(item: Quotation): string {
+  return `Esta seguradora não contempla: ${item.coberturasNaoContempladas.join(', ')}.`
+}
+
 const unavailOpen = ref(false)
 
 // Gate de seleção (RN-059): a Análise de subscrição é confirmada antes de marcar (vai para a esteira).
@@ -329,12 +343,24 @@ onMounted(() => {
               {{ formatCurrencyBRL(item.limite) }}
             </template>
             <template #[`item.status`]="{ item }">
-              <SiChip
-                :color="classificationView(item).color"
-                size="small"
-              >
-                {{ classificationView(item).label }}
-              </SiChip>
+              <div class="si-qg-step4__status-cell">
+                <SiChip
+                  :color="classificationView(item).color"
+                  size="small"
+                >
+                  {{ classificationView(item).label }}
+                </SiChip>
+                <!-- RN-106: escopo menor que o pedido — o corretor não pode comparar prêmios de
+                     coberturas diferentes sem saber. -->
+                <SiChip
+                  v-if="item.coberturasNaoContempladas.length > 0"
+                  color="warning"
+                  size="small"
+                  :title="coberturasNaoContempladasTitle(item)"
+                >
+                  {{ coberturasNaoContempladasLabel(item) }}
+                </SiChip>
+              </div>
             </template>
             <template #[`item.actions`]="{ item }">
               <SiButton
@@ -369,12 +395,23 @@ onMounted(() => {
                   />
                   <span class="si-qg-step4__card-name">{{ item.name }}</span>
                 </div>
-                <SiChip
-                  :color="classificationView(item).color"
-                  size="small"
-                >
-                  {{ classificationView(item).label }}
-                </SiChip>
+                <div class="si-qg-step4__status-cell">
+                  <SiChip
+                    :color="classificationView(item).color"
+                    size="small"
+                  >
+                    {{ classificationView(item).label }}
+                  </SiChip>
+                  <!-- RN-106: mesma sinalização do desktop. -->
+                  <SiChip
+                    v-if="item.coberturasNaoContempladas.length > 0"
+                    color="warning"
+                    size="small"
+                    :title="coberturasNaoContempladasTitle(item)"
+                  >
+                    {{ coberturasNaoContempladasLabel(item) }}
+                  </SiChip>
+                </div>
               </div>
               <div class="si-qg-step4__card-facts">
                 <div class="si-qg-step4__card-premio">
@@ -751,6 +788,14 @@ onMounted(() => {
   justify-content: space-between;
   gap: var(--si-space-2);
   margin-bottom: var(--si-space-3);
+}
+
+/* RN-106: chip de classificação + aviso de cobertura não contemplada, lado a lado. */
+.si-qg-step4__status-cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--si-space-2);
 }
 
 .si-qg-step4__card-name {

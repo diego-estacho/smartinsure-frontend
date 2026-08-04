@@ -55,8 +55,8 @@ export interface RiskData {
   /** Vigência em ISO (yyyy-MM-dd), padrão do backend. */
   startDate: string | null
   endDate: string | null
-  coverageMulta: boolean
-  coverageLabor: boolean
+  /** RN-104: Coberturas Adicionais canônicas escolhidas (ids do catálogo). */
+  additionalCoverageIds: string[]
   /** Modalidade complementar (opcional) — UI-only por ora (contrato ainda não a persiste). */
   complementaryModalityId: string | null
 }
@@ -68,8 +68,7 @@ function emptyRisk(): RiskData {
     insuredAmount: null,
     startDate: null,
     endDate: null,
-    coverageMulta: false,
-    coverageLabor: false,
+    additionalCoverageIds: [],
     complementaryModalityId: null,
   }
 }
@@ -258,8 +257,7 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
       r.insuredAmount,
       r.startDate,
       r.endDate,
-      r.coverageMulta,
-      r.coverageLabor,
+      [...r.additionalCoverageIds].sort(),
       r.complementaryModalityId,
     ])
   }

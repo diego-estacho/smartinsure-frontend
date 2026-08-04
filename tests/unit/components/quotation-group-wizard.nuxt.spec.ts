@@ -1016,7 +1016,7 @@ describe('Salvar QuotationGroup + recálculo inteligente (exec-plan 0015)', () =
     branchId: null,
     insuredId: 'i',
     scope: { mode: 'all', insurerIds: [] },
-    risk: { modalityId: 'm', insuredAmount: 1000, startDate: '2026-01-01', endDate: '2026-02-01', coverageMulta: false, coverageLabor: false },
+    risk: { modalityId: 'm', insuredAmount: 1000, startDate: '2026-01-01', endDate: '2026-02-01', additionalCoverageIds: ['ac-multas'] },
   }
 
   beforeEach(() => {
@@ -1043,8 +1043,8 @@ describe('Salvar QuotationGroup + recálculo inteligente (exec-plan 0015)', () =
         coverageEndDate: '2026-02-01',
         scopeMode: 'All',
         insurerIds: [],
-        includesPenaltyCoverage: false,
-        includesLaborCoverage: false,
+        // RN-104: a escolha vai pelos ids das Coberturas Adicionais canônicas.
+        additionalCoverageIds: ['ac-multas'],
       },
     })
 
