@@ -134,15 +134,13 @@ const rangeLabel = computed(() => {
 // truncam com reticências e cedem espaço para Modalidade e Status respirarem; a tabela preenche
 // a largura do card, então o que importa é a proporção.
 const headers = [
-  { title: 'Cotação', key: 'number', sortable: false, width: 114 },
-  { title: 'Tomador', key: 'policyHolderName', sortable: false, width: 128 },
-  { title: 'Segurado', key: 'insuredName', sortable: false, width: 110 },
-  { title: 'Seguradora', key: 'insurerName', sortable: false, width: 104 },
-  { title: 'Modalidade', key: 'modalityName', sortable: false, width: 122 },
-  { title: 'Valores', key: 'values', sortable: false, align: 'end', width: 148 },
-  { title: 'Status', key: 'result', sortable: false, width: 156 },
-  { title: 'Vigência', key: 'coverage', sortable: false, width: 114 },
-  { title: 'Ações', key: 'actions', sortable: false, align: 'end', width: 128 },
+  { title: 'Cotação', key: 'number', sortable: false, width: 112 },
+  { title: 'Tomador / Segurado', key: 'policyHolderName', sortable: false, width: 238 },
+  { title: 'Seguradora / Modalidade', key: 'insurerName', sortable: false, width: 232 },
+  { title: 'Valores', key: 'values', sortable: false, align: 'start', width: 140 },
+  { title: 'Status', key: 'result', sortable: false, width: 150 },
+  { title: 'Vigência', key: 'coverage', sortable: false, width: 110 },
+  { title: 'Ações', key: 'actions', sortable: false, align: 'start', width: 126 },
 ] as const
 
 await refresh()
@@ -428,32 +426,32 @@ function changePageSize(size: number) {
             <span class="si-quotations__mono">{{ item.number ?? '—' }}</span>
           </template>
 
+          <!-- Tomador (forte) + Segurado (cinza) empilhados, alinhados com IS/Prêmio. -->
           <template #[`item.policyHolderName`]="{ item }">
-            <span
-              class="si-cell-strong si-quotations__truncate"
-              :title="item.policyHolderName"
-            >{{ item.policyHolderName }}</span>
+            <div class="si-quotations__stack">
+              <span
+                class="si-cell-strong si-quotations__truncate"
+                :title="item.policyHolderName"
+              >{{ item.policyHolderName }}</span>
+              <span
+                class="si-quotations__muted si-quotations__truncate"
+                :title="item.insuredName"
+              >{{ item.insuredName }}</span>
+            </div>
           </template>
 
-          <template #[`item.insuredName`]="{ item }">
-            <span
-              class="si-quotations__muted si-quotations__truncate"
-              :title="item.insuredName"
-            >{{ item.insuredName }}</span>
-          </template>
-
+          <!-- Seguradora + Modalidade (cinza) empilhados. -->
           <template #[`item.insurerName`]="{ item }">
-            <span
-              class="si-quotations__truncate"
-              :title="item.insurerName"
-            >{{ item.insurerName }}</span>
-          </template>
-
-          <template #[`item.modalityName`]="{ item }">
-            <span
-              class="si-quotations__muted si-quotations__truncate"
-              :title="item.modalityName"
-            >{{ item.modalityName }}</span>
+            <div class="si-quotations__stack">
+              <span
+                class="si-quotations__truncate"
+                :title="item.insurerName"
+              >{{ item.insurerName }}</span>
+              <span
+                class="si-quotations__muted si-quotations__truncate"
+                :title="item.modalityName"
+              >{{ item.modalityName }}</span>
+            </div>
           </template>
 
           <template #[`item.values`]="{ item }">
@@ -609,15 +607,19 @@ function changePageSize(size: number) {
       </template>
     </SiCard>
 
-    <QuotationsFiltersDrawer
-      v-model="drawerOpen"
-      :filters="filters"
-      :result-count="totalCount"
-      :insurers="insurers"
-      :modalities="modalities"
-      @apply="applyFilters"
-      @clear="clearDrawerFilters"
-    />
+    <!-- ClientOnly: o drawer temporário não é renderizado no SSR, evitando o "flash" meio-aberto
+         antes da hidratação (só monta no cliente, já fechado). -->
+    <ClientOnly>
+      <QuotationsFiltersDrawer
+        v-model="drawerOpen"
+        :filters="filters"
+        :result-count="totalCount"
+        :insurers="insurers"
+        :modalities="modalities"
+        @apply="applyFilters"
+        @clear="clearDrawerFilters"
+      />
+    </ClientOnly>
   </VContainer>
 </template>
 
@@ -676,14 +678,11 @@ function changePageSize(size: number) {
   min-width: 280px;
 }
 
-/* Busca em branco (surface), não o cinza translúcido do outlined padrão: campo limpo sobre o card. */
+/* Busca com fundo cinza (theme background = #f8fafc, o `--si-fundo` do protótipo) sobre o card branco —
+   é assim no protótipo; NÃO branco. */
 .si-quotations__search :deep(.v-field) {
   min-height: 48px;
-  background: rgb(var(--v-theme-surface));
-}
-
-.si-quotations__search :deep(.v-field__overlay) {
-  opacity: 0;
+  background: rgb(var(--v-theme-background));
 }
 
 .si-quotations__filters-btn.v-btn {
@@ -714,6 +713,21 @@ function changePageSize(size: number) {
   overflow: hidden;
 }
 
+/* Conteúdo alinhado ao TOPO: a 1ª linha de cada célula (Tomador, Seguradora, IS, número, status,
+   início da vigência) fica na mesma linha; a 2ª (Segurado, Modalidade, Prêmio, fim) logo abaixo. */
+.si-quotations__table :deep(td) {
+  vertical-align: top;
+  padding-block: var(--si-space-3) !important;
+}
+
+/* Par empilhado: primário (forte) em cima, secundário (cinza) embaixo — espelha o Valores. */
+.si-quotations__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
 /* Nomes longos (Tomador/Segurado/Seguradora/Modalidade) truncam em 1 linha com reticências;
    o texto completo aparece no tooltip nativo (atributo title da célula). */
 .si-quotations__truncate {
@@ -736,7 +750,7 @@ function changePageSize(size: number) {
 .si-quotations__values {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 2px;
 }
 
@@ -792,17 +806,19 @@ function changePageSize(size: number) {
 .si-quotations__row-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: var(--si-space-1);
 }
 
-/* Botão de ação da linha compacto (DS compactBtn): fonte menor e caixa justa, como Corretoras. */
+/* Botão de ação da linha compacto (DS compactBtn): fonte menor e caixa justa, como Corretoras.
+   `min-width` uniforme para "Emitir" e "Continuar" terem a MESMA largura e alinharem na coluna. */
 .si-quotations__row-btn.v-btn {
   font-size: var(--si-fs-caption);
   font-weight: var(--si-font-weight-semibold);
   letter-spacing: 0;
   text-transform: none;
   padding-inline: 12px;
+  min-width: 88px;
 }
 
 /* Kebab menor (34px), proporcional ao botão compacto — evita o ícone dominar a coluna. */
