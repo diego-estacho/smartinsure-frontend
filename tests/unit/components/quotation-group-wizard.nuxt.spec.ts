@@ -797,7 +797,6 @@ describe('Etapa 4 — Cotações (exec-plan 0013, RN-056..059)', () => {
     const store = useQuotationGroupWizardStore()
     store.startOffer()
     store.setQuotationGroupId('qg-1')
-    store.setBrokerageId('brk-1')
     const w = await mountSuspended(Step4Quotations)
     expect(w.find('.si-qg-step4').exists()).toBe(true)
   })

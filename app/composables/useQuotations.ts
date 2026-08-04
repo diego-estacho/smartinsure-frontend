@@ -200,11 +200,13 @@ export function mapQuotations(response: ListResponse): QuotationsResult {
 }
 
 export function useQuotations(api: typeof $fetch = useNuxtApp().$api as typeof $fetch) {
-  /** RN-056/057: dispara a cotação de todas as Seguradoras do escopo (fan-out, 202). */
-  async function runQuotations(groupId: string, brokerageId: string): Promise<RunResponse> {
+  /**
+   * RN-056/057: dispara a cotação de todas as Seguradoras do escopo (fan-out, 202).
+   * RN-103: a Corretora é a do Escopo ativo do acesso, resolvida no servidor — não vai no corpo.
+   */
+  async function runQuotations(groupId: string): Promise<RunResponse> {
     return await api<RunResponse>(`/api/quotation-groups/${groupId}/quotations`, {
       method: 'POST',
-      body: { brokerageId },
     })
   }
 

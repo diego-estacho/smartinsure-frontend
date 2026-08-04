@@ -2391,11 +2391,7 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["RunQuotationsBody"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Accepted */
                 202: {
@@ -4070,10 +4066,6 @@ export interface components {
             importedModalityId: string;
             ignored: boolean;
         };
-        RunQuotationsBody: {
-            /** Format: uuid */
-            brokerageId: string;
-        };
         RunQuotationsResponse: {
             /** Format: uuid */
             quotationGroupId: string;
@@ -4103,8 +4095,6 @@ export interface components {
             profile: null | string;
         };
         SubmitQuotationMinutaBody: {
-            /** Format: uuid */
-            brokerageId: string;
             terms: components["schemas"]["QuotationTermInput"][];
             particularClauses: components["schemas"]["QuotationClauseInput"][];
         };

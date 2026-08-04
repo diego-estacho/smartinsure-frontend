@@ -135,7 +135,8 @@ async function generate(): Promise<void> {
     generateError.value = 'Não foi possível identificar o grupo de cotação para cotar.'
     return
   }
-  // Sem Corretora ativa na sessão (RN-064) não há como resolver as Habilitações — orienta a escolher.
+  // UX: sem Corretora ativa na sessão (RN-064) o gate orienta a escolher antes de cotar. A cotação em si
+  // não envia a Corretora — o backend a resolve pelo claim do Escopo ativo (RN-103); isto é só pré-check.
   if (!brokerageId) {
     generateError.value = 'Selecione uma corretora ativa para cotar.'
     return
@@ -143,7 +144,8 @@ async function generate(): Promise<void> {
 
   selectError.value = null
   const started = await runGenerate(async () => {
-    await runQuotations(groupId, brokerageId)
+    // RN-103: a Corretora (fan-out) é a do Escopo ativo do acesso, resolvida no servidor.
+    await runQuotations(groupId)
     await refreshQuotations()
     return true
   }, 'Não foi possível iniciar as cotações.')
@@ -154,8 +156,7 @@ async function generate(): Promise<void> {
 async function baixarMinuta(): Promise<void> {
   const groupId = wizard.quotationGroupId
   const quotation = wizard.selectedQuotation
-  const brokerageId = wizard.brokerageId
-  if (!groupId || !quotation || !brokerageId) return
+  if (!groupId || !quotation) return
 
   const terms = Object.entries(wizard.minuta)
     .map(([name, value]) => ({ name, value: String(value ?? '') }))
@@ -171,7 +172,7 @@ async function baixarMinuta(): Promise<void> {
     }))
 
   const result = await runDraft(
-    () => submitMinuta(groupId, quotation.id, { brokerageId, terms, particularClauses }),
+    () => submitMinuta(groupId, quotation.id, { terms, particularClauses }),
     'Não foi possível baixar a minuta.',
   )
   if (result === undefined) return
