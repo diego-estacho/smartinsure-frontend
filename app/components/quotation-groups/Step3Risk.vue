@@ -13,6 +13,7 @@ import type { ModalityListItem } from '~/composables/useModalities'
 import type { AvailableAdditionalCoverage } from '~/composables/useAvailableAdditionalCoverages'
 import { fromIsoDate, toIsoDate } from '~/lib/dates'
 import { extractApiErrorMessage } from '~/lib/apiError'
+import { pruneSelection } from '~/lib/additionalCoverageSelection'
 
 const wizard = useQuotationGroupWizardStore()
 const { listModalities } = useModalities()
@@ -41,7 +42,12 @@ const coverages = ref<AvailableAdditionalCoverage[]>([])
 const loadingCoverages = ref(false)
 const coveragesError = ref<string | null>(null)
 
+// Latest-wins: trocar de Modalidade rápido pode fazer a resposta antiga chegar depois da nova.
+// Sem este token, a lista exibida seria a da Modalidade errada.
+let coveragesRequest = 0
+
 async function loadCoverages(id: string | null): Promise<void> {
+  const request = ++coveragesRequest
   coveragesError.value = null
 
   if (!id) {
@@ -51,15 +57,25 @@ async function loadCoverages(id: string | null): Promise<void> {
 
   loadingCoverages.value = true
   try {
-    coverages.value = await listByModality(id)
+    const loaded = await listByModality(id)
+    if (request !== coveragesRequest) return
+
+    coverages.value = loaded
+
+    // A seleção reidratada de um Rascunho pode conter cobertura que saiu da oferta (curadoria mudou,
+    // Seguradora inativada). Sem podar, o id fica invisível na tela e seria reenviado no salvar —
+    // o servidor recusaria e o corretor não entenderia por quê.
+    wizard.risk.additionalCoverageIds = pruneSelection(wizard.risk.additionalCoverageIds, loaded)
   }
   catch (err) {
+    if (request !== coveragesRequest) return
+
     coverages.value = []
     coveragesError.value = extractApiErrorMessage(
       err, 'Não foi possível carregar as coberturas adicionais.')
   }
   finally {
-    loadingCoverages.value = false
+    if (request === coveragesRequest) loadingCoverages.value = false
   }
 }
 
