@@ -667,6 +667,27 @@ onBeforeUnmount(() => {
   min-height: 0;
   overflow-y: auto;
   padding-inline: var(--si-space-2);
+  /* Scrollbar fino e suave (thumb claro translúcido sobre o carvão), no lugar da barra padrão
+   * "pesada" do SO. Firefox usa scrollbar-color/width; WebKit/Chromium os pseudo-elementos. */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--v-theme-on-charcoal), 0.22) transparent;
+}
+
+.si-shell-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.si-shell-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.si-shell-nav::-webkit-scrollbar-thumb {
+  background: rgba(var(--v-theme-on-charcoal), 0.22);
+  border-radius: var(--si-radius-pill);
+}
+
+.si-shell-nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--v-theme-on-charcoal), 0.35);
 }
 
 /* Item sobre carvão: texto suave; hover/ativo com realce. O verde é ACCENT (barra + ícone)
@@ -676,6 +697,22 @@ onBeforeUnmount(() => {
   border-radius: var(--si-radius-md);
   margin-block: var(--si-space-1);
   min-height: var(--si-space-10);
+}
+
+/* Ícone e rótulo do item: o default do Vuetify (ícone 24px) fica grande e pesado vs o protótipo —
+ * ícone 20px + rótulo 14px (DS small) deixam o menu mais equilibrado e leve, como no handoff. */
+.si-shell-nav :deep(.si-shell-nav-item .v-list-item__prepend .v-icon) {
+  font-size: 20px;
+}
+
+.si-shell-nav :deep(.si-shell-nav-item .v-list-item-title) {
+  font-size: var(--si-fs-small);
+  line-height: 1.3;
+}
+
+/* Aproxima o rótulo do ícone (o prepend do Vuetify reserva espaço para o ícone de 24). */
+.si-shell-nav :deep(.si-shell-nav-item .v-list-item__prepend) {
+  margin-inline-end: calc(-1 * var(--si-space-2));
 }
 
 .si-shell-nav :deep(.v-list-item:hover) {
