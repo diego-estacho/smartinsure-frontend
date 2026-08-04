@@ -1635,6 +1635,125 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/quotation-groups/{groupId}/policy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    groupId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["RequestPolicyIssuanceBody"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RequestPolicyIssuanceResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotation-groups/{groupId}/quotations/selected/tax": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    groupId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateQuotationTaxBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UpdateQuotationTaxResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quotation-groups/{groupId}/insurer-term": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    groupId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GetInsurerTermResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/policy-holders": {
         parameters: {
             query?: never;
@@ -3264,6 +3383,8 @@ export interface components {
             insurerIds: string[];
             includesPenaltyCoverage: boolean;
             includesLaborCoverage: boolean;
+            /** Format: uuid */
+            insuredAddressId?: null | string;
         };
         CreateQuotationGroupResponse: {
             /** Format: uuid */
@@ -3436,6 +3557,11 @@ export interface components {
             referenceExternalId: null | string;
             status: string;
         };
+        GetInsurerTermResponse: {
+            /** Format: uuid */
+            insurerId: string;
+            content: string;
+        };
         GetModalityResponse: {
             /** Format: uuid */
             id: string;
@@ -3540,6 +3666,14 @@ export interface components {
             /** Format: uuid */
             id: string;
             status: string;
+        };
+        InstallmentOptionResponse: {
+            /** Format: int32 */
+            number: number | string;
+            description: null | string;
+            /** Format: double */
+            value: number | string;
+            hasInterest: boolean;
         };
         InsurerListItemResponse: {
             /** Format: uuid */
@@ -3793,6 +3927,18 @@ export interface components {
             description: null | string;
             isSystem: boolean;
         };
+        PersonAddressOptionResponse: {
+            /** Format: uuid */
+            id: string;
+            isMain: boolean;
+            zipCode: null | string;
+            street: null | string;
+            number: null | string;
+            complement: null | string;
+            neighborhood: null | string;
+            city: null | string;
+            state: null | string;
+        };
         PersonAddressResponse: {
             zipCode: null | string;
             street: null | string;
@@ -3815,6 +3961,7 @@ export interface components {
             preSelectedBranchDocumentNumber?: null | string;
             /** Format: uuid */
             preSelectedBranchId?: null | string;
+            addresses?: null | components["schemas"]["PersonAddressOptionResponse"][];
         };
         PolicyHolderAddressResponse: {
             /** Format: uuid */
@@ -3901,6 +4048,14 @@ export interface components {
             socialName: null | string;
             mainAddress: null | components["schemas"]["QuotationGroupPersonAddressResponse"];
         };
+        QuotationInstallmentOptionResponse: {
+            /** Format: int32 */
+            number: number | string;
+            description: null | string;
+            /** Format: double */
+            value: number | string;
+            hasInterest: boolean;
+        };
         QuotationListItemResponse: {
             /** Format: uuid */
             quotationId: string;
@@ -3927,6 +4082,9 @@ export interface components {
             ccgMaxLimitWithoutNeed: null | number | string;
             ccgSigned: boolean;
             reasons: string[];
+            installmentOptions: components["schemas"]["QuotationInstallmentOptionResponse"][];
+            possibleGracePeriodsInDays: (number | string)[];
+            requiredDocuments: components["schemas"]["QuotationRequiredDocumentResponse"][];
         };
         QuotationMinutaClauseResponse: {
             externalId: string;
@@ -3939,6 +4097,10 @@ export interface components {
             clauses: components["schemas"]["QuotationMinutaClauseResponse"][];
             filledTagsJson?: null | string;
             filledClausesJson?: null | string;
+        };
+        QuotationRequiredDocumentResponse: {
+            name: string;
+            description: null | string;
         };
         QuotationTermInput: {
             name: string;
@@ -3954,6 +4116,22 @@ export interface components {
             /** Format: uuid */
             modalityId: string;
             linkSource: string;
+        };
+        RequestPolicyIssuanceBody: {
+            /** Format: int32 */
+            installmentNumber: number | string;
+            /** Format: int32 */
+            gracePeriodInDays: number | string;
+            termAccepted: boolean;
+        };
+        RequestPolicyIssuanceResponse: {
+            /** Format: uuid */
+            policyId: string;
+            policyExternalId: string;
+            proposalNumber?: null | string;
+            /** Format: date-time */
+            requestedAt: string;
+            quotationGroupStatus: string;
         };
         ResendInvitationResponse: {
             /** Format: uuid */
@@ -4145,6 +4323,22 @@ export interface components {
             includesPenaltyCoverage: boolean;
             includesLaborCoverage: boolean;
             status: string;
+        };
+        UpdateQuotationTaxBody: {
+            /** Format: double */
+            tax: number | string;
+        };
+        UpdateQuotationTaxResponse: {
+            /** Format: double */
+            premium?: null | number | string;
+            /** Format: double */
+            tax?: null | number | string;
+            /** Format: double */
+            commissionPercentage?: null | number | string;
+            /** Format: double */
+            commissionValue?: null | number | string;
+            installmentOptions?: components["schemas"]["InstallmentOptionResponse"][];
+            possibleGracePeriodsInDays?: (number | string)[];
         };
         UpdateScopedProfileResponse: {
             /** Format: uuid */

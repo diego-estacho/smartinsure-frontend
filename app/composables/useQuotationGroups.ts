@@ -18,6 +18,8 @@ export interface QuotationGroupPayload {
   /** Filial marcada na etapa 1 (RN-102); null = estabelecimento é a matriz. */
   branchId: string | null
   insuredId: string | null
+  /** RN-503: endereço do Segurado escolhido no passo 2; null deixa o servidor usar o principal. */
+  insuredAddressId?: string | null
   scope: { mode: string, insurerIds: string[] }
   risk: {
     modalityId: string | null
@@ -62,6 +64,9 @@ function toRequestBody(payload: QuotationGroupPayload): QuotationGroupBody {
     // real e não mais um placeholder: o wizard passa a escolha feita pelo corretor.
     branchId: payload.branchId,
     insuredId: payload.insuredId ?? '',
+    // RN-503: endereço do Segurado escolhido no passo 2 — o servidor replica os valores na oferta.
+    // `null` significa "usa o principal", decisão do servidor, não um placeholder do cliente.
+    insuredAddressId: payload.insuredAddressId ?? null,
     modalityId: payload.risk.modalityId ?? '',
     insuredAmount,
     coverageStartDate: payload.risk.startDate ?? '',

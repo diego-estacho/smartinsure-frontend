@@ -224,6 +224,58 @@ O `brokerageId` da oferta (origem do fan-out/seleção/minuta no Passo 4) deixou
 
 **Fan-out real (recotar, RN-060):** alterando a IS no Passo 3 e confirmando o fork, o Passo 4 disparou o fan-out de verdade — **POST `/quotation-groups/{novoId}/quotations` com corpo `{"brokerageId":"019f7fb4-6c07-7dd5-a971-ad1f1d223ae0"}`** (FINN, da sessão), 200, seguido do polling (ADR-051). Backend abriu **7 Cotações = as 7 Habilitações ativas da FINN**, cada uma com veredito real do provedor PlugV2 QA (dedup "já existe cotação", "modalidade indisponível", "grupo econômico do tomador não definido" etc.). Prova ponta-a-ponta: switcher → sessão → `wizard.brokerageId` → POST → Habilitações da Corretora. Screenshot `0015-incr9-recotar-fanout-finn.png`.
 
+### Incremento 10 — Passo 5 real: emissão integrada (RN-500..RN-514) (2026-08-03) — cross-repo
+
+Sai o mock da etapa 5. A jornada de Emissão foi catalogada antes do código
+(`regras-de-negocio/emissao.md`, RN-500..RN-514, faixa 500 por decisão do dono) e implementada em 12
+issues rastreadas em `artefatos/tickets/emissao-apolice/`.
+
+**Backend:** Permissão `policies.issue`; ACL passa a traduzir parcelamento, dias de vencimento e
+documentos exigidos (estavam sendo descartados na resposta do `/Cotation`); `Quotation` guarda essas
+opções e a Habilitação que a originou (RN-512); `QuotationAddress` replica o endereço do Segurado na
+oferta (RN-503); `InsurerTerm` + `TermAcceptance` com seed (RN-506); situações `Quoted` e
+`EmissionRequested` (RN-508); ajuste de taxa via `UpdateProposalFinancialData` (RN-504); portão do
+emitir com 10 testes provando que **nenhuma** chamada mutante é gasta em recusa previsível (RN-500/501/
+502/505/507); sequência do emitir (termos → aceite → `CreatePolicy`) com ordem travada por teste,
+entidade `Policy` e cancelamento das irmãs (RN-509/511/514); leitura do Termo e das opções de pagamento
+para a tela. **702/702 testes verdes**, solução compila sem erro.
+
+**dbmigration:** 5 migrations (permissão + concessão, colunas de pagamento/documentos/habilitação na
+Cotação, `QuotationAddresses`, Termo/aceite com seed, `Policies`), todas aplicadas por `sqlcmd -b -I` no
+banco de dev e **reaplicadas** para provar idempotência. Nota operacional: `CREATE INDEX` filtrado sobre
+coluna criada no mesmo arquivo exige `EXEC sp_executesql` (o batch compila inteiro antes de executar) —
+`GO` no meio não é opção neste repositório.
+
+**Front:** `useIssuance` deixou de ser mock (`requestIssuance`/`updateTax`/`getInsurerTerm` + 3 rotas
+Nitro); campo "Número do contrato" **removido** (é Tag da minuta, RN-502); taxa como único valor
+editável, com recálculo pelo servidor; prêmio/comissão em leitura; parcelamento e vencimento **das
+opções da Cotação**; documentos exigidos; aviso de Contragarantia; Termo vindo do servidor; desfecho
+**"Emissão solicitada"** (nunca "Apólice emitida" — a plataforma não afirma o que não confirmou).
+Passo 2 passou a escolher o endereço do Segurado com os ids reais do cadastro. **346/346 vitest**,
+typecheck/lint/build/`check-harness` verdes.
+
+**Runtime (dev :3000 + API :5158, Playwright).** O backend recusa a sessão do dev-auth (401, mesmo
+achado do incremento 3), então **as leituras de sessão e as três rotas de emissão foram interceptadas no
+Playwright e o estado do wizard injetado via Pinia** — as telas são reais, os dados são sintéticos:
+- `0015-12a-passo5-emissao-desktop.png` — documentos exigidos, prêmio/comissão em leitura, taxa com
+  "Recalcular", pagamento com as opções da Cotação; sem campo de contrato.
+- `0015-12b-termo-do-servidor.png` — modal com o texto vindo do servidor; "Emitir apólice" desabilitado
+  enquanto o aceite não é marcado (RN-506).
+- `0015-12c-emissao-solicitada.png` — desfecho "Emissão solicitada" com o número da proposta.
+- `0015-12d-bloqueio-ccg.png` — aviso de Contragarantia exigida, no topo, antes de preencher (RN-501).
+- `0015-12e-passo5-mobile.png` — 390px: coluna única, resumo colapsado, "Passo 5 de 5".
+- `0015-12f-recalculo-taxa.png` — taxa 1,80 → 2,50 e o prêmio passa de **R$ 412,50 a R$ 452,80** com os
+  valores devolvidos pela Seguradora; a parcela escolhida sobrevive porque continua na lista (RN-504).
+
+**Defeito encontrado e corrigido na captura:** a seção da minuta renderizava um card vazio quando a
+Modalidade não define Tag nem Cláusula — a RN-502 prevê "nada a preencher". O wrapper foi removido e o
+componente passou a controlar os próprios blocos (`0015-12-defeito-card-vazio-minuta-corrigido.png`
+registra o antes).
+
+**Fora desta entrega (OPEN-07):** confirmação da emissão (número da apólice, arquivo, boletos) e a
+reconciliação do caso "Seguradora emitiu, plataforma não registrou"; co-corretagem; envio de documentos;
+assinatura da Contragarantia; followup da Análise de subscrição.
+
 ## Aberto (registrado)
 
 - **Ponto de entrada (decidido 2026-07-24):** habilitar o item de menu "Cotações" → rota `/cotacoes` = página placeholder "em construção" (centro) + botão **"Nova oferta"** no canto superior direito que leva a `/ofertas/nova`. A listagem real de cotações segue fora de escopo.

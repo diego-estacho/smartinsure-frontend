@@ -38,6 +38,8 @@ function groupPayload() {
     policyHolderId: wizard.policyHolder?.id ?? null,
     branchId: wizard.selectedBranchId,
     insuredId: wizard.insured?.id ?? null,
+    // RN-503: endereço do Segurado escolhido no passo 2 acompanha o salvar da oferta.
+    insuredAddressId: wizard.insured?.addressId ?? null,
     scope: { mode: wizard.scope.mode, insurerIds: wizard.scope.insurerIds },
     risk: {
       modalityId: wizard.risk.modalityId,

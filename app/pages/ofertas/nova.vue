@@ -78,6 +78,10 @@ async function restoreFromRoute(groupId: string): Promise<void> {
     documentNumber: group.insured.documentNumber,
     socialName: group.insured.socialName ?? null,
     mainAddress: formatPersonAddress(group.insured.mainAddress),
+    // RN-503: a oferta salva guarda a RÉPLICA do endereço, não o id do cadastro — então não há id a
+    // reidratar. `null` diz ao servidor "preserva o que já está replicado": salvar de novo sem passar
+    // pela etapa do Segurado não troca o endereço combinado. Trocar exige reescolher no passo 2.
+    addressId: null,
   }
 
   wizard.setPolicyHolder(policyHolder)

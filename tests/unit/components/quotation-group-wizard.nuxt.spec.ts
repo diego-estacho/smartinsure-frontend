@@ -12,7 +12,6 @@ import Step5Issuance from '~/components/quotation-groups/Step5Issuance.vue'
 import Step2Insured from '~/components/quotation-groups/Step2Insured.vue'
 import Step1PolicyHolder from '~/components/quotation-groups/Step1PolicyHolder.vue'
 import type { Quotation } from '~/composables/useQuotations'
-import { useIssuance } from '~/composables/useIssuance'
 import { usePersons } from '~/composables/usePersons'
 import { useQuotationGroups } from '~/composables/useQuotationGroups'
 import { buildObjetoTemplate, parseTemplate } from '~/lib/minuta'
@@ -857,50 +856,47 @@ describe('Etapa 5 — Emissão (exec-plan 0015, incremento 5)', () => {
     forceDesktopViewport()
   })
 
-  it('useIssuance (mock) retorna o identificador da apólice', async () => {
-    const { issue } = useIssuance()
-    const result = await issue({ delayMs: 0 })
-    expect(result.policyId).toBeTruthy()
-  })
-
-  it('validateCurrentStep exige contrato e forma de pagamento na emissão', () => {
+  // RN-505: o número do contrato saiu da validação (é Tag da minuta, RN-502); o que a etapa exige é a
+  // forma de pagamento, escolhida entre as opções que a Seguradora informou na Cotação.
+  it('validateCurrentStep exige a forma de pagamento na emissão', () => {
     const store = useQuotationGroupWizardStore()
     store.startOffer()
     for (let i = 0; i < 4; i++) store.goNext()
     expect(store.currentStep).toBe(4)
-    expect(store.validateCurrentStep()).toContain('contrato')
-    store.issuance.contrato = '2026/0481-SP'
-    store.issuance.parcelas = '3'
-    store.issuance.vencimento = '30'
+    expect(store.validateCurrentStep()).toContain('forma de pagamento')
+    store.issuance.parcelas = 3
+    store.issuance.vencimento = 30
     expect(store.validateCurrentStep()).toBeNull()
   })
 
   it('reset limpa os dados de emissão', () => {
     const store = useQuotationGroupWizardStore()
-    store.issuance.contrato = 'X'
-    store.issuanceState = 'success'
+    store.issuance.taxa = '2,5'
+    store.issuanceState = 'requested'
     store.termOpen = true
     store.reset()
-    expect(store.issuance.contrato).toBe('')
+    expect(store.issuance.taxa).toBe('')
     expect(store.issuanceState).toBe('form')
     expect(store.termOpen).toBe(false)
   })
 
-  it('a etapa 5 renderiza o formulário (contrato + forma de pagamento)', async () => {
+  it('a etapa 5 renderiza prêmio/comissão e a forma de pagamento', async () => {
     useQuotationGroupWizardStore().startOffer()
     const w = await mountSuspended(Step5Issuance)
     const text = w.text()
-    expect(text).toContain('Número do contrato')
+    expect(text).toContain('Prêmio e comissão')
     expect(text).toContain('Forma de pagamento')
+    expect(text).not.toContain('Número do contrato')
   })
 
-  it('no estado de sucesso, mostra "Apólice emitida"', async () => {
+  // RN-508/RN-514: o desfecho é "Emissão solicitada" — a plataforma não afirma apólice emitida.
+  it('no desfecho, mostra "Emissão solicitada" com o número da proposta', async () => {
     const store = useQuotationGroupWizardStore()
-    store.issuance.contrato = '2026/0481-SP'
-    store.issuanceState = 'success'
-    store.policyId = 'AP-1'
+    store.setIssuanceRequested({ policyExternalId: 'AP-EXT-1', proposalNumber: 'PROP-77' })
     const w = await mountSuspended(Step5Issuance)
-    expect(w.text()).toContain('Apólice emitida')
+    expect(w.text()).toContain('Emissão solicitada')
+    expect(w.text()).toContain('PROP-77')
+    expect(w.text()).not.toContain('Apólice emitida')
   })
 })
 
@@ -1038,6 +1034,9 @@ describe('Salvar QuotationGroup + recálculo inteligente (exec-plan 0015)', () =
         policyHolderId: 'p',
         branchId: null,
         insuredId: 'i',
+        // RN-503: sem escolha no passo 2, null pede ao servidor o principal (na criação) ou a
+        // preservação da réplica já combinada (na atualização).
+        insuredAddressId: null,
         modalityId: 'm',
         insuredAmount: 1000,
         coverageStartDate: '2026-01-01',

@@ -43,6 +43,11 @@ export interface SelectedInsured {
   documentNumber: string
   socialName: string | null
   mainAddress: string | null
+  /**
+   * RN-503: endereço do Segurado escolhido para a oferta (id do cadastro da Pessoa). Acompanha o
+   * salvar do grupo; o backend replica os valores. `null` deixa o servidor usar o principal.
+   */
+  addressId: string | null
 }
 
 /** Dados de risco da etapa 3 (modalidade, IS, vigência e coberturas). */
@@ -75,20 +80,26 @@ function emptyRisk(): RiskData {
 }
 
 /** Dados da emissão (etapa 5). */
+/**
+ * Dados da etapa de emissão (RN-504/RN-505). A taxa é editável e vai ao servidor, que devolve os
+ * valores recalculados pela Seguradora; parcelamento e vencimento são escolhidos **entre as opções da
+ * Cotação**. O número do contrato saiu daqui: é Tag da minuta (RN-502), não campo próprio.
+ */
 export interface IssuanceData {
-  contrato: string
   taxa: string
-  comissaoCorretagem: string
-  parcelas: string | null
-  vencimento: string | null
+  parcelas: number | null
+  vencimento: number | null
 }
 
 function emptyIssuance(): IssuanceData {
-  return { contrato: '', taxa: '', comissaoCorretagem: '', parcelas: null, vencimento: null }
+  return { taxa: '', parcelas: null, vencimento: null }
 }
 
-/** 'form' = formulário; 'emitting' = processando; 'success' = apólice emitida. */
-export type IssuanceState = 'form' | 'emitting' | 'success'
+/**
+ * 'form' = formulário; 'emitting' = pedido em andamento; 'requested' = emissão SOLICITADA à Seguradora
+ * (RN-508). Não existe 'success'/'emitida' nesta fase: a plataforma não afirma o que não confirmou.
+ */
+export type IssuanceState = 'form' | 'emitting' | 'requested'
 
 /** 'entry' = tela de escopo (antes do stepper); 'steps' = as 5 etapas do stepper. */
 export type WizardPhase = 'entry' | 'steps'
@@ -129,7 +140,10 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
   // Emissão (etapa 5): dados do formulário, estado do processo, apólice e o termo de aceite.
   const issuance = ref<IssuanceData>(emptyIssuance())
   const issuanceState = ref<IssuanceState>('form')
+  /** RN-514: referência da Apólice devolvida pela Seguradora no pedido de emissão. */
   const policyId = ref<string | null>(null)
+  /** RN-514: número da proposta — é por ele que o corretor identifica a oferta solicitada. */
+  const issuedProposalNumber = ref<string | null>(null)
   const termOpen = ref(false)
   const termAccepted = ref(false)
 
@@ -186,6 +200,56 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
   function setBranch(id: string): void {
     if (!policyHolder.value) return
     policyHolder.value.selectedBranchId = id
+  }
+
+  /**
+   * RN-508/RN-514: registra o desfecho do pedido de emissão. Situação **solicitada**, não "emitida" — a
+   * confirmação junto à Seguradora (número da apólice, arquivo, boletos) é demanda própria.
+   */
+  /**
+   * RN-504: espelha na Cotação escolhida os valores que a Seguradora devolveu no ajuste de taxa — o
+   * servidor já os aplicou; aqui a tela deixa de mostrar número velho. As opções antigas não sobrevivem,
+   * porque se referiam a outro prêmio, e uma escolha de pagamento que saiu da lista é descartada.
+   */
+  function applyRecalculatedQuotation(result: {
+    premium?: number | null
+    tax?: number | null
+    commissionPercentage?: number | null
+    commissionValue?: number | null
+    installmentOptions?: { number: number, description?: string | null, value: number, hasInterest: boolean }[]
+    possibleGracePeriodsInDays?: number[]
+  }): void {
+    if (!selectedQuotation.value) return
+
+    selectedQuotation.value = {
+      ...selectedQuotation.value,
+      premio: result.premium ?? selectedQuotation.value.premio,
+      taxa: result.tax ?? selectedQuotation.value.taxa,
+      comissao: result.commissionPercentage ?? selectedQuotation.value.comissao,
+      installmentOptions: (result.installmentOptions ?? []).map(option => ({
+        number: option.number,
+        description: option.description ?? null,
+        value: option.value,
+        hasInterest: option.hasInterest,
+      })),
+      possibleGracePeriodsInDays: result.possibleGracePeriodsInDays ?? [],
+    }
+
+    const options = selectedQuotation.value.installmentOptions
+    if (issuance.value.parcelas != null && !options.some(option => option.number === issuance.value.parcelas)) {
+      issuance.value.parcelas = null
+    }
+
+    if (issuance.value.vencimento != null
+      && !selectedQuotation.value.possibleGracePeriodsInDays.includes(issuance.value.vencimento)) {
+      issuance.value.vencimento = null
+    }
+  }
+
+  function setIssuanceRequested(result: { policyExternalId: string, proposalNumber?: string | null }): void {
+    policyId.value = result.policyExternalId
+    issuedProposalNumber.value = result.proposalNumber ?? null
+    issuanceState.value = 'requested'
   }
 
   /** Desmarca a Filial — o estabelecimento volta a ser a matriz (RN-102). */
@@ -302,8 +366,10 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     }
     if (currentStep.value === 4) {
       const data = issuance.value
-      if (!data.contrato.trim() || !data.parcelas || !data.vencimento) {
-        return 'Preencha o número do contrato e a forma de pagamento para emitir.'
+      // RN-505: parcelamento e vencimento são obrigatórios e vêm das opções da Cotação. O número do
+      // contrato saiu da validação — é Tag da minuta (RN-502), preenchida no bloco da minuta.
+      if (data.parcelas == null || data.vencimento == null) {
+        return 'Escolha a forma de pagamento para emitir.'
       }
     }
     return null
@@ -328,6 +394,7 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     issuance.value = emptyIssuance()
     issuanceState.value = 'form'
     policyId.value = null
+    issuedProposalNumber.value = null
     termOpen.value = false
     termAccepted.value = false
   }
@@ -353,6 +420,9 @@ export const useQuotationGroupWizardStore = defineStore('quotationGroupWizard', 
     issuance,
     issuanceState,
     policyId,
+    issuedProposalNumber,
+    setIssuanceRequested,
+    applyRecalculatedQuotation,
     termOpen,
     termAccepted,
     isFirstStep,
