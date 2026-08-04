@@ -211,13 +211,6 @@
   box-shadow: 0 0 0 3px rgba(var(--v-theme-error), 0.18);
 }
 
-/* Campo de BUSCA: fundo cinza (theme background), padrão do DS para inputs de busca — NÃO
- * branco (é assim no protótipo). Opt-in pelo modificador `si-field--search` no SiTextField,
- * para não pintar todo campo de texto; vive no skin global (ADR-014) e vale para todo o kit. */
-.si-field--search .v-field {
-  background: rgb(var(--v-theme-background));
-}
-
 /* ─── Calendário do SiDateField (.si-datepicker no overlay do VDateInput) ─────
  * DS (DateField.jsx): dias em cor de TEXTO (carvão), não verde; dia selecionado = verde
  * preenchido + branco; hoje = anel verde. O default global `VBtn { color: primary }` pinta
