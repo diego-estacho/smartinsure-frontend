@@ -129,12 +129,12 @@ describe('RN-056/057/059 — composable useQuotations (BFF)', () => {
 })
 
 describe('classificationView (RN-058 + CCG pendente)', () => {
-  it('Pronta para emissão sem CCG → "Emissão automática" (success)', () => {
+  it('Pronta para emissão sem CCG → "Pronta para emissão" (success)', () => {
     expect(classificationView({ status: 'auto', requiresCcg: false, analysisTrack: null }))
-      .toEqual({ label: 'Emissão automática', color: 'success' })
+      .toEqual({ label: 'Pronta para emissão', color: 'success' })
   })
 
-  it('Pronta para emissão COM CCG pendente → "Pendência de CCG" (info), não "Emissão automática"', () => {
+  it('Pronta para emissão COM CCG pendente → "Pendência de CCG" (info), não "Pronta para emissão"', () => {
     expect(classificationView({ status: 'auto', requiresCcg: true, analysisTrack: null }))
       .toEqual({ label: 'Pendência de CCG', color: 'info' })
   })
