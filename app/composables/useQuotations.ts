@@ -11,6 +11,7 @@ type ListResponse = components['schemas']['ListQuotationsResponse']
 type ItemResponse = components['schemas']['QuotationListItemResponse']
 type RunResponse = components['schemas']['RunQuotationsResponse']
 type SelectResponse = components['schemas']['SelectQuotationResponse']
+type CoverageResponse = components['schemas']['QuotationAdditionalCoverageResponse']
 
 /** Classes seguíveis exibidas com chip próprio; as demais caem em "indisponíveis". */
 export type QuotationStatus = 'auto' | 'analise'
@@ -45,6 +46,12 @@ export interface Quotation {
   requiresCcg: boolean
   ccgSigned: boolean
   ccgMaxLimitWithoutNeed: number | null
+  /**
+   * RN-106: nomes das Coberturas Adicionais escolhidas que ESTA Seguradora não contempla. A
+   * comparação sinaliza a lacuna para que prêmios de escopos diferentes não sejam comparados sem
+   * aviso. Vazio quando a Seguradora contemplou todas (ou quando nenhuma foi escolhida).
+   */
+  coberturasNaoContempladas: string[]
 }
 
 export interface UnavailableQuotation {
@@ -151,7 +158,18 @@ function toAvailable(item: ItemResponse): Quotation {
     requiresCcg: item.requiresCcg,
     ccgSigned: item.ccgSigned,
     ccgMaxLimitWithoutNeed: numOrNull(item.ccgMaxLimitWithoutNeed),
+    coberturasNaoContempladas: notOfferedNames(item.additionalCoverages),
   }
+}
+
+/**
+ * RN-106: nomes (da canônica) das coberturas não contempladas. Filtra pelo NOME ESTÁVEL do status —
+ * nunca por posição ordinal.
+ */
+function notOfferedNames(coverages: CoverageResponse[] | undefined | null): string[] {
+  return (coverages ?? [])
+    .filter(coverage => coverage.status === 'NotOffered')
+    .map(coverage => coverage.name)
 }
 
 function toUnavailable(item: ItemResponse): UnavailableQuotation {

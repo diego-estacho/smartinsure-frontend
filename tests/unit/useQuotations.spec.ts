@@ -32,6 +32,7 @@ function item(over: Partial<Item>): Item {
     ccgMaxLimitWithoutNeed: null,
     ccgSigned: false,
     reasons: [],
+    additionalCoverages: [],
     ...over,
   }
 }
@@ -117,6 +118,38 @@ describe('RN-056/057/059 — composable useQuotations (BFF)', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/api/quotation-groups/g-1/quotations', { method: 'GET' })
     expect(result.available[0]!.premio).toBe(300)
+  })
+
+  it('RN-106: expõe as coberturas pedidas que a Seguradora não contemplou', async () => {
+    fetchMock.mockResolvedValueOnce(list([
+      item({
+        quotationId: 'a',
+        result: 'ReadyForEmission',
+        isFollowable: true,
+        premium: 300,
+        additionalCoverages: [
+          { additionalCoverageId: 'ac-1', name: 'Multas', status: 'Sent', sentName: 'Multas' },
+          { additionalCoverageId: 'ac-2', name: 'Trabalhista e Previdenciária', status: 'NotOffered', sentName: null },
+        ],
+      }),
+    ]))
+
+    const { listQuotations } = useQuotations(api)
+    const result = await listQuotations('g-1')
+
+    // Filtrado pelo NOME ESTÁVEL do status, nunca por posição ordinal.
+    expect(result.available[0]!.coberturasNaoContempladas).toEqual(['Trabalhista e Previdenciária'])
+  })
+
+  it('RN-106: sem cobertura escolhida, não há o que sinalizar', async () => {
+    fetchMock.mockResolvedValueOnce(list([
+      item({ quotationId: 'a', result: 'ReadyForEmission', isFollowable: true, premium: 300 }),
+    ]))
+
+    const { listQuotations } = useQuotations(api)
+    const result = await listQuotations('g-1')
+
+    expect(result.available[0]!.coberturasNaoContempladas).toEqual([])
   })
 
   it('marca a Cotação escolhida via POST select', async () => {

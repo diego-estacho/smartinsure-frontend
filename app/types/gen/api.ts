@@ -1492,6 +1492,43 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/modalities/{id}/additional-coverages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ListAvailableAdditionalCoveragesResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/modality-imports/run": {
         parameters: {
             query?: never;
@@ -3040,6 +3077,11 @@ export interface components {
             /** Format: date-time */
             expiresAtUtc: string;
         };
+        AvailableAdditionalCoverageItemResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
         BrokerageAddressResponse: {
             zipCode: null | string;
             street: null | string;
@@ -3308,8 +3350,7 @@ export interface components {
             coverageEndDate: string;
             scopeMode: string;
             insurerIds: string[];
-            includesPenaltyCoverage: boolean;
-            includesLaborCoverage: boolean;
+            additionalCoverageIds: string[];
         };
         CreateQuotationGroupResponse: {
             /** Format: uuid */
@@ -3328,8 +3369,7 @@ export interface components {
             coverageEndDate: string;
             scopeMode: string;
             insurerIds: string[];
-            includesPenaltyCoverage: boolean;
-            includesLaborCoverage: boolean;
+            additionalCoverageIds: string[];
             status: string;
         };
         CreateScopedProfileResponse: {
@@ -3532,8 +3572,7 @@ export interface components {
             coverageEndDate: string;
             scopeMode: string;
             insurerIds: string[];
-            includesPenaltyCoverage: boolean;
-            includesLaborCoverage: boolean;
+            additionalCoverageIds: string[];
             status: string;
             /** Format: uuid */
             selectedQuotationId: null | string;
@@ -3675,6 +3714,9 @@ export interface components {
             importedCoverageId: string;
             /** Format: uuid */
             additionalCoverageId: string;
+        };
+        ListAvailableAdditionalCoveragesResponse: {
+            items: components["schemas"]["AvailableAdditionalCoverageItemResponse"][];
         };
         ListBrokeragesResponse: {
             items: components["schemas"]["BrokerageListItemResponse"][];
@@ -3926,6 +3968,13 @@ export interface components {
             description: null | string;
             isSystem: boolean;
         };
+        QuotationAdditionalCoverageResponse: {
+            /** Format: uuid */
+            additionalCoverageId: string;
+            name: string;
+            status: string;
+            sentName: null | string;
+        };
         QuotationBookItemResponse: {
             /** Format: uuid */
             quotationId: string;
@@ -4019,6 +4068,7 @@ export interface components {
             ccgMaxLimitWithoutNeed: null | number | string;
             ccgSigned: boolean;
             reasons: string[];
+            additionalCoverages: components["schemas"]["QuotationAdditionalCoverageResponse"][];
         };
         QuotationMinutaClauseResponse: {
             externalId: string;
@@ -4213,8 +4263,7 @@ export interface components {
             coverageEndDate: string;
             scopeMode: string;
             insurerIds: string[];
-            includesPenaltyCoverage: boolean;
-            includesLaborCoverage: boolean;
+            additionalCoverageIds: string[];
         };
         UpdateQuotationGroupResponse: {
             /** Format: uuid */
@@ -4233,8 +4282,7 @@ export interface components {
             coverageEndDate: string;
             scopeMode: string;
             insurerIds: string[];
-            includesPenaltyCoverage: boolean;
-            includesLaborCoverage: boolean;
+            additionalCoverageIds: string[];
             status: string;
         };
         UpdateScopedProfileResponse: {
