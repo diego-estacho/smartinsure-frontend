@@ -19,11 +19,11 @@ type QuotationSituationView = {
   known: boolean
 }
 
-// Q7: verde (success) fica reservado para "Emitida" (Passo 5); azul (info) = "Pronta para emissão".
-// `label` é o rótulo canônico (RN-078), usado tanto nas abas quanto na pill da coluna Status — sem
-// abreviar: a coluna é alargada o suficiente para caber "Pronta para emissão".
+// Cor por situação: "Pronta para emissão" usa VERDE (success) — simboliza que a Cotação está apta a
+// emitir (PO 2026-08-04, revisa o Q7 que reservava verde para "Emitida"). O badge de CCG (ortogonal)
+// usa o azul/info. `label` é o rótulo canônico (RN-078), usado nas abas e na pill da coluna Status.
 const quotationSituationViews = {
-  [quotationResults.readyForEmission]: { label: 'Pronta para emissão', color: 'info' },
+  [quotationResults.readyForEmission]: { label: 'Pronta para emissão', color: 'success' },
   [quotationResults.analysis]: { label: 'Em análise', color: 'warning' },
   [quotationResults.unavailable]: { label: 'Indisponível', color: 'secondary' },
   [quotationResults.unrecognized]: { label: 'Não reconhecida', color: 'error' },

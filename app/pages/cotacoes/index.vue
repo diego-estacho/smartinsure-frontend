@@ -474,13 +474,12 @@ function changePageSize(size: number) {
               <!-- CCG é flag ORTOGONAL (RN-058/059), não status: badge outline distinto da pill preenchida. -->
               <SiChip
                 v-if="item.requiresCcg"
-                variant="outlined"
-                color="warning"
+                color="info"
                 size="x-small"
                 class="si-quotations__ccg"
                 title="Exige contragarantia (CCG)"
               >
-                CCG
+                Pendência de CCG
               </SiChip>
             </div>
           </template>
@@ -554,13 +553,12 @@ function changePageSize(size: number) {
                 </SiChip>
                 <SiChip
                   v-if="item.requiresCcg"
-                  variant="outlined"
-                  color="warning"
+                  color="info"
                   size="x-small"
                   class="si-quotations__ccg"
                   title="Exige contragarantia (CCG)"
                 >
-                  CCG
+                  Pendência de CCG
                 </SiChip>
               </div>
             </div>
@@ -794,7 +792,8 @@ function changePageSize(size: number) {
   gap: var(--si-space-1);
 }
 
-/* Badge CCG compacto: outline âmbar, sem preenchimento — lê como marcador, não como estado. */
+/* Badge CCG compacto: tonal azul (info) — fundo azul-claro + texto azul-escuro (mesmo estilo que o
+   "Pronta para emissão" tinha antes de virar verde). Menor que a pill, marca o flag ortogonal. */
 .si-quotations__ccg.v-chip {
   height: 18px;
   font-size: 10.5px;

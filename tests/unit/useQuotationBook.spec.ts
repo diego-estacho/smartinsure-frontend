@@ -61,7 +61,7 @@ describe('RN-078 situação apresentada da Cotação', () => {
   it('mapeia o resultado por nome estável (situação + cor)', () => {
     expect(getQuotationSituationView('ReadyForEmission')).toEqual({
       label: 'Pronta para emissão',
-      color: 'info',
+      color: 'success',
       known: true,
     })
     expect(getQuotationSituationView('Analysis').label).toBe('Em análise')
