@@ -16,8 +16,8 @@ describe('RN-050/RN-051 Grupo de Cotação - BFF Nitro', () => {
     coverageEndDate: '2026-02-01',
     scopeMode: 'All',
     insurerIds: [],
-    includesPenaltyCoverage: false,
-    includesLaborCoverage: false,
+    // RN-104: contrato atual — ids das Coberturas Adicionais canônicas.
+    additionalCoverageIds: ['ac-multas'],
   }
 
   it('encaminha corpo e token ao criar (POST), sem o browser falar direto (ADR-008, RN-050)', async () => {
