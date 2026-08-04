@@ -1648,6 +1648,7 @@ export interface paths {
                     page?: number | string;
                     pageSize?: number | string;
                     search?: string;
+                    brokerageId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -3384,6 +3385,8 @@ export interface components {
             insurerName: string;
             status: string;
             failureReason: null | string;
+            /** Format: int64 */
+            responseTimeMs: null | number | string;
             limits: components["schemas"]["CreditInquiryLimitGroupResponse"][];
         };
         CreditInquirySummary: {
@@ -3905,6 +3908,9 @@ export interface components {
             name: string;
             socialName: null | string;
             isPrivateSector: null | boolean;
+            city: null | string;
+            stateCode: null | string;
+            isAppointedToBrokerage: null | boolean;
         };
         ProfileListItemResponse: {
             /** Format: uuid */
