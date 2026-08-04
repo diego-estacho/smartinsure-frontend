@@ -78,8 +78,8 @@ const headers = [
   { title: 'Cotação', key: 'number' },
   { title: 'Prêmio', key: 'premio', align: 'end' },
   { title: 'Comissão', key: 'comissao', align: 'end' },
-  { title: 'Limite', key: 'limite', align: 'end' },
-  { title: 'Classificação', key: 'status' },
+  { title: 'Limite', key: 'limite' },
+  { title: 'Status', key: 'status' },
   { title: '', key: 'actions', sortable: false, align: 'end' },
 ] as const
 
