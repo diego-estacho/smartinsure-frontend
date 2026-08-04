@@ -18,6 +18,8 @@ export type QuotationStatus = 'auto' | 'analise'
 export interface Quotation {
   /** Id da Cotação (Quotation) — chave de seleção. */
   id: string
+  /** Nº da proposta (ProposalNumber), o mesmo da listagem — âncora do usuário; null se a Seguradora ainda não atribuiu. */
+  number: string | null
   insurerId: string
   name: string
   /** Logo da Seguradora (URL), quando cadastrado; null cai no monograma. */
@@ -133,6 +135,7 @@ function numOrNull(value: number | string | null | undefined): number | null {
 function toAvailable(item: ItemResponse): Quotation {
   return {
     id: item.quotationId,
+    number: item.number,
     insurerId: item.insurerId,
     name: item.insurerName,
     logoUrl: item.insurerLogoUrl,

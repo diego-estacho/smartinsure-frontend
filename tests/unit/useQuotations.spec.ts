@@ -15,6 +15,7 @@ afterEach(() => {
 function item(over: Partial<Item>): Item {
   return {
     quotationId: 'q-1',
+    number: null,
     insurerId: 'i-1',
     insurerName: 'Seguradora X',
     insurerLogoUrl: null,

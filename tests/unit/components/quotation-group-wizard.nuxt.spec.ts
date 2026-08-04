@@ -29,6 +29,7 @@ function forceDesktopViewport() {
 function makeQuote(over: Partial<Quotation> = {}): Quotation {
   return {
     id: 'newe',
+    number: '202600000274282',
     insurerId: 'i-newe',
     name: 'Newe Seguros',
     logoUrl: null,

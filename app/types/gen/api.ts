@@ -3995,6 +3995,7 @@ export interface components {
         QuotationListItemResponse: {
             /** Format: uuid */
             quotationId: string;
+            number: null | string;
             /** Format: uuid */
             insurerId: string;
             insurerName: string;
