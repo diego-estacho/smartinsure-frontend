@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { BrokerageListItem } from '~/composables/useBrokerages'
 import type { ExecuteCreditInquiryResponse } from '~/composables/useCreditInquiries'
 import type { PolicyHolderListItem } from '~/composables/usePolicyHolders'
 import { buildCreditInquiryRows, formatResponseTime, formatShortCurrencyBRL, isCnpjQuery } from '~/lib/creditInquiry'
@@ -31,15 +30,12 @@ type Phase = 'idle' | 'searching' | 'choose' | 'notfound' | 'loading' | 'error' 
 
 const { executeCreditInquiry } = useCreditInquiries()
 const { listPolicyHolders } = usePolicyHolders()
-const { listBrokerages } = useBrokerages()
-const { activeWorkspace } = useWorkspaces()
+const { workspaces, activeWorkspace, loadContext, loading: workspacesLoading } = useWorkspaces()
 
 const phase = ref<Phase>('idle')
 const query = ref('')
 const fieldError = ref('')
 const selectedBrokerageId = ref('')
-const brokerages = ref<BrokerageListItem[]>([])
-const brokeragesLoading = ref(false)
 const candidates = ref<PolicyHolderListItem[]>([])
 const searchTerm = ref('')
 const selectedPolicyHolder = ref<PolicyHolderListItem | null>(null)
@@ -107,18 +103,10 @@ onMounted(async () => {
     return
   }
 
-  brokeragesLoading.value = true
-  try {
-    const result = await listBrokerages({ pageSize: 100, situation: 'Active' })
-    brokerages.value = result.items
-    selectedBrokerageId.value = activeWorkspace.value?.id ?? result.items[0]?.id ?? ''
-  }
-  catch (error) {
-    errorMessage.value = extractApiErrorMessage(error, 'Não foi possível carregar as corretoras.')
-  }
-  finally {
-    brokeragesLoading.value = false
-  }
+  // RN-064: as Corretoras do select são as VINCULADAS ao usuário (workspaces), não a listagem
+  // de gestão (`listBrokerages`, escopada, que traz só a Corretora ativa). loadContext é idempotente.
+  await loadContext()
+  selectedBrokerageId.value = activeWorkspace.value?.id ?? workspaces.value[0]?.id ?? ''
 })
 
 function pushRecent(term: string) {
@@ -275,10 +263,10 @@ function initials(name: string): string {
           <SiSelect
             v-model="selectedBrokerageId"
             label="Corretora"
-            :items="brokerages"
+            :items="workspaces"
             item-title="name"
             item-value="id"
-            :loading="brokeragesLoading"
+            :loading="workspacesLoading"
             hide-details
           />
         </div>
