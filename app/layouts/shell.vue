@@ -667,12 +667,14 @@ onBeforeUnmount(() => {
   min-height: 0;
   overflow-y: auto;
   padding-inline: var(--si-space-2);
-  /* Scrollbar fino e suave (thumb claro translúcido sobre o carvão), no lugar da barra padrão
-   * "pesada" do SO. Firefox usa scrollbar-color/width; WebKit/Chromium os pseudo-elementos. */
-  scrollbar-width: thin;
-  scrollbar-color: rgba(var(--v-theme-on-charcoal), 0.22) transparent;
 }
 
+/* Scrollbar fino e suave (thumb claro translúcido sobre o carvão, cantos arredondados), no lugar
+ * da barra "pesada" do SO. Em Chromium/WebKit quem desenha o thumb de 6px são os pseudo-elementos
+ * abaixo — mas eles SÓ valem enquanto o elemento NÃO tiver `scrollbar-width`/`scrollbar-color`:
+ * desde o Chrome 121, definir a propriedade padrão faz o Chromium (Brave incluso) ignorar o
+ * ::-webkit-scrollbar e cair na barra fina NATIVA (trilho + setas — o visual "Windows 98"). Por
+ * isso o thin/color fica restrito ao Firefox, via @supports (lá o ::-webkit-scrollbar não existe). */
 .si-shell-nav::-webkit-scrollbar {
   width: 6px;
 }
@@ -688,6 +690,15 @@ onBeforeUnmount(() => {
 
 .si-shell-nav::-webkit-scrollbar-thumb:hover {
   background: rgba(var(--v-theme-on-charcoal), 0.35);
+}
+
+/* Firefox não conhece ::-webkit-scrollbar, então recebe as propriedades padrão. O @supports isola
+ * o Firefox: se estas linhas valessem em todo lugar, reativariam a barra nativa "pesada" no Chromium. */
+@supports not selector(::-webkit-scrollbar) {
+  .si-shell-nav {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--v-theme-on-charcoal), 0.22) transparent;
+  }
 }
 
 /* Item sobre carvão: texto suave; hover/ativo com realce. O verde é ACCENT (barra + ícone)
