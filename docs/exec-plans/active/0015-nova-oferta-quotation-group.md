@@ -276,6 +276,43 @@ registra o antes).
 reconciliação do caso "Seguradora emitiu, plataforma não registrou"; co-corretagem; envio de documentos;
 assinatura da Contragarantia; followup da Análise de subscrição.
 
+### Incremento 11 — E2E de emissão contra o ambiente real (2026-08-05)
+
+Novo `tests/e2e/emissao.spec.ts` (projeto `jornadas`): login no Casdoor, Tomador, Segurado com escolha de
+endereço, risco, **fan-out real no PlugV2**, seleção e pedido de emissão — sem mock em etapa alguma.
+
+**O que a jornada provou funcionando com dado real:** cotação obtida de verdade (**SANCOR R$ 250,00** e
+**NEWE R$ 220,00** `ReadyForEmission`, com as opções de parcelamento que a ACL passou a ler — RN-505),
+Grupo promovido a **Cotado** (RN-508), endereço replicado na oferta (RN-503), aceite do Termo registrado
+com conteúdo exato e agente de acesso e comunicado ao provedor (RN-506, resposta 200).
+
+**Onde para:** o gateway de QA responde **504 (GatewayTimeout) em `CreatePolicy`** — a emissão não
+conclui no ambiente. A plataforma reage conforme a RN-511: **nenhuma Apólice registrada** e a oferta
+**segue Cotada**, com o motivo do provedor na tela. O spec assere exatamente isso no banco antes de
+reprovar, para que a falha aponte o ambiente e não passe verde falso.
+
+**Três defeitos do Passo 5 que só o E2E pegou** (unidade cobria a regra, não a integração) — corrigidos
+com teste, commit `fix(emissao): três defeitos do Passo 5...`:
+1. RN-502 — o portão exigia minuta mesmo quando a Modalidade **não define Tag**, contrariando o caso
+   limite da própria RN; passou a consultar o catálogo importado.
+2. RN-502 — o reenvio dos termos era feito sempre e o provedor recusa envio vazio ("Nenhum termo foi
+   informado para atualização"); sem minuta, a chamada é pulada.
+3. RN-503 — o Grupo era carregado **sem** a réplica do endereço, e o portão reprovava oferta que tinha
+   endereço; novo carregamento explícito no repositório.
+
+**Cenário que o ambiente de dev não tinha** (montado para o teste; nada disso é código de produção):
+86 Modalidades copiadas da base `smart-mvp` (o catálogo estava zerado, e os schemas diferem — mapeado
+coluna a coluna), Segurado inexistente criado com dois endereços, e Tomador com crédito aprovado no QA
+(o único existente era uma S/A em recuperação judicial, recusada por todas as Seguradoras) nomeado à
+Corretora do cenário.
+
+**Dois problemas de ambiente encontrados, que o time precisa decidir:**
+- As Habilitações apontavam para `https://gateway.onpoint.com.br/qa/garantia/api`, que responde **404**
+  em `/Cotation`; o PlugV2 vive em `/qa/garantia/plugv2` (responde 401 sem credencial). Corrigi **apenas
+  a Corretora do cenário** para não mexer nas outras seis — elas seguem sem conseguir cotar.
+- `CalculationEngines:PlugV2:NonIdempotentTimeoutSeconds` (default 60s) é curto para `CreatePolicy`;
+  subi para 240s no `appsettings.Development.Local.json` (não versionado) e o gateway ainda devolveu 504.
+
 ## Aberto (registrado)
 
 - **Ponto de entrada (decidido 2026-07-24):** habilitar o item de menu "Cotações" → rota `/cotacoes` = página placeholder "em construção" (centro) + botão **"Nova oferta"** no canto superior direito que leva a `/ofertas/nova`. A listagem real de cotações segue fora de escopo.
