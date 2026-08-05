@@ -801,31 +801,45 @@ describe('Etapa 4 — Cotações (exec-plan 0013, RN-056..059)', () => {
     expect(w.find('.si-qg-step4').exists()).toBe(true)
   })
 
-  it('etapa 4 sem corretora ativa na sessão orienta a selecionar (RN-064)', async () => {
-    // Grupo salvo, mas sessão sem Corretora ativa (brokerageId nulo) e /api/me também sem: o fan-out
-    // automático do onMounted não pode resolver as Habilitações — a guarda deve orientar, não cotar às cegas.
+})
+
+/**
+ * O Escopo ativo é do servidor (RN-064): a etapa 4 precisa dele para resolver as Habilitações do
+ * fan-out. O contexto do acesso é carregado uma vez por sessão de navegação, então os três cenários
+ * abaixo se distinguem pelo que o SERVIDOR responde — não pelo que está no cache do cliente.
+ */
+describe('RN-064 Corretora ativa na etapa 4 de cotações', () => {
+  const CONTEXT_BASE = {
+    id: 'usr-1',
+    name: 'Corretor',
+    email: 'corretor@teste.com',
+    status: 'Active',
+    systemProfileName: 'BrokerageAdministrator',
+    activePolicyHolderId: null,
+    policyHolders: [],
+  }
+
+  beforeEach(() => {
+    useQuotationGroupWizardStore().reset()
+    forceDesktopViewport()
+  })
+
+  function mountStep4WithSavedGroup() {
     const store = useQuotationGroupWizardStore()
     store.startOffer()
     store.setQuotationGroupId('qg-1')
-    const w = await mountSuspended(Step4Quotations)
-    await flushPromises()
-    expect(w.text()).toContain('Selecione uma corretora ativa para cotar')
-  })
+    return store
+  }
 
-  it('etapa 4 recarrega o contexto antes de acusar falta de corretora ativa (RN-064)', async () => {
-    // Vínculo criado DEPOIS do login: o contexto em cache não tem Corretora, mas o servidor já tem.
-    // Antes de bloquear o corretor, a etapa reconsulta o próprio acesso — só orienta se nem o servidor
-    // devolver Corretora ativa. Sem isso o corretor fica travado sem saída visível na tela.
+  it('RN-064: contexto em cache sem Corretora, servidor com — reconsulta e adota a do servidor', async () => {
+    // Vínculo criado DEPOIS do login: o cache do cliente não tem Corretora, mas o servidor já tem.
+    // Antes de bloquear o corretor, a etapa reconsulta o próprio acesso — sem isso ele fica travado
+    // sem saída visível na tela, com a Corretora ativa já resolvida do outro lado.
     registerEndpoint('/api/me', {
       method: 'GET',
       handler: () => ({
-        id: 'usr-1',
-        name: 'Corretor',
-        email: 'corretor@teste.com',
-        status: 'Active',
-        systemProfileName: 'BrokerageAdministrator',
+        ...CONTEXT_BASE,
         activeBrokerageId: 'brk-9',
-        activePolicyHolderId: null,
         brokerages: [{
           id: 'brk-9',
           documentNumber: '10864690000180',
@@ -833,18 +847,44 @@ describe('Etapa 4 — Cotações (exec-plan 0013, RN-056..059)', () => {
           profileName: 'BrokerageAdministrator',
           isActive: true,
         }],
-        policyHolders: [],
       }),
     })
 
-    const store = useQuotationGroupWizardStore()
-    store.startOffer()
-    store.setQuotationGroupId('qg-1')
+    const store = mountStep4WithSavedGroup()
     const w = await mountSuspended(Step4Quotations)
     // A reconsulta é uma ida ao servidor: espera o efeito dela, não só o tick do mount.
     await vi.waitFor(() => expect(store.brokerageId).toBe('brk-9'))
     await flushPromises()
 
+    expect(w.text()).not.toContain('Selecione uma corretora ativa para cotar')
+  })
+
+  it('RN-064: servidor também sem Corretora ativa — orienta a selecionar, não cota às cegas', async () => {
+    // Acesso legítimo, mas nenhum Escopo de Corretora ativo: sem ele não há Habilitação a resolver.
+    registerEndpoint('/api/me', {
+      method: 'GET',
+      handler: () => ({ ...CONTEXT_BASE, activeBrokerageId: null, brokerages: [] }),
+    })
+
+    const store = mountStep4WithSavedGroup()
+    const w = await mountSuspended(Step4Quotations)
+    await vi.waitFor(() => expect(w.text()).toContain('Selecione uma corretora ativa para cotar'))
+    expect(store.brokerageId).toBeNull()
+  })
+
+  it('RN-064: consulta do acesso falha — avisa a falha em vez de culpar a corretora', async () => {
+    // `loadContext` engole o erro e zera o contexto. Sem contexto nenhum o problema é a consulta, não
+    // a ausência de Corretora: mandar "selecione uma corretora" faria o corretor caçar erro que não é dele.
+    registerEndpoint('/api/me', {
+      method: 'GET',
+      handler: () => {
+        throw createError({ statusCode: 500, statusMessage: 'contexto indisponível' })
+      },
+    })
+
+    mountStep4WithSavedGroup()
+    const w = await mountSuspended(Step4Quotations)
+    await vi.waitFor(() => expect(w.text()).toContain('Não foi possível confirmar sua corretora ativa'))
     expect(w.text()).not.toContain('Selecione uma corretora ativa para cotar')
   })
 })

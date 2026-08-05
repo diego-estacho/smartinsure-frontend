@@ -15,7 +15,7 @@ import { classificationView } from '~/composables/useQuotations'
 import { formatCurrencyBRL } from '~/lib/currency'
 
 const wizard = useQuotationGroupWizardStore()
-const { loadContext, activeWorkspace } = useWorkspaces()
+const { context: userContext, loadContext, activeWorkspace } = useWorkspaces()
 const { runQuotations, selectQuotation } = useQuotations()
 const { submitMinuta } = useQuotationMinuta()
 const { isMobile } = useIsMobile()
@@ -141,7 +141,16 @@ async function generate(): Promise<void> {
   // acesso antes de desistir (RN-064) — o servidor é quem diz qual é a Corretora ativa.
   if (!wizard.brokerageId) {
     await loadContext(true)
-    if (activeWorkspace.value) wizard.setBrokerageId(activeWorkspace.value.id)
+    if (activeWorkspace.value) {
+      wizard.setBrokerageId(activeWorkspace.value.id)
+    }
+    else if (!userContext.value) {
+      // `loadContext` não propaga a falha (zera o contexto e segue); sem contexto nenhum, o problema
+      // é a consulta e não a ausência de Corretora — dizer "selecione uma corretora" aqui mandaria o
+      // corretor caçar um erro que não é dele.
+      generateError.value = 'Não foi possível confirmar sua corretora ativa. Tente novamente.'
+      return
+    }
   }
 
   const brokerageId = wizard.brokerageId
