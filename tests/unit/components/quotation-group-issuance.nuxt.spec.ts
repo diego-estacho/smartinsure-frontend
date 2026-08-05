@@ -1,7 +1,7 @@
 // @vitest-environment nuxt
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
-import { mountSuspended } from '@nuxt/test-utils/runtime'
+import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import type { Quotation } from '~/composables/useQuotations'
 import Step5Issuance from '~/components/quotation-groups/Step5Issuance.vue'
 import { useIssuance } from '~/composables/useIssuance'
@@ -197,5 +197,68 @@ describe('RN-506 aceite do Termo é obrigatório para emitir', () => {
     await flushPromises()
 
     expect(emitirDoTermo()?.disabled).toBe(false)
+  })
+})
+
+/**
+ * RN-504 — a taxa que a etapa oferece para ajuste é a **vigente na Cotação escolhida**, que veio da
+ * Seguradora. Campo vazio esconderia o valor que está valendo e obrigaria o corretor a redigitar de
+ * memória o que a plataforma já sabe; e reenviar a taxa que já vale é chamada inútil à Seguradora.
+ */
+describe('RN-504 taxa vigente da cotação escolhida', () => {
+  beforeEach(() => useQuotationGroupWizardStore().reset())
+
+  function campoTaxa(wrapper: { findAll: (s: string) => { element: HTMLInputElement }[] }) {
+    return wrapper.findAll('input')
+      .map(input => input.element)
+      .find(element => element.value === '0,36' || element.placeholder === '0,00')
+  }
+
+  it('RN-504: apresenta a taxa que veio da seguradora, não campo vazio', async () => {
+    const store = useQuotationGroupWizardStore()
+    store.setSelectedQuotation(makeReadyQuotation({ taxa: 0.36 }))
+
+    const w = await mountSuspended(Step5Issuance)
+    await flushPromises()
+
+    expect(store.issuance.taxa).toBe('0,36')
+    expect(campoTaxa(w)?.value).toBe('0,36')
+  })
+
+  it('RN-504 (caso limite): taxa igual à vigente não é submetida à seguradora', async () => {
+    // Conta as idas ao BFF: a guarda só está de fato valendo se o endpoint não for tocado.
+    let chamadas = 0
+    registerEndpoint('/api/quotation-groups/qg-1/quotations/selected-tax', {
+      method: 'POST',
+      handler: () => {
+        chamadas += 1
+        return {
+          premium: 412.5,
+          tax: 1.8,
+          commissionPercentage: 22,
+          commissionValue: 90.75,
+          installmentOptions: [],
+          possibleGracePeriodsInDays: [],
+        }
+      },
+    })
+
+    const store = useQuotationGroupWizardStore()
+    store.setSelectedQuotation(makeReadyQuotation({ taxa: 1.8 }))
+    store.setQuotationGroupId('qg-1')
+
+    const w = await mountSuspended(Step5Issuance)
+    await flushPromises()
+
+    // A taxa vigente já está no campo: confirmar sem mexer não pode gerar chamada.
+    const recalcular = w.findAll('button').find(button => button.text().includes('Recalcular'))
+    await recalcular?.trigger('click')
+    await flushPromises()
+    expect(chamadas).toBe(0)
+
+    // Taxa realmente diferente: aí sim a Seguradora é consultada.
+    store.issuance.taxa = '2,5'
+    await recalcular?.trigger('click')
+    await vi.waitFor(() => expect(chamadas).toBe(1))
   })
 })

@@ -62,6 +62,26 @@ const ccgBlock = computed(() =>
     : null,
 )
 
+/** Taxa como o corretor lê e digita (pt-BR); 4 casas porque a Seguradora devolve frações de ponto. */
+function formatTax(value: number): string {
+  return value.toLocaleString('pt-BR', { maximumFractionDigits: 4 })
+}
+
+/** Última taxa vinda da Cotação: distingue "campo intocado" de "corretor digitou outro valor". */
+const lastAppliedTax = ref('')
+
+// RN-504: a taxa oferecida para ajuste é a VIGENTE na Cotação escolhida — deixar o campo vazio
+// esconderia o valor que está valendo e faria o corretor redigitar de memória o que já veio da
+// Seguradora. Segue a Cotação (inclusive após um recálculo), preservando o que ele estiver digitando.
+watch(() => quotation.value?.taxa, (taxa) => {
+  if (taxa == null) return
+  const vigente = formatTax(taxa)
+  if (wizard.issuance.taxa === '' || wizard.issuance.taxa === lastAppliedTax.value) {
+    wizard.issuance.taxa = vigente
+  }
+  lastAppliedTax.value = vigente
+}, { immediate: true })
+
 /** RN-504: submete a taxa e passa a exibir o que a Seguradora devolveu. */
 async function confirmTax(): Promise<void> {
   const groupId = wizard.quotationGroupId
@@ -76,6 +96,12 @@ async function confirmTax(): Promise<void> {
 
   if (!Number.isFinite(parsed) || parsed <= 0) {
     taxError.value = 'Informe uma taxa maior que zero.'
+    return
+  }
+
+  // RN-504 (caso limite): taxa igual à vigente não é submetida — nada mudaria, e a Seguradora não
+  // precisa recalcular o que já vale.
+  if (quotation.value != null && parsed === quotation.value.taxa) {
     return
   }
 
