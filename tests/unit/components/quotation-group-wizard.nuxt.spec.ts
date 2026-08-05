@@ -802,14 +802,50 @@ describe('Etapa 4 — Cotações (exec-plan 0013, RN-056..059)', () => {
   })
 
   it('etapa 4 sem corretora ativa na sessão orienta a selecionar (RN-064)', async () => {
-    // Grupo salvo, mas sessão sem Corretora ativa (brokerageId nulo): o fan-out automático do onMounted
-    // não pode resolver as Habilitações — a guarda deve orientar, não cotar às cegas.
+    // Grupo salvo, mas sessão sem Corretora ativa (brokerageId nulo) e /api/me também sem: o fan-out
+    // automático do onMounted não pode resolver as Habilitações — a guarda deve orientar, não cotar às cegas.
     const store = useQuotationGroupWizardStore()
     store.startOffer()
     store.setQuotationGroupId('qg-1')
     const w = await mountSuspended(Step4Quotations)
     await flushPromises()
     expect(w.text()).toContain('Selecione uma corretora ativa para cotar')
+  })
+
+  it('etapa 4 recarrega o contexto antes de acusar falta de corretora ativa (RN-064)', async () => {
+    // Vínculo criado DEPOIS do login: o contexto em cache não tem Corretora, mas o servidor já tem.
+    // Antes de bloquear o corretor, a etapa reconsulta o próprio acesso — só orienta se nem o servidor
+    // devolver Corretora ativa. Sem isso o corretor fica travado sem saída visível na tela.
+    registerEndpoint('/api/me', {
+      method: 'GET',
+      handler: () => ({
+        id: 'usr-1',
+        name: 'Corretor',
+        email: 'corretor@teste.com',
+        status: 'Active',
+        systemProfileName: 'BrokerageAdministrator',
+        activeBrokerageId: 'brk-9',
+        activePolicyHolderId: null,
+        brokerages: [{
+          id: 'brk-9',
+          documentNumber: '10864690000180',
+          name: 'CORRETORA ATIVA',
+          profileName: 'BrokerageAdministrator',
+          isActive: true,
+        }],
+        policyHolders: [],
+      }),
+    })
+
+    const store = useQuotationGroupWizardStore()
+    store.startOffer()
+    store.setQuotationGroupId('qg-1')
+    const w = await mountSuspended(Step4Quotations)
+    // A reconsulta é uma ida ao servidor: espera o efeito dela, não só o tick do mount.
+    await vi.waitFor(() => expect(store.brokerageId).toBe('brk-9'))
+    await flushPromises()
+
+    expect(w.text()).not.toContain('Selecione uma corretora ativa para cotar')
   })
 })
 

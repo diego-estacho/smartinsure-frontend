@@ -15,6 +15,7 @@ import { classificationView } from '~/composables/useQuotations'
 import { formatCurrencyBRL } from '~/lib/currency'
 
 const wizard = useQuotationGroupWizardStore()
+const { loadContext, activeWorkspace } = useWorkspaces()
 const { runQuotations, selectQuotation } = useQuotations()
 const { submitMinuta } = useQuotationMinuta()
 const { isMobile } = useIsMobile()
@@ -130,12 +131,21 @@ async function doSelect(item: Quotation): Promise<void> {
 
 async function generate(): Promise<void> {
   const groupId = wizard.quotationGroupId
-  const brokerageId = wizard.brokerageId
   if (!groupId) {
     generateError.value = 'Não foi possível identificar o grupo de cotação para cotar.'
     return
   }
-  // Sem Corretora ativa na sessão (RN-064) não há como resolver as Habilitações — orienta a escolher.
+
+  // Contexto do acesso é carregado uma vez por sessão de navegação: um Vínculo criado DEPOIS do login
+  // não aparece no cache, e o corretor ficaria travado aqui sem saída visível. Reconsulta o próprio
+  // acesso antes de desistir (RN-064) — o servidor é quem diz qual é a Corretora ativa.
+  if (!wizard.brokerageId) {
+    await loadContext(true)
+    if (activeWorkspace.value) wizard.setBrokerageId(activeWorkspace.value.id)
+  }
+
+  const brokerageId = wizard.brokerageId
+  // Sem Corretora ativa nem no servidor (RN-064) não há como resolver as Habilitações — orienta a escolher.
   if (!brokerageId) {
     generateError.value = 'Selecione uma corretora ativa para cotar.'
     return
