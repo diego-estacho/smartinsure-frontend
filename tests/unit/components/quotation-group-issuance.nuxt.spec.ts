@@ -1,6 +1,7 @@
 // @vitest-environment nuxt
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
+import { createError } from 'h3'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import type { Quotation } from '~/composables/useQuotations'
 import Step5Issuance from '~/components/quotation-groups/Step5Issuance.vue'
@@ -260,5 +261,31 @@ describe('RN-504 taxa vigente da cotação escolhida', () => {
     store.issuance.taxa = '2,5'
     await recalcular?.trigger('click')
     await vi.waitFor(() => expect(chamadas).toBe(1))
+  })
+
+  it('RN-504 (caso limite): falha ao submeter preserva os valores anteriores e informa o corretor', async () => {
+    registerEndpoint('/api/quotation-groups/qg-erro/quotations/selected-tax', {
+      method: 'POST',
+      handler: () => {
+        throw createError({ statusCode: 502, statusMessage: 'seguradora indisponível' })
+      },
+    })
+
+    const store = useQuotationGroupWizardStore()
+    store.setSelectedQuotation(makeReadyQuotation({ taxa: 1.8, premio: 412.5, comissao: 22 }))
+    store.setQuotationGroupId('qg-erro')
+
+    const w = await mountSuspended(Step5Issuance)
+    await flushPromises()
+
+    store.issuance.taxa = '3,2'
+    const recalcular = w.findAll('button').find(button => button.text().includes('Recalcular'))
+    await recalcular?.trigger('click')
+    await vi.waitFor(() => expect(w.text()).toContain('Não foi possível ajustar a taxa'))
+
+    // O que valia continua valendo: nada de meio-caminho na tela quando a Seguradora não respondeu.
+    expect(store.selectedQuotation?.taxa).toBe(1.8)
+    expect(store.selectedQuotation?.premio).toBe(412.5)
+    expect(store.selectedQuotation?.comissao).toBe(22)
   })
 })

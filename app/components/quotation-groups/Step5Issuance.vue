@@ -62,13 +62,16 @@ const ccgBlock = computed(() =>
     : null,
 )
 
-/** Taxa como o corretor lê e digita (pt-BR); 4 casas porque a Seguradora devolve frações de ponto. */
+/**
+ * Taxa como o corretor lê e digita (pt-BR); 4 casas porque a Seguradora devolve frações de ponto.
+ * Sem separador de milhar de propósito: o valor volta pelo mesmo campo e é lido com `replace(',', '.')`,
+ * que engasgaria com o ponto de milhar de uma taxa ≥ 1.000.
+ */
 function formatTax(value: number): string {
-  return value.toLocaleString('pt-BR', { maximumFractionDigits: 4 })
+  return value.toLocaleString('pt-BR', { maximumFractionDigits: 4, useGrouping: false })
 }
 
-/** Última taxa vinda da Cotação: distingue "campo intocado" de "corretor digitou outro valor". */
-const lastAppliedTax = ref('')
+const lastQuotationTax = ref('')
 
 // RN-504: a taxa oferecida para ajuste é a VIGENTE na Cotação escolhida — deixar o campo vazio
 // esconderia o valor que está valendo e faria o corretor redigitar de memória o que já veio da
@@ -76,10 +79,11 @@ const lastAppliedTax = ref('')
 watch(() => quotation.value?.taxa, (taxa) => {
   if (taxa == null) return
   const vigente = formatTax(taxa)
-  if (wizard.issuance.taxa === '' || wizard.issuance.taxa === lastAppliedTax.value) {
+  // Só sobrescreve o que a própria Cotação escreveu antes — o que o corretor digitou é preservado.
+  if (wizard.issuance.taxa === '' || wizard.issuance.taxa === lastQuotationTax.value) {
     wizard.issuance.taxa = vigente
   }
-  lastAppliedTax.value = vigente
+  lastQuotationTax.value = vigente
 }, { immediate: true })
 
 /** RN-504: submete a taxa e passa a exibir o que a Seguradora devolveu. */
@@ -100,8 +104,9 @@ async function confirmTax(): Promise<void> {
   }
 
   // RN-504 (caso limite): taxa igual à vigente não é submetida — nada mudaria, e a Seguradora não
-  // precisa recalcular o que já vale.
-  if (quotation.value != null && parsed === quotation.value.taxa) {
+  // precisa recalcular o que já vale. Comparação por tolerância: o valor faz ida e volta por texto
+  // formatado, e igualdade exata de ponto flutuante escaparia por diferença invisível na tela.
+  if (quotation.value != null && Math.abs(parsed - quotation.value.taxa) < 0.00001) {
     return
   }
 
