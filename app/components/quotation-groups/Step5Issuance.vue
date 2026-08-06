@@ -11,6 +11,7 @@
  */
 import type { QuotationInstallmentOption } from '~/composables/useQuotations'
 import { extractApiErrorMessage } from '~/lib/apiError'
+import { formatTaxPercentage, isSameTaxPercentage, parseTaxPercentage } from '~/lib/format'
 
 const wizard = useQuotationGroupWizardStore()
 const { requestIssuance, updateTax, getInsurerTerm } = useIssuance()
@@ -62,15 +63,6 @@ const ccgBlock = computed(() =>
     : null,
 )
 
-/**
- * Taxa como o corretor lê e digita (pt-BR); 4 casas porque a Seguradora devolve frações de ponto.
- * Sem separador de milhar de propósito: o valor volta pelo mesmo campo e é lido com `replace(',', '.')`,
- * que engasgaria com o ponto de milhar de uma taxa ≥ 1.000.
- */
-function formatTax(value: number): string {
-  return value.toLocaleString('pt-BR', { maximumFractionDigits: 4, useGrouping: false })
-}
-
 const lastQuotationTax = ref('')
 
 // RN-504: a taxa oferecida para ajuste é a VIGENTE na Cotação escolhida — deixar o campo vazio
@@ -78,7 +70,7 @@ const lastQuotationTax = ref('')
 // Seguradora. Segue a Cotação (inclusive após um recálculo), preservando o que ele estiver digitando.
 watch(() => quotation.value?.taxa, (taxa) => {
   if (taxa == null) return
-  const vigente = formatTax(taxa)
+  const vigente = formatTaxPercentage(taxa)
   // Só sobrescreve o que a própria Cotação escreveu antes — o que o corretor digitou é preservado.
   if (wizard.issuance.taxa === '' || wizard.issuance.taxa === lastQuotationTax.value) {
     wizard.issuance.taxa = vigente
@@ -89,7 +81,7 @@ watch(() => quotation.value?.taxa, (taxa) => {
 /** RN-504: submete a taxa e passa a exibir o que a Seguradora devolveu. */
 async function confirmTax(): Promise<void> {
   const groupId = wizard.quotationGroupId
-  const parsed = Number(wizard.issuance.taxa.replace(',', '.'))
+  const parsed = parseTaxPercentage(wizard.issuance.taxa)
 
   taxError.value = null
 
@@ -104,9 +96,9 @@ async function confirmTax(): Promise<void> {
   }
 
   // RN-504 (caso limite): taxa igual à vigente não é submetida — nada mudaria, e a Seguradora não
-  // precisa recalcular o que já vale. Comparação por tolerância: o valor faz ida e volta por texto
-  // formatado, e igualdade exata de ponto flutuante escaparia por diferença invisível na tela.
-  if (quotation.value != null && Math.abs(parsed - quotation.value.taxa) < 0.00001) {
+  // precisa recalcular o que já vale. "Igual" é o que o campo mostra: a Seguradora pode devolver mais
+  // casas do que a exibição, e o valor intocado voltaria numericamente diferente.
+  if (quotation.value != null && isSameTaxPercentage(parsed, quotation.value.taxa)) {
     return
   }
 

@@ -224,6 +224,11 @@ describe('RN-504 taxa vigente da cotação escolhida', () => {
 
     expect(store.issuance.taxa).toBe('0,36')
     expect(campoTaxa(w)?.value).toBe('0,36')
+
+    // Trocar a Cotação escolhida leva o campo junto — prova que o valor acompanha a Cotação, em vez
+    // de ter sido escrito uma vez na montagem.
+    store.setSelectedQuotation(makeReadyQuotation({ id: 'q-outra', taxa: 2.75 }))
+    await vi.waitFor(() => expect(store.issuance.taxa).toBe('2,75'))
   })
 
   it('RN-504 (caso limite): taxa igual à vigente não é submetida à seguradora', async () => {
@@ -261,6 +266,49 @@ describe('RN-504 taxa vigente da cotação escolhida', () => {
     store.issuance.taxa = '2,5'
     await recalcular?.trigger('click')
     await vi.waitFor(() => expect(chamadas).toBe(1))
+  })
+
+  it('RN-505: recálculo bem-sucedido descarta a escolha de pagamento que deixou de existir', async () => {
+    // A Seguradora devolve OUTRO conjunto de opções junto do novo cálculo: o parcelamento e o
+    // vencimento escolhidos antes podem não existir mais, e escolha morta não pode seguir para a
+    // emissão como se valesse.
+    registerEndpoint('/api/quotation-groups/qg-505/quotations/selected-tax', {
+      method: 'POST',
+      handler: () => ({
+        premium: 600,
+        tax: 3.2,
+        commissionPercentage: 25,
+        commissionValue: 150,
+        installmentOptions: [{ number: 2, description: '2x', value: 300, hasInterest: false }],
+        possibleGracePeriodsInDays: [15],
+      }),
+    })
+
+    const store = useQuotationGroupWizardStore()
+    store.setSelectedQuotation(makeReadyQuotation({
+      taxa: 1.8,
+      installmentOptions: [{ number: 1, description: 'À vista', value: 412.5, hasInterest: false }],
+      possibleGracePeriodsInDays: [0, 30],
+    }))
+    store.setQuotationGroupId('qg-505')
+
+    // Escolhas válidas ANTES do recálculo — nenhuma delas sobrevive ao novo conjunto.
+    store.issuance.parcelas = 1
+    store.issuance.vencimento = 30
+
+    const w = await mountSuspended(Step5Issuance)
+    await flushPromises()
+
+    store.issuance.taxa = '3,2'
+    const recalcular = w.findAll('button').find(button => button.text().includes('Recalcular'))
+    await recalcular?.trigger('click')
+    await vi.waitFor(() => expect(store.selectedQuotation?.premio).toBe(600))
+
+    expect(store.issuance.parcelas).toBeNull()
+    expect(store.issuance.vencimento).toBeNull()
+    // O que a Seguradora devolveu passa a ser a única oferta possível.
+    expect(store.selectedQuotation?.installmentOptions.map(option => option.number)).toEqual([2])
+    expect(store.selectedQuotation?.possibleGracePeriodsInDays).toEqual([15])
   })
 
   it('RN-504 (caso limite): falha ao submeter preserva os valores anteriores e informa o corretor', async () => {

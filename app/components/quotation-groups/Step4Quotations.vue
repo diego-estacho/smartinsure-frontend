@@ -130,6 +130,10 @@ async function doSelect(item: Quotation): Promise<void> {
 }
 
 async function generate(): Promise<void> {
+  // Um fan-out por vez: o onMounted dispara e o botão de tentar de novo também, e duas chamadas
+  // concorrentes cotariam o mesmo Grupo duas vezes.
+  if (generating.value) return
+
   const groupId = wizard.quotationGroupId
   if (!groupId) {
     generateError.value = 'Não foi possível identificar o grupo de cotação para cotar.'
@@ -138,16 +142,19 @@ async function generate(): Promise<void> {
 
   // Contexto do acesso é carregado uma vez por sessão de navegação: um Vínculo criado DEPOIS do login
   // não aparece no cache, e o corretor ficaria travado aqui sem saída visível. Reconsulta o próprio
-  // acesso antes de desistir (RN-064) — o servidor é quem diz qual é a Corretora ativa.
+  // acesso antes de desistir (RN-064) — o servidor é quem diz qual é a Corretora ativa. Vai pelo
+  // `run` para a etapa mostrar carregando enquanto a consulta acontece, como nas demais chamadas.
   if (!wizard.brokerageId) {
-    await loadContext(true)
-    if (activeWorkspace.value) {
-      wizard.setBrokerageId(activeWorkspace.value.id)
-    }
-    else if (!userContext.value) {
-      // `loadContext` não propaga a falha (zera o contexto e segue); sem contexto nenhum, o problema
-      // é a consulta e não a ausência de Corretora — dizer "selecione uma corretora" aqui mandaria o
-      // corretor caçar um erro que não é dele.
+    await runGenerate(async () => {
+      await loadContext(true)
+      if (activeWorkspace.value) wizard.setBrokerageId(activeWorkspace.value.id)
+      return true
+    }, 'Não foi possível confirmar sua corretora ativa. Tente novamente.')
+
+    // `loadContext` não propaga a falha (zera o contexto e segue), então o `run` acima não tem o que
+    // capturar: sem contexto nenhum, o problema é a consulta e não a ausência de Corretora — dizer
+    // "selecione uma corretora" aqui mandaria o corretor caçar um erro que não é dele.
+    if (!wizard.brokerageId && !userContext.value) {
       generateError.value = 'Não foi possível confirmar sua corretora ativa. Tente novamente.'
       return
     }
