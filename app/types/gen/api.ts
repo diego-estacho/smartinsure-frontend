@@ -3012,6 +3012,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/quotations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["QuotationDetailResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4321,6 +4365,51 @@ export interface components {
             name: string;
             profileName: string;
             isActive: boolean;
+        };
+        QuotationDetailCoverageResponse: {
+            name: string;
+            status: string;
+            sentName: null | string;
+        };
+        QuotationTimelineEventResponse: {
+            type: string;
+            /** Format: date-time */
+            occurredAt: string;
+        };
+        QuotationDetailResponse: {
+            /** Format: uuid */
+            quotationId: string;
+            number: null | string;
+            policyHolderName: string;
+            policyHolderDocumentNumber: string;
+            insuredName: string;
+            insuredDocumentNumber: string;
+            /** Format: uuid */
+            insurerId: string;
+            insurerName: string;
+            insurerLogoUrl: null | string;
+            /** Format: uuid */
+            modalityId: string;
+            modalityName: string;
+            /** Format: double */
+            insuredAmount: number | string;
+            /** Format: double */
+            premium: null | number | string;
+            /** Format: double */
+            commissionPercentage: null | number | string;
+            /** Format: double */
+            commissionValue: null | number | string;
+            /** Format: date */
+            coverageStartDate: string;
+            /** Format: date */
+            coverageEndDate: string;
+            /** Format: date-time */
+            createdAt: string;
+            result: string;
+            requiresCcg: boolean;
+            ccgSigned: boolean;
+            additionalCoverages: components["schemas"]["QuotationDetailCoverageResponse"][];
+            timeline: components["schemas"]["QuotationTimelineEventResponse"][];
         };
     };
     responses: never;

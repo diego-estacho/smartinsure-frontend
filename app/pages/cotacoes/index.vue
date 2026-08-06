@@ -49,6 +49,104 @@ function emptyFilters(): QuotationFilters {
 
 const filters = ref<QuotationFilters>(emptyFilters())
 
+// RN-081: o recorte (aba/busca/página/filtros) vive na URL — o detalhe volta preservando-o (breadcrumb e
+// back). Hidrata do query no mount; escreve a cada mudança; guarda o fullPath ao abrir um detalhe.
+const route = useRoute()
+const router = useRouter()
+const returnTo = useQuotationBookReturn()
+
+hydrateFiltersFromUrl()
+
+function toNumberOrNull(value: unknown): number | null {
+  const parsed = Number(value)
+  return typeof value === 'string' && value !== '' && Number.isFinite(parsed) ? parsed : null
+}
+
+function toStringOrNull(value: unknown): string | null {
+  return typeof value === 'string' && value !== '' ? value : null
+}
+
+function hydrateFiltersFromUrl() {
+  const q = route.query
+  const pageValue = Number(q.page)
+  if (Number.isFinite(pageValue) && pageValue > 0) {
+    page.value = pageValue
+  }
+  if (typeof q.search === 'string') {
+    search.value = q.search
+  }
+  if (typeof q.situation === 'string') {
+    situation.value = q.situation
+  }
+  filters.value = {
+    insurerId: toStringOrNull(q.insurerId),
+    modalityId: toStringOrNull(q.modalityId),
+    premiumMin: toNumberOrNull(q.premiumMin),
+    premiumMax: toNumberOrNull(q.premiumMax),
+    insuredAmountMin: toNumberOrNull(q.insuredAmountMin),
+    insuredAmountMax: toNumberOrNull(q.insuredAmountMax),
+    createdFrom: toStringOrNull(q.createdFrom),
+    createdTo: toStringOrNull(q.createdTo),
+    coverageStartFrom: toStringOrNull(q.coverageStartFrom),
+    coverageStartTo: toStringOrNull(q.coverageStartTo),
+  }
+}
+
+function syncUrl() {
+  const q: Record<string, string> = {}
+  if (page.value > 1) {
+    q.page = String(page.value)
+  }
+  if (search.value) {
+    q.search = search.value
+  }
+  if (situation.value) {
+    q.situation = situation.value
+  }
+  const f = filters.value
+  if (f.insurerId) {
+    q.insurerId = f.insurerId
+  }
+  if (f.modalityId) {
+    q.modalityId = f.modalityId
+  }
+  if (f.premiumMin != null) {
+    q.premiumMin = String(f.premiumMin)
+  }
+  if (f.premiumMax != null) {
+    q.premiumMax = String(f.premiumMax)
+  }
+  if (f.insuredAmountMin != null) {
+    q.insuredAmountMin = String(f.insuredAmountMin)
+  }
+  if (f.insuredAmountMax != null) {
+    q.insuredAmountMax = String(f.insuredAmountMax)
+  }
+  if (f.createdFrom) {
+    q.createdFrom = f.createdFrom
+  }
+  if (f.createdTo) {
+    q.createdTo = f.createdTo
+  }
+  if (f.coverageStartFrom) {
+    q.coverageStartFrom = f.coverageStartFrom
+  }
+  if (f.coverageStartTo) {
+    q.coverageStartTo = f.coverageStartTo
+  }
+  router.replace({ query: q }).catch(() => {})
+}
+
+// Abre o detalhe (RN-081): guarda o recorte atual para o voltar e navega pela identidade (guid).
+function openDetail(item: QuotationBookItem) {
+  returnTo.value = route.fullPath
+  navigateTo(`/cotacoes/${item.quotationId}`)
+}
+
+function onRowClick(_event: unknown, payload: { item: QuotationBookItem }) {
+  openDetail(payload.item)
+}
+
 const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 
 // Decimais do contrato podem chegar como string ou number (openapi) — coage e valida.
@@ -181,6 +279,9 @@ function reload() {
 
 watch(search, reload)
 watch(situation, reload)
+
+// RN-081: espelha o recorte na URL a cada mudança (independente do fetch — só reescreve a query).
+watch([page, situation, search, filters], syncUrl, { deep: true })
 
 function applyFilters(next: QuotationFilters) {
   filters.value = next
@@ -420,7 +521,8 @@ function changePageSize(size: number) {
           :loading="loading"
           :items-per-page="pageSize"
           hide-default-footer
-          class="si-quotations__table"
+          class="si-quotations__table si-quotations__table--clickable"
+          @click:row="onRowClick"
         >
           <template #[`item.number`]="{ item }">
             <span class="si-quotations__mono">{{ item.number ?? '—' }}</span>
@@ -522,6 +624,7 @@ function changePageSize(size: number) {
                   <SiListItem
                     title="Ver detalhes"
                     prepend-icon="eye"
+                    @click="openDetail(item)"
                   />
                   <SiListItem
                     title="Cancelar cotação"
@@ -540,7 +643,8 @@ function changePageSize(size: number) {
             v-for="item in items"
             :key="item.quotationId"
             variant="outlined"
-            class="si-quotations__card"
+            class="si-quotations__card si-quotations__card--clickable"
+            @click="openDetail(item)"
           >
             <div class="si-quotations__card-top">
               <span class="si-quotations__mono">{{ item.number ?? '—' }}</span>
@@ -676,7 +780,7 @@ function changePageSize(size: number) {
   min-width: 280px;
 }
 
-/* Busca com fundo cinza (theme background = #f8fafc, o `--si-fundo` do protótipo) sobre o card branco —
+/* Busca com fundo cinza (theme background, o `--si-fundo` do protótipo) sobre o card branco —
    é assim no protótipo; NÃO branco. */
 .si-quotations__search :deep(.v-field) {
   min-height: 48px;
@@ -697,6 +801,15 @@ function changePageSize(size: number) {
 
 .si-quotations__table-card {
   overflow: hidden;
+}
+
+/* Linha (desktop) e card (mobile) abrem o detalhe ao clicar (RN-081) — a coluna de ações usa @click.stop. */
+.si-quotations__table--clickable :deep(tbody tr) {
+  cursor: pointer;
+}
+
+.si-quotations__card--clickable {
+  cursor: pointer;
 }
 
 /* Densidade do protótipo (01-cotacoes.md): 9 colunas cabem em ~1090px com largura fixa; o padding

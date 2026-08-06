@@ -91,6 +91,7 @@ por essa chave. Ícone novo entra no registry de `lib/icons.ts`.
 | `chevrons-left/right` | `ChevronsLeft/Right` | `chevronsLeft/Right` |
 | `eye` / `eye-off` | `Eye` / `EyeOff` | `eye` / `eyeOff` |
 | `pencil` | `Pencil` | `pencil` |
+| `copy` | `Copy` | `copy` |
 | `plus` | `Plus` | `plus` |
 | `trash-2` | `Trash2` | `trash` |
 | `calendar` | `CalendarDays` | `calendar` |
