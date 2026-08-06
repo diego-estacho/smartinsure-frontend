@@ -31,36 +31,36 @@ const notOfferedCoverages = computed(() =>
 
 <template>
   <div class="si-summary">
-    <!-- Faixa de números -->
+    <!-- Faixa de números: card único, células com divisor (IS em destaque). -->
     <SiCard
-      variant="outlined"
+      variant="flat"
       class="si-summary__metrics"
     >
-      <SiMetric
-        label="Importância segurada"
-        :value="formatCurrencyBRL(quotation.insuredAmount)"
-        hint="Valor garantido à segurada"
-      />
-      <SiMetric
-        label="Prêmio total"
-        :value="formatCurrencyBRL(quotation.premium)"
-        hint="À vista, no aceite da apólice"
-      />
-      <SiMetric
-        label="Sua comissão"
-        :value="formatCurrencyBRL(quotation.commissionValue)"
-        :hint="commissionHint"
-      />
-      <SiMetric
-        label="Vigência"
-        :value="days == null ? '—' : `${days} dias`"
-        :hint="coverageHint"
-      />
+      <div class="si-summary__metric">
+        <span class="si-summary__mlabel">Importância segurada</span>
+        <span class="si-summary__mvalue si-summary__mvalue--lead">{{ formatCurrencyBRL(quotation.insuredAmount) }}</span>
+        <span class="si-summary__mhint">Valor garantido à segurada</span>
+      </div>
+      <div class="si-summary__metric">
+        <span class="si-summary__mlabel">Prêmio total</span>
+        <span class="si-summary__mvalue">{{ formatCurrencyBRL(quotation.premium) }}</span>
+        <span class="si-summary__mhint">À vista, no aceite da apólice</span>
+      </div>
+      <div class="si-summary__metric">
+        <span class="si-summary__mlabel">Sua comissão</span>
+        <span class="si-summary__mvalue">{{ formatCurrencyBRL(quotation.commissionValue) }}</span>
+        <span class="si-summary__mhint">{{ commissionHint }}</span>
+      </div>
+      <div class="si-summary__metric">
+        <span class="si-summary__mlabel">Vigência</span>
+        <span class="si-summary__mvalue">{{ days == null ? '—' : `${days} dias` }}</span>
+        <span class="si-summary__mhint">{{ coverageHint }}</span>
+      </div>
     </SiCard>
 
     <!-- Dados da cotação -->
     <SiCard
-      variant="outlined"
+      variant="flat"
       class="si-summary__data"
     >
       <h2 class="si-summary__title">
@@ -98,17 +98,17 @@ const notOfferedCoverages = computed(() =>
         <div class="si-summary__grid">
           <div class="si-summary__field">
             <span class="si-summary__key">Modalidade</span>
-            <span class="si-summary__val">{{ quotation.modalityName }}</span>
+            <span class="si-summary__val si-summary__val--medium">{{ quotation.modalityName }}</span>
           </div>
           <div class="si-summary__field">
             <span class="si-summary__key">Seguradora</span>
-            <span class="si-summary__val">{{ quotation.insurerName }}</span>
+            <span class="si-summary__val si-summary__val--medium">{{ quotation.insurerName }}</span>
           </div>
           <div class="si-summary__field si-summary__field--wide">
             <span class="si-summary__key">Cobertura adicional</span>
             <span
               v-if="sentCoverages.length === 0 && notOfferedCoverages.length === 0"
-              class="si-summary__val"
+              class="si-summary__val si-summary__val--medium"
             >—</span>
             <div
               v-else
@@ -163,33 +163,72 @@ const notOfferedCoverages = computed(() =>
 .si-summary {
   display: flex;
   flex-direction: column;
-  gap: var(--si-space-4);
+  gap: var(--si-space-5);
 }
 
+/* Faixa de números — 4 células num card só, divisor à esquerda (exceto a 1ª). */
 .si-summary__metrics {
   display: grid;
   grid-template-columns: 1.35fr 1fr 1fr 1.05fr;
   overflow: hidden;
-}
-
-.si-summary__metrics > * + * {
-  border-left: 1px solid var(--si-cinza-claro);
+  box-shadow: var(--si-shadow-1);
 }
 
 .si-summary__data {
   overflow: hidden;
+  box-shadow: var(--si-shadow-1);
 }
 
+.si-summary__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  min-width: 0;
+}
+
+.si-summary__metric + .si-summary__metric {
+  border-left: 1px solid var(--si-cinza-claro);
+}
+
+.si-summary__mlabel {
+  font-size: 11px;
+  font-weight: var(--si-font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--si-cinza);
+  white-space: nowrap;
+}
+
+.si-summary__mvalue {
+  font-size: 18.5px;
+  line-height: 1.2;
+  font-weight: var(--si-font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.si-summary__mvalue--lead {
+  font-size: 20px;
+}
+
+.si-summary__mhint {
+  font-size: 12px;
+  color: var(--si-cinza);
+}
+
+/* Card "Dados da cotação". */
 .si-summary__title {
   margin: 0;
-  padding: var(--si-space-4) var(--si-space-5);
-  font-size: var(--si-fs-h4);
+  padding: 16px 20px;
+  font-size: 15px;
   font-weight: var(--si-font-weight-semibold);
   border-bottom: 1px solid var(--si-cinza-claro);
 }
 
 .si-summary__group {
-  padding: var(--si-space-4) var(--si-space-5);
+  padding: 18px 20px;
 }
 
 .si-summary__group + .si-summary__group {
@@ -197,10 +236,10 @@ const notOfferedCoverages = computed(() =>
 }
 
 .si-summary__eyebrow {
-  margin: 0 0 var(--si-space-3);
+  margin: 0 0 14px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  font-size: var(--si-fs-caption);
+  font-size: 11.5px;
   font-weight: var(--si-font-weight-semibold);
   color: var(--si-cinza);
   white-space: nowrap;
@@ -209,13 +248,13 @@ const notOfferedCoverages = computed(() =>
 .si-summary__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--si-space-3) var(--si-space-5);
+  gap: 16px 24px;
 }
 
 .si-summary__field {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
 }
 
@@ -224,12 +263,16 @@ const notOfferedCoverages = computed(() =>
 }
 
 .si-summary__key {
-  font-size: var(--si-fs-caption);
+  font-size: 12px;
   color: var(--si-cinza);
 }
 
 .si-summary__val {
-  font-size: var(--si-fs-small);
+  font-size: 14px;
+}
+
+.si-summary__val--medium {
+  font-weight: var(--si-font-weight-medium);
 }
 
 .si-summary__val--strong {
@@ -251,13 +294,16 @@ const notOfferedCoverages = computed(() =>
     grid-template-columns: 1fr 1fr;
   }
 
-  .si-summary__metrics > * {
-    border-left: none;
+  .si-summary__metric {
     border-top: 1px solid var(--si-cinza-claro);
   }
 
-  .si-summary__metrics > :nth-child(-n + 2) {
+  .si-summary__metric:nth-child(-n + 2) {
     border-top: none;
+  }
+
+  .si-summary__metric:nth-child(odd) {
+    border-left: none;
   }
 
   .si-summary__grid {

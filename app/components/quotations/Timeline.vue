@@ -21,7 +21,7 @@ const countLabel = computed(() =>
 
 <template>
   <SiCard
-    variant="outlined"
+    variant="flat"
     class="si-crono"
   >
     <button
@@ -81,6 +81,7 @@ const countLabel = computed(() =>
 <style scoped>
 .si-crono {
   overflow: hidden;
+  box-shadow: var(--si-shadow-1);
 }
 
 .si-crono__header,
@@ -103,7 +104,7 @@ const countLabel = computed(() =>
 }
 
 .si-crono__title {
-  font-size: var(--si-fs-small);
+  font-size: 15px;
   font-weight: var(--si-font-weight-semibold);
 }
 

@@ -14,7 +14,7 @@ withDefaults(defineProps<{
 
 <template>
   <SiCard
-    variant="outlined"
+    variant="flat"
     class="si-situation"
   >
     <SiStepper
@@ -38,7 +38,8 @@ withDefaults(defineProps<{
 .si-situation {
   display: flex;
   flex-direction: column;
-  gap: var(--si-space-4);
-  padding: var(--si-space-5);
+  gap: var(--si-space-5);
+  padding: var(--si-space-5) 22px;
+  box-shadow: var(--si-shadow-1);
 }
 </style>

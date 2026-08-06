@@ -1,9 +1,9 @@
 <script setup lang="ts">
 /**
  * Detalhe da Cotação (RN-081), read-only. Página fina (ADR-018): busca a Cotação pelo id (guid) e orquestra
- * cabeçalho + card de situação (só pronta/ccg) + aba Resumo + Cronologia. A situação apresentada (pill) vem
- * de `lib/status/quotations` (fonte única, eixo-1); o card de situação, do view-model de detalhe. Emitir e
- * Cancelar são visíveis mas inertes nesta fatia (integração nas próximas). Desktop e mobile.
+ * cabeçalho + card de situação (full-width, só pronta/ccg) + corpo em duas colunas (aba Resumo da proposta +
+ * Cronologia). A situação apresentada (pill) vem de `lib/status/quotations` (fonte única, eixo-1); o card de
+ * situação, do view-model de detalhe. Emitir e Cancelar são visíveis mas inertes nesta fatia. Desktop e mobile.
  */
 import type { QuotationDetail } from '~/composables/useQuotationDetail'
 import { getQuotationSituationView } from '~/lib/status/quotations'
@@ -23,6 +23,7 @@ const quotation = ref<QuotationDetail | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 const notFound = ref(false)
+const tab = ref('resumo')
 const snack = ref<{ message: string, variant: 'success' | 'info' | 'warning' | 'error' } | null>(null)
 
 const situationView = computed(() =>
@@ -131,11 +132,12 @@ async function copyNumber() {
 
     <!-- Dados -->
     <template v-else-if="quotation">
+      <!-- Cabeçalho: transparente no desktop (sobre --si-fundo), escuro no mobile -->
       <header
-        class="si-qd__hero"
-        :class="{ 'si-qd__hero--dark': isMobile }"
+        class="si-qd__header"
+        :class="{ 'si-qd__header--dark': isMobile }"
       >
-        <VContainer class="si-qd__hero-inner">
+        <div class="si-qd__header-inner">
           <SiPageBack
             :to="returnTo"
             parent-label="Cotações"
@@ -143,7 +145,7 @@ async function copyNumber() {
             class="si-qd__back"
           />
 
-          <div class="si-qd__hero-row">
+          <div class="si-qd__hero">
             <div class="si-qd__identity">
               <SiAvatar
                 v-if="!isMobile"
@@ -214,34 +216,45 @@ async function copyNumber() {
               </SiButton>
             </div>
           </div>
-        </VContainer>
+        </div>
       </header>
 
-      <VContainer class="si-qd__body">
+      <div class="si-qd__body">
+        <!-- Card de situação: FULL WIDTH, acima do corpo em colunas -->
+        <QuotationsSituationCard
+          v-if="detailSituation?.hasSituationCard"
+          :view="detailSituation"
+          :orientation="isMobile ? 'vertical' : 'horizontal'"
+        />
+
+        <!-- Ações (mobile): empilhadas, largura total -->
+        <div
+          v-if="isMobile && detailSituation?.showActions"
+          class="si-qd__actions si-qd__actions--stacked"
+        >
+          <SiButton block>
+            Emitir apólice
+          </SiButton>
+          <SiButton
+            block
+            variant="outlined"
+            color="error"
+          >
+            Cancelar cotação
+          </SiButton>
+        </div>
+
         <div class="si-qd__grid">
           <div class="si-qd__main">
-            <QuotationsSituationCard
-              v-if="detailSituation?.hasSituationCard"
-              :view="detailSituation"
-              :orientation="isMobile ? 'vertical' : 'horizontal'"
-            />
-
-            <!-- Ações (mobile): empilhadas, largura total, após o card de situação -->
-            <div
-              v-if="isMobile && detailSituation?.showActions"
-              class="si-qd__actions si-qd__actions--stacked"
+            <SiTabs
+              v-model="tab"
+              class="si-qd__tabs"
             >
-              <SiButton block>
-                Emitir apólice
-              </SiButton>
-              <SiButton
-                block
-                variant="outlined"
-                color="error"
-              >
-                Cancelar cotação
-              </SiButton>
-            </div>
+              <SiTab
+                value="resumo"
+                text="Resumo da proposta"
+              />
+            </SiTabs>
 
             <QuotationsDetailSummary :quotation="quotation" />
           </div>
@@ -253,7 +266,7 @@ async function copyNumber() {
             />
           </aside>
         </div>
-      </VContainer>
+      </div>
     </template>
 
     <SiSnackbar
@@ -271,6 +284,7 @@ async function copyNumber() {
 <style scoped>
 .si-qd {
   min-height: 100%;
+  background: rgb(var(--v-theme-background));
 }
 
 .si-qd__state {
@@ -310,31 +324,39 @@ async function copyNumber() {
   font-size: var(--si-fs-small);
 }
 
-/* Cabeçalho — claro no desktop, escuro no mobile (--si-carvao). */
-.si-qd__hero-inner {
-  padding-top: var(--si-space-5);
-  padding-bottom: var(--si-space-4);
+/* Larguras: cabeçalho e corpo compartilham o mesmo eixo central e recuo lateral. */
+.si-qd__header-inner,
+.si-qd__body {
+  max-width: var(--si-container-wide);
+  margin-inline: auto;
+  padding-inline: 32px;
 }
 
-.si-qd__hero--dark {
-  background: var(--si-carvao);
+.si-qd__header-inner {
+  padding-block: 24px 0;
 }
 
-.si-qd__hero--dark .si-qd__title,
-.si-qd__hero--dark .si-qd__meta-number {
+/* Mobile: cabeçalho escuro edge-to-edge (charcoal do tema). */
+.si-qd__header--dark {
+  background: rgb(var(--v-theme-charcoal));
+}
+
+.si-qd__header--dark .si-qd__title,
+.si-qd__header--dark .si-qd__meta-number {
   color: rgb(var(--v-theme-on-charcoal));
 }
 
-.si-qd__hero--dark .si-qd__meta,
-.si-qd__hero--dark .si-qd__eyebrow {
-  color: rgba(var(--v-theme-on-charcoal), 0.6);
+.si-qd__header--dark .si-qd__meta,
+.si-qd__header--dark .si-qd__eyebrow {
+  color: rgba(var(--v-theme-on-charcoal), 0.65);
 }
 
-.si-qd__hero-row {
+.si-qd__hero {
   display: flex;
   justify-content: space-between;
-  gap: var(--si-space-5);
+  gap: var(--si-space-6);
   flex-wrap: wrap;
+  margin-top: var(--si-space-4);
 }
 
 .si-qd__identity {
@@ -342,6 +364,12 @@ async function copyNumber() {
   gap: var(--si-space-4);
   flex: 1 1 460px;
   min-width: 0;
+}
+
+.si-qd__avatar {
+  flex-shrink: 0;
+  color: rgb(var(--v-theme-primary));
+  font-weight: var(--si-font-weight-bold);
 }
 
 .si-qd__headings {
@@ -363,13 +391,13 @@ async function copyNumber() {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--si-space-2);
+  gap: var(--si-space-3);
 }
 
 .si-qd__title {
   margin: 0;
-  font-size: var(--si-fs-h2, 24px);
-  line-height: 1.25;
+  font-size: 24px;
+  line-height: 1.2;
   letter-spacing: -0.02em;
   font-weight: var(--si-font-weight-semibold);
   text-wrap: pretty;
@@ -381,7 +409,7 @@ async function copyNumber() {
   flex-wrap: wrap;
   gap: var(--si-space-2);
   color: var(--si-cinza);
-  font-size: var(--si-fs-small);
+  font-size: 13.5px;
 }
 
 .si-qd__meta-number {
@@ -406,22 +434,28 @@ async function copyNumber() {
 }
 
 .si-qd__body {
-  padding-top: var(--si-space-4);
-  padding-bottom: var(--si-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--si-space-5);
+  padding-block: var(--si-space-5) 40px;
 }
 
 .si-qd__grid {
   display: grid;
   grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
-  gap: var(--si-space-4);
+  gap: var(--si-space-5);
   align-items: start;
 }
 
 .si-qd__main {
   display: flex;
   flex-direction: column;
-  gap: var(--si-space-4);
   min-width: 0;
+}
+
+.si-qd__tabs {
+  margin-bottom: var(--si-space-4);
+  border-bottom: 1px solid var(--si-cinza-claro);
 }
 
 .si-qd__aside {
@@ -430,8 +464,19 @@ async function copyNumber() {
 }
 
 @media (max-width: 1023.98px) {
+  .si-qd__header-inner {
+    padding: 14px 16px 16px;
+  }
+
+  .si-qd__body {
+    padding-inline: 16px;
+    padding-block: var(--si-space-4);
+    gap: var(--si-space-4);
+  }
+
   .si-qd__grid {
     grid-template-columns: 1fr;
+    gap: var(--si-space-4);
   }
 
   .si-qd__aside {
