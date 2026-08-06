@@ -23,16 +23,6 @@ export function parseTaxPercentage(text: string): number {
   return normalized === '' ? Number.NaN : Number(normalized)
 }
 
-/**
- * Duas taxas são a mesma quando o campo as exibe igual. Comparar pelo texto, e não por igualdade
- * numérica ou por uma tolerância escolhida a dedo, mede exatamente o que o corretor enxerga: a
- * exibição arredonda para {@link TAX_FRACTION_DIGITS}, então um valor com mais casas volta do campo
- * diferente do original sem ninguém ter editado nada.
- */
-export function isSameTaxPercentage(left: number, right: number): boolean {
-  return formatTaxPercentage(left) === formatTaxPercentage(right)
-}
-
 /** Iniciais (até 2) para avatar a partir de um nome/razão social. */
 export function initials(source: string | null | undefined): string {
   return (source ?? '')

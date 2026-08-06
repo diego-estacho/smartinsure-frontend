@@ -231,8 +231,9 @@ describe('RN-504 taxa vigente da cotação escolhida', () => {
     await vi.waitFor(() => expect(store.issuance.taxa).toBe('2,75'))
   })
 
-  it('RN-504 (caso limite): taxa igual à vigente não é submetida à seguradora', async () => {
-    // Conta as idas ao BFF: a guarda só está de fato valendo se o endpoint não for tocado.
+  it('RN-504: a tela submete e reflete o que o servidor devolveu, sem decidir por conta própria', async () => {
+    // Quem decide se a taxa mudou é o servidor (RN-504 vale no UpdateQuotationTaxUseCase): a tela não
+    // pode comparar taxas e engolir a chamada, senão a regra passa a viver em dois lugares.
     let chamadas = 0
     registerEndpoint('/api/quotation-groups/qg-1/quotations/selected-tax', {
       method: 'POST',
@@ -243,8 +244,8 @@ describe('RN-504 taxa vigente da cotação escolhida', () => {
           tax: 1.8,
           commissionPercentage: 22,
           commissionValue: 90.75,
-          installmentOptions: [],
-          possibleGracePeriodsInDays: [],
+          installmentOptions: [{ number: 1, description: 'À vista', value: 412.5, hasInterest: false }],
+          possibleGracePeriodsInDays: [0],
         }
       },
     })
@@ -256,16 +257,39 @@ describe('RN-504 taxa vigente da cotação escolhida', () => {
     const w = await mountSuspended(Step5Issuance)
     await flushPromises()
 
-    // A taxa vigente já está no campo: confirmar sem mexer não pode gerar chamada.
+    // Mesma taxa que está no campo: a tela não filtra — o servidor responde com a Cotação como está.
+    const recalcular = w.findAll('button').find(button => button.text().includes('Recalcular'))
+    await recalcular?.trigger('click')
+    await vi.waitFor(() => expect(chamadas).toBe(1))
+    expect(store.selectedQuotation?.taxa).toBe(1.8)
+  })
+
+  it('RN-504: taxa não positiva é barrada como formato, sem ir ao servidor', async () => {
+    // A RN autoriza a plataforma a validar APENAS o formato ("numérico maior que zero") — isso não é
+    // decidir sobre o valor da taxa, é impedir um envio que não tem sentido.
+    let chamadas = 0
+    registerEndpoint('/api/quotation-groups/qg-formato/quotations/selected-tax', {
+      method: 'POST',
+      handler: () => {
+        chamadas += 1
+        return { premium: 1, tax: 1, commissionPercentage: 1, commissionValue: 1, installmentOptions: [], possibleGracePeriodsInDays: [] }
+      },
+    })
+
+    const store = useQuotationGroupWizardStore()
+    store.setSelectedQuotation(makeReadyQuotation({ taxa: 1.8 }))
+    store.setQuotationGroupId('qg-formato')
+
+    const w = await mountSuspended(Step5Issuance)
+    await flushPromises()
+
+    store.issuance.taxa = '0'
     const recalcular = w.findAll('button').find(button => button.text().includes('Recalcular'))
     await recalcular?.trigger('click')
     await flushPromises()
-    expect(chamadas).toBe(0)
 
-    // Taxa realmente diferente: aí sim a Seguradora é consultada.
-    store.issuance.taxa = '2,5'
-    await recalcular?.trigger('click')
-    await vi.waitFor(() => expect(chamadas).toBe(1))
+    expect(chamadas).toBe(0)
+    expect(w.text()).toContain('Informe uma taxa maior que zero')
   })
 
   it('RN-505: recálculo bem-sucedido descarta a escolha de pagamento que deixou de existir', async () => {

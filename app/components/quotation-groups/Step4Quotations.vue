@@ -145,17 +145,19 @@ async function generate(): Promise<void> {
   // acesso antes de desistir (RN-064) — o servidor é quem diz qual é a Corretora ativa. Vai pelo
   // `run` para a etapa mostrar carregando enquanto a consulta acontece, como nas demais chamadas.
   if (!wizard.brokerageId) {
+    const contextoIndisponivel = 'Não foi possível confirmar sua corretora ativa. Tente novamente.'
+
     await runGenerate(async () => {
       await loadContext(true)
       if (activeWorkspace.value) wizard.setBrokerageId(activeWorkspace.value.id)
       return true
-    }, 'Não foi possível confirmar sua corretora ativa. Tente novamente.')
+    }, contextoIndisponivel)
 
     // `loadContext` não propaga a falha (zera o contexto e segue), então o `run` acima não tem o que
     // capturar: sem contexto nenhum, o problema é a consulta e não a ausência de Corretora — dizer
     // "selecione uma corretora" aqui mandaria o corretor caçar um erro que não é dele.
     if (!wizard.brokerageId && !userContext.value) {
-      generateError.value = 'Não foi possível confirmar sua corretora ativa. Tente novamente.'
+      generateError.value = contextoIndisponivel
       return
     }
   }

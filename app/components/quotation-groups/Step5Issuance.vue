@@ -11,7 +11,7 @@
  */
 import type { QuotationInstallmentOption } from '~/composables/useQuotations'
 import { extractApiErrorMessage } from '~/lib/apiError'
-import { formatTaxPercentage, isSameTaxPercentage, parseTaxPercentage } from '~/lib/format'
+import { formatTaxPercentage, parseTaxPercentage } from '~/lib/format'
 
 const wizard = useQuotationGroupWizardStore()
 const { requestIssuance, updateTax, getInsurerTerm } = useIssuance()
@@ -92,13 +92,6 @@ async function confirmTax(): Promise<void> {
 
   if (!Number.isFinite(parsed) || parsed <= 0) {
     taxError.value = 'Informe uma taxa maior que zero.'
-    return
-  }
-
-  // RN-504 (caso limite): taxa igual à vigente não é submetida — nada mudaria, e a Seguradora não
-  // precisa recalcular o que já vale. "Igual" é o que o campo mostra: a Seguradora pode devolver mais
-  // casas do que a exibição, e o valor intocado voltaria numericamente diferente.
-  if (quotation.value != null && isSameTaxPercentage(parsed, quotation.value.taxa)) {
     return
   }
 

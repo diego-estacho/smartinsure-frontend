@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { formatTaxPercentage, isSameTaxPercentage, parseTaxPercentage } from '~/lib/format'
+import { formatTaxPercentage, parseTaxPercentage } from '~/lib/format'
 
 /**
  * A taxa sai da Seguradora como número, é exibida como texto pt-BR no campo editável e volta pelo
  * mesmo campo. Formatar e ler são as duas metades de uma coisa só: se saírem de sincronia, o corretor
  * vê um valor e a Seguradora recebe outro. Estes testes fixam a ida e a volta.
  */
-describe('taxa: formatação e leitura do campo editável', () => {
+describe('RN-504 taxa: formatação e leitura do campo editável', () => {
   it('formata em pt-BR, com vírgula decimal e sem separador de milhar', () => {
     // O ponto de milhar quebraria a leitura de volta, que troca vírgula por ponto.
     expect(formatTaxPercentage(0.36)).toBe('0,36')
@@ -32,18 +32,13 @@ describe('taxa: formatação e leitura do campo editável', () => {
     expect(parseTaxPercentage('abc')).toBeNaN()
   })
 
-  it('taxa com mais casas do que o campo exibe continua sendo a mesma taxa', () => {
-    // A Seguradora pode devolver mais casas do que o campo mostra: o valor volta do campo arredondado
-    // e NÃO é igual ao original — comparar por igualdade numérica acusaria uma edição que não houve.
+  it('arredonda para 4 casas: taxa com mais casas volta do campo diferente do original', () => {
+    // Limite conhecido da exibição — quem decide se isso é "a mesma taxa" é o servidor (RN-504),
+    // não a tela. Aqui só se fixa que a ida e volta perde as casas além da quarta.
     const original = 0.361255
     const ida = parseTaxPercentage(formatTaxPercentage(original))
 
+    expect(ida).toBe(0.3613)
     expect(ida).not.toBe(original)
-    expect(isSameTaxPercentage(ida, original)).toBe(true)
-  })
-
-  it('mudança visível na última casa exibida é edição de verdade', () => {
-    expect(isSameTaxPercentage(0.3612, 0.3613)).toBe(false)
-    expect(isSameTaxPercentage(1.8, 2.5)).toBe(false)
   })
 })
