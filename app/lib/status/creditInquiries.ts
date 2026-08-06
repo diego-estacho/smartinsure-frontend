@@ -18,7 +18,7 @@ type CreditInquiryInsurerStatusView = {
 }
 
 const creditInquiryInsurerStatusViews = {
-  [creditInquiryInsurerStatuses.available]: { label: 'Disponível', color: 'success' },
+  [creditInquiryInsurerStatuses.available]: { label: 'Aprovado', color: 'success' },
   [creditInquiryInsurerStatuses.unavailable]: { label: 'Indisponível', color: 'error' },
 } as const satisfies Record<CreditInquiryInsurerStatus, Omit<CreditInquiryInsurerStatusView, 'known'>>
 

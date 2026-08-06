@@ -6,10 +6,10 @@ import {
 } from '../../app/lib/status/creditInquiries'
 
 describe('RN-030 — Falha isolada na Consulta de Crédito (Status Mapping)', () => {
-  it('deve mapear status "Available" para label "Disponível" e cor "success"', () => {
+  it('deve mapear status "Available" para label "Aprovado" e cor "success"', () => {
     const view = getCreditInquiryInsurerStatusView(creditInquiryInsurerStatuses.available)
 
-    expect(view.label).toBe('Disponível')
+    expect(view.label).toBe('Aprovado')
     expect(view.color).toBe('success')
     expect(view.known).toBe(true)
   })
@@ -61,7 +61,7 @@ describe('RN-030 — Falha isolada na Consulta de Crédito (Status Mapping)', ()
       expect(view.known).toBe(true)
       // Verifica que o mapeamento é baseado no valor, não na posição
       if (status === 'Available') {
-        expect(view.label).toBe('Disponível')
+        expect(view.label).toBe('Aprovado')
       } else if (status === 'Unavailable') {
         expect(view.label).toBe('Indisponível')
       }
