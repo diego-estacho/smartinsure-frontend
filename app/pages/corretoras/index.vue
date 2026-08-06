@@ -282,6 +282,7 @@ function formatDate(value: string) {
             :prepend-inner-icon="'search'"
             clearable
             hide-details
+            class="si-field--search"
           />
         </div>
         <SiButton

@@ -395,6 +395,7 @@ function changePageSize(size: number) {
             :prepend-inner-icon="'search'"
             clearable
             hide-details
+            class="si-field--search"
           />
         </div>
         <SiButton
@@ -780,11 +781,9 @@ function changePageSize(size: number) {
   min-width: 280px;
 }
 
-/* Busca com fundo cinza (theme background, o `--si-fundo` do protótipo) sobre o card branco —
-   é assim no protótipo; NÃO branco. */
+/* O fundo cinza da busca vem do padrão do kit (`si-field--search`, skin.css). Aqui só a altura. */
 .si-quotations__search :deep(.v-field) {
   min-height: 48px;
-  background: rgb(var(--v-theme-background));
 }
 
 .si-quotations__filters-btn.v-btn {
