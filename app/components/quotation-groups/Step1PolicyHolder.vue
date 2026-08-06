@@ -7,7 +7,8 @@
  * ENCONTRADO + razão social + CNPJ + endereço) e guarda na store para o resumo e a assinatura de
  * recálculo. A busca fica SEMPRE visível — trocar o tomador é só buscar de novo (sem botão "Trocar").
  *
- * "Ver limites e taxas" abre um modal placeholder (tela à parte). O card também lista as Filiais do
+ * "Ver limites e taxas" abre a Consulta de Crédito em modo embed (modal, só leitura), com o Tomador
+ * e a Corretora ativa já definidos. O card também lista as Filiais do
  * tomador (RN-102) com marcação exclusiva (no máx. uma) via `usePolicyHolderBranches`; "Adicionar
  * filial" abre um modal que registra uma nova por CNPJ via Birô (`createBranch`) e mostra o aviso do
  * backend quando o CNPJ não é localizado (a matriz continua usável — não é erro).
@@ -21,6 +22,8 @@ import { extractApiErrorMessage } from '~/lib/apiError'
 const wizard = useQuotationGroupWizardStore()
 const { searchPersons } = usePersons()
 const { listBranches, createBranch } = usePolicyHolderBranches()
+// Corretora ativa da sessão (RN-064): a Consulta de Crédito usa a mesma Corretora da cotação.
+const { activeWorkspace } = useWorkspaces()
 
 const query = ref('')
 const searching = ref(false)
@@ -369,29 +372,15 @@ function closeBranchModal(): void {
       </div>
     </SiCard>
 
-    <!-- Modal: limites e taxas (placeholder — tela à parte, fora de escopo). -->
-    <SiDialog
+    <!-- Modal: limites e taxas por seguradora (Consulta de Crédito em modo embed, só leitura). -->
+    <CreditInquiryModal
+      v-if="selected"
       v-model="limitsModalOpen"
-      :max-width="480"
-    >
-      <SiCard class="si-qg-step1__modal">
-        <h3 class="text-subtitle-1 si-qg-step1__modal-title">
-          Limites e taxas
-        </h3>
-        <p class="si-qg-step1__modal-text">
-          Em construção. Esta tela será disponibilizada em breve.
-        </p>
-        <div class="si-qg-step1__modal-actions">
-          <SiButton
-            variant="text"
-            color="secondary"
-            @click="limitsModalOpen = false"
-          >
-            Fechar
-          </SiButton>
-        </div>
-      </SiCard>
-    </SiDialog>
+      :brokerage-id="activeWorkspace?.id ?? ''"
+      :brokerage-name="activeWorkspace?.name ?? ''"
+      :policy-holder-name="selected.name"
+      :policy-holder-cnpj="selected.documentNumber"
+    />
 
     <!-- Modal: adicionar filial. -->
     <SiDialog

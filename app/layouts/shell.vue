@@ -669,6 +669,38 @@ onBeforeUnmount(() => {
   padding-inline: var(--si-space-2);
 }
 
+/* Scrollbar fino e suave (thumb claro translúcido sobre o carvão, cantos arredondados), no lugar
+ * da barra "pesada" do SO. Em Chromium/WebKit quem desenha o thumb de 6px são os pseudo-elementos
+ * abaixo — mas eles SÓ valem enquanto o elemento NÃO tiver `scrollbar-width`/`scrollbar-color`:
+ * desde o Chrome 121, definir a propriedade padrão faz o Chromium (Brave incluso) ignorar o
+ * ::-webkit-scrollbar e cair na barra fina NATIVA (trilho + setas — o visual "Windows 98"). Por
+ * isso o thin/color fica restrito ao Firefox, via @supports (lá o ::-webkit-scrollbar não existe). */
+.si-shell-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.si-shell-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.si-shell-nav::-webkit-scrollbar-thumb {
+  background: rgba(var(--v-theme-on-charcoal), 0.22);
+  border-radius: var(--si-radius-pill);
+}
+
+.si-shell-nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--v-theme-on-charcoal), 0.35);
+}
+
+/* Firefox não conhece ::-webkit-scrollbar, então recebe as propriedades padrão. O @supports isola
+ * o Firefox: se estas linhas valessem em todo lugar, reativariam a barra nativa "pesada" no Chromium. */
+@supports not selector(::-webkit-scrollbar) {
+  .si-shell-nav {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--v-theme-on-charcoal), 0.22) transparent;
+  }
+}
+
 /* Item sobre carvão: texto suave; hover/ativo com realce. O verde é ACCENT (barra + ícone)
  * sobre um leve tint de fundo no ativo — não um preenchimento pesado (evolução do 0005). */
 .si-shell-nav :deep(.v-list-item) {
@@ -676,6 +708,22 @@ onBeforeUnmount(() => {
   border-radius: var(--si-radius-md);
   margin-block: var(--si-space-1);
   min-height: var(--si-space-10);
+}
+
+/* Ícone e rótulo do item: o default do Vuetify (ícone 24px) fica grande e pesado vs o protótipo —
+ * ícone 20px + rótulo 14px (DS small) deixam o menu mais equilibrado e leve, como no handoff. */
+.si-shell-nav :deep(.si-shell-nav-item .v-list-item__prepend .v-icon) {
+  font-size: 20px;
+}
+
+.si-shell-nav :deep(.si-shell-nav-item .v-list-item-title) {
+  font-size: var(--si-fs-small);
+  line-height: 1.3;
+}
+
+/* Aproxima o rótulo do ícone (o prepend do Vuetify reserva espaço para o ícone de 24). */
+.si-shell-nav :deep(.si-shell-nav-item .v-list-item__prepend) {
+  margin-inline-end: calc(-1 * var(--si-space-2));
 }
 
 .si-shell-nav :deep(.v-list-item:hover) {

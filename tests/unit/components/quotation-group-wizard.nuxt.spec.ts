@@ -28,6 +28,7 @@ function forceDesktopViewport() {
 function makeQuote(over: Partial<Quotation> = {}): Quotation {
   return {
     id: 'newe',
+    number: '202600000274282',
     insurerId: 'i-newe',
     name: 'Newe Seguros',
     logoUrl: null,
@@ -796,7 +797,6 @@ describe('Etapa 4 — Cotações (exec-plan 0013, RN-056..059)', () => {
     const store = useQuotationGroupWizardStore()
     store.startOffer()
     store.setQuotationGroupId('qg-1')
-    store.setBrokerageId('brk-1')
     const w = await mountSuspended(Step4Quotations)
     expect(w.find('.si-qg-step4').exists()).toBe(true)
   })
@@ -1089,7 +1089,7 @@ describe('Salvar QuotationGroup + recálculo inteligente (exec-plan 0015)', () =
     branchId: null,
     insuredId: 'i',
     scope: { mode: 'all', insurerIds: [] },
-    risk: { modalityId: 'm', insuredAmount: 1000, startDate: '2026-01-01', endDate: '2026-02-01', coverageMulta: false, coverageLabor: false },
+    risk: { modalityId: 'm', insuredAmount: 1000, startDate: '2026-01-01', endDate: '2026-02-01', additionalCoverageIds: ['ac-multas'] },
   }
 
   beforeEach(() => {
@@ -1119,8 +1119,8 @@ describe('Salvar QuotationGroup + recálculo inteligente (exec-plan 0015)', () =
         coverageEndDate: '2026-02-01',
         scopeMode: 'All',
         insurerIds: [],
-        includesPenaltyCoverage: false,
-        includesLaborCoverage: false,
+        // RN-104: a escolha vai pelos ids das Coberturas Adicionais canônicas.
+        additionalCoverageIds: ['ac-multas'],
       },
     })
 

@@ -17,6 +17,8 @@ export function usePolicyHolders(api: typeof $fetch = useNuxtApp().$api as typeo
     page?: number
     pageSize?: number
     search?: string
+    /** RN-200: Corretora ativa — traz a flag "já é Tomador desta Corretora" nos itens. */
+    brokerageId?: string
   } = {}): Promise<PolicyHolderListResponse> {
     return await api<PolicyHolderListResponse>('/api/policy-holders', {
       method: 'GET',
@@ -24,6 +26,7 @@ export function usePolicyHolders(api: typeof $fetch = useNuxtApp().$api as typeo
         page: params.page ?? 1,
         pageSize: params.pageSize ?? 20,
         ...(params.search ? { search: params.search } : {}),
+        ...(params.brokerageId ? { brokerageId: params.brokerageId } : {}),
       },
     })
   }

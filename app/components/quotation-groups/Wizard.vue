@@ -46,8 +46,7 @@ function groupPayload() {
       insuredAmount: wizard.risk.insuredAmount,
       startDate: wizard.risk.startDate,
       endDate: wizard.risk.endDate,
-      coverageMulta: wizard.risk.coverageMulta,
-      coverageLabor: wizard.risk.coverageLabor,
+      additionalCoverageIds: wizard.risk.additionalCoverageIds,
     },
   }
 }

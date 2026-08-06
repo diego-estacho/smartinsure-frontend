@@ -821,6 +821,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/credit-inquiries/{id}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Exporta o quadro consolidado de uma consulta de crédito (.xlsx) */
+        get: operations["ExportCreditInquiry"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/imported-additional-coverages/{id}/link": {
         parameters: {
             query?: never;
@@ -1492,6 +1509,43 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/modalities/{id}/additional-coverages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ListAvailableAdditionalCoveragesResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/modality-imports/run": {
         parameters: {
             query?: never;
@@ -1767,6 +1821,7 @@ export interface paths {
                     page?: number | string;
                     pageSize?: number | string;
                     search?: string;
+                    brokerageId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -2320,6 +2375,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/quotations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    page?: number | string;
+                    pageSize?: number | string;
+                    search?: string;
+                    situation?: string;
+                    insurerId?: string;
+                    modalityId?: string;
+                    premiumMin?: number | string;
+                    premiumMax?: number | string;
+                    insuredAmountMin?: number | string;
+                    insuredAmountMax?: number | string;
+                    createdFrom?: string;
+                    createdTo?: string;
+                    coverageStartFrom?: string;
+                    coverageStartTo?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["QuotationBookResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/quotation-groups": {
         parameters: {
             query?: never;
@@ -2460,11 +2565,7 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["RunQuotationsBody"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Accepted */
                 202: {
@@ -3113,6 +3214,11 @@ export interface components {
             /** Format: date-time */
             expiresAtUtc: string;
         };
+        AvailableAdditionalCoverageItemResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
         BrokerageAddressResponse: {
             zipCode: null | string;
             street: null | string;
@@ -3381,8 +3487,7 @@ export interface components {
             coverageEndDate: string;
             scopeMode: string;
             insurerIds: string[];
-            includesPenaltyCoverage: boolean;
-            includesLaborCoverage: boolean;
+            additionalCoverageIds: string[];
             /** Format: uuid */
             insuredAddressId?: null | string;
         };
@@ -3403,8 +3508,7 @@ export interface components {
             coverageEndDate: string;
             scopeMode: string;
             insurerIds: string[];
-            includesPenaltyCoverage: boolean;
-            includesLaborCoverage: boolean;
+            additionalCoverageIds: string[];
             status: string;
         };
         CreateScopedProfileResponse: {
@@ -3457,8 +3561,11 @@ export interface components {
             /** Format: uuid */
             insurerId: string;
             insurerName: string;
+            insurerLogoUrl: null | string;
             status: string;
             failureReason: null | string;
+            /** Format: int64 */
+            responseTimeMs: null | number | string;
             limits: components["schemas"]["CreditInquiryLimitGroupResponse"][];
         };
         CreditInquirySummary: {
@@ -3612,8 +3719,7 @@ export interface components {
             coverageEndDate: string;
             scopeMode: string;
             insurerIds: string[];
-            includesPenaltyCoverage: boolean;
-            includesLaborCoverage: boolean;
+            additionalCoverageIds: string[];
             status: string;
             /** Format: uuid */
             selectedQuotationId: null | string;
@@ -3763,6 +3869,9 @@ export interface components {
             importedCoverageId: string;
             /** Format: uuid */
             additionalCoverageId: string;
+        };
+        ListAvailableAdditionalCoveragesResponse: {
+            items: components["schemas"]["AvailableAdditionalCoverageItemResponse"][];
         };
         ListBrokeragesResponse: {
             items: components["schemas"]["BrokerageListItemResponse"][];
@@ -4006,6 +4115,9 @@ export interface components {
             name: string;
             socialName: null | string;
             isPrivateSector: null | boolean;
+            city: null | string;
+            stateCode: null | string;
+            isAppointedToBrokerage: null | boolean;
         };
         ProfileListItemResponse: {
             /** Format: uuid */
@@ -4026,6 +4138,58 @@ export interface components {
             code: string;
             description: null | string;
             isSystem: boolean;
+        };
+        QuotationAdditionalCoverageResponse: {
+            /** Format: uuid */
+            additionalCoverageId: string;
+            name: string;
+            status: string;
+            sentName: null | string;
+        };
+        QuotationBookItemResponse: {
+            /** Format: uuid */
+            quotationId: string;
+            number: null | string;
+            policyHolderName: string;
+            insuredName: string;
+            /** Format: uuid */
+            insurerId: string;
+            insurerName: string;
+            insurerLogoUrl: null | string;
+            /** Format: uuid */
+            modalityId: string;
+            modalityName: string;
+            /** Format: double */
+            insuredAmount: number | string;
+            /** Format: double */
+            premium: null | number | string;
+            /** Format: double */
+            commissionPercentage: null | number | string;
+            result: string;
+            requiresCcg: boolean;
+            /** Format: date */
+            coverageStartDate: string;
+            /** Format: date */
+            coverageEndDate: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        QuotationBookOptionResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
+        QuotationBookResponse: {
+            items: components["schemas"]["QuotationBookItemResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int64 */
+            totalCount: number | string;
+            counts: components["schemas"]["QuotationSituationCountResponse"][];
+            insurers: components["schemas"]["QuotationBookOptionResponse"][];
+            modalities: components["schemas"]["QuotationBookOptionResponse"][];
         };
         QuotationClauseInput: {
             particularClauseExternalId: string;
@@ -4059,6 +4223,7 @@ export interface components {
         QuotationListItemResponse: {
             /** Format: uuid */
             quotationId: string;
+            number: null | string;
             /** Format: uuid */
             insurerId: string;
             insurerName: string;
@@ -4082,6 +4247,7 @@ export interface components {
             ccgMaxLimitWithoutNeed: null | number | string;
             ccgSigned: boolean;
             reasons: string[];
+            additionalCoverages: components["schemas"]["QuotationAdditionalCoverageResponse"][];
             installmentOptions: components["schemas"]["QuotationInstallmentOptionResponse"][];
             possibleGracePeriodsInDays: (number | string)[];
             requiredDocuments: components["schemas"]["QuotationRequiredDocumentResponse"][];
@@ -4101,6 +4267,11 @@ export interface components {
         QuotationRequiredDocumentResponse: {
             name: string;
             description: null | string;
+        };
+        QuotationSituationCountResponse: {
+            result: string;
+            /** Format: int64 */
+            count: number | string;
         };
         QuotationTermInput: {
             name: string;
@@ -4148,10 +4319,6 @@ export interface components {
             importedModalityId: string;
             ignored: boolean;
         };
-        RunQuotationsBody: {
-            /** Format: uuid */
-            brokerageId: string;
-        };
         RunQuotationsResponse: {
             /** Format: uuid */
             quotationGroupId: string;
@@ -4181,8 +4348,6 @@ export interface components {
             profile: null | string;
         };
         SubmitQuotationMinutaBody: {
-            /** Format: uuid */
-            brokerageId: string;
             terms: components["schemas"]["QuotationTermInput"][];
             particularClauses: components["schemas"]["QuotationClauseInput"][];
         };
@@ -4300,8 +4465,7 @@ export interface components {
             coverageEndDate: string;
             scopeMode: string;
             insurerIds: string[];
-            includesPenaltyCoverage: boolean;
-            includesLaborCoverage: boolean;
+            additionalCoverageIds: string[];
         };
         UpdateQuotationGroupResponse: {
             /** Format: uuid */
@@ -4320,8 +4484,7 @@ export interface components {
             coverageEndDate: string;
             scopeMode: string;
             insurerIds: string[];
-            includesPenaltyCoverage: boolean;
-            includesLaborCoverage: boolean;
+            additionalCoverageIds: string[];
             status: string;
         };
         UpdateQuotationTaxBody: {
@@ -4475,6 +4638,33 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["GetCreditInquiryResponse"];
                 };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ExportCreditInquiry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Not Found */
             404: {

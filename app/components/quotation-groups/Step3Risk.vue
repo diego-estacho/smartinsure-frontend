@@ -10,11 +10,14 @@
  * ainda não a persiste — TODO backend).
  */
 import type { ModalityListItem } from '~/composables/useModalities'
+import type { AvailableAdditionalCoverage } from '~/composables/useAvailableAdditionalCoverages'
 import { fromIsoDate, toIsoDate } from '~/lib/dates'
 import { extractApiErrorMessage } from '~/lib/apiError'
+import { pruneSelection } from '~/lib/additionalCoverageSelection'
 
 const wizard = useQuotationGroupWizardStore()
 const { listModalities } = useModalities()
+const { listByModality } = useAvailableAdditionalCoverages()
 
 const modalities = ref<ModalityListItem[]>([])
 const loadingModalities = ref(false)
@@ -23,10 +26,60 @@ const modalitiesError = ref<string | null>(null)
 const modalityId = computed<string | null>({
   get: () => wizard.risk.modalityId,
   set: (id) => {
+    const changed = wizard.risk.modalityId !== id
     wizard.risk.modalityId = id
     wizard.risk.modalityName = modalities.value.find(m => m.id === id)?.name ?? null
+
+    // RN-104: a disponibilidade das Coberturas Adicionais depende da Modalidade — trocar a
+    // Modalidade descarta a escolha, para não enviar cobertura que a nova modalidade não oferece.
+    if (changed) wizard.risk.additionalCoverageIds = []
   },
 })
+
+// RN-104/RN-046: as Coberturas Adicionais ofertáveis vêm do catálogo, derivadas dos vínculos ativos
+// das Seguradoras habilitadas — nunca uma lista fixa no cliente.
+const coverages = ref<AvailableAdditionalCoverage[]>([])
+const loadingCoverages = ref(false)
+const coveragesError = ref<string | null>(null)
+
+// Latest-wins: trocar de Modalidade rápido pode fazer a resposta antiga chegar depois da nova.
+// Sem este token, a lista exibida seria a da Modalidade errada.
+let coveragesRequest = 0
+
+async function loadCoverages(id: string | null): Promise<void> {
+  const request = ++coveragesRequest
+  coveragesError.value = null
+
+  if (!id) {
+    coverages.value = []
+    return
+  }
+
+  loadingCoverages.value = true
+  try {
+    const loaded = await listByModality(id)
+    if (request !== coveragesRequest) return
+
+    coverages.value = loaded
+
+    // A seleção reidratada de um Rascunho pode conter cobertura que saiu da oferta (curadoria mudou,
+    // Seguradora inativada). Sem podar, o id fica invisível na tela e seria reenviado no salvar —
+    // o servidor recusaria e o corretor não entenderia por quê.
+    wizard.risk.additionalCoverageIds = pruneSelection(wizard.risk.additionalCoverageIds, loaded)
+  }
+  catch (err) {
+    if (request !== coveragesRequest) return
+
+    coverages.value = []
+    coveragesError.value = extractApiErrorMessage(
+      err, 'Não foi possível carregar as coberturas adicionais.')
+  }
+  finally {
+    if (request === coveragesRequest) loadingCoverages.value = false
+  }
+}
+
+watch(() => wizard.risk.modalityId, id => loadCoverages(id), { immediate: true })
 
 const prazo = ref<number | null>(null)
 
@@ -140,15 +193,45 @@ onMounted(async () => {
       <legend class="si-qg-step3__coverages-legend">
         Coberturas adicionais
       </legend>
-      <div class="si-qg-step3__coverages-row">
+
+      <SiAlert
+        v-if="coveragesError"
+        type="error"
+        class="mt-0 mb-0"
+        :text="coveragesError"
+      />
+
+      <p
+        v-else-if="!wizard.risk.modalityId"
+        class="si-qg-step3__coverages-empty"
+      >
+        Selecione a modalidade para ver as coberturas adicionais disponíveis.
+      </p>
+
+      <p
+        v-else-if="loadingCoverages"
+        class="si-qg-step3__coverages-empty"
+      >
+        Carregando coberturas adicionais…
+      </p>
+
+      <p
+        v-else-if="coverages.length === 0"
+        class="si-qg-step3__coverages-empty"
+      >
+        Esta modalidade não tem coberturas adicionais disponíveis.
+      </p>
+
+      <div
+        v-else
+        class="si-qg-step3__coverages-row"
+      >
         <SiCheckbox
-          v-model="wizard.risk.coverageMulta"
-          label="Multa"
-          hide-details
-        />
-        <SiCheckbox
-          v-model="wizard.risk.coverageLabor"
-          label="Trabalhista e previdenciária"
+          v-for="coverage in coverages"
+          :key="coverage.id"
+          v-model="wizard.risk.additionalCoverageIds"
+          :label="coverage.name"
+          :value="coverage.id"
           hide-details
         />
       </div>
@@ -200,6 +283,12 @@ onMounted(async () => {
   display: flex;
   flex-wrap: wrap;
   gap: var(--si-space-6);
+}
+
+.si-qg-step3__coverages-empty {
+  margin: 0;
+  color: var(--si-cinza);
+  font-size: var(--si-fs-small);
 }
 
 .si-qg-step3__complementary {

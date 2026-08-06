@@ -15,6 +15,7 @@ afterEach(() => {
 function item(over: Partial<Item>): Item {
   return {
     quotationId: 'q-1',
+    number: null,
     insurerId: 'i-1',
     insurerName: 'Seguradora X',
     insurerLogoUrl: null,
@@ -31,6 +32,7 @@ function item(over: Partial<Item>): Item {
     ccgMaxLimitWithoutNeed: null,
     ccgSigned: false,
     reasons: [],
+    additionalCoverages: [],
     ...over,
   }
 }
@@ -95,15 +97,14 @@ describe('RN-058 — mapeamento do leque de Cotações (ACL → tela)', () => {
 })
 
 describe('RN-056/057/059 — composable useQuotations (BFF)', () => {
-  it('dispara o fan-out via POST com a Corretora no corpo', async () => {
+  it('RN-103: dispara o fan-out via POST sem corpo (a Corretora vem do Escopo ativo no servidor)', async () => {
     fetchMock.mockResolvedValueOnce({ quotationGroupId: 'g-1', requestedCount: 3 })
 
     const { runQuotations } = useQuotations(api)
-    await runQuotations('g-1', 'brk-1')
+    await runQuotations('g-1')
 
     expect(fetchMock).toHaveBeenCalledWith('/api/quotation-groups/g-1/quotations', {
       method: 'POST',
-      body: { brokerageId: 'brk-1' },
     })
   })
 
@@ -119,6 +120,38 @@ describe('RN-056/057/059 — composable useQuotations (BFF)', () => {
     expect(result.available[0]!.premio).toBe(300)
   })
 
+  it('RN-106: expõe as coberturas pedidas que a Seguradora não contemplou', async () => {
+    fetchMock.mockResolvedValueOnce(list([
+      item({
+        quotationId: 'a',
+        result: 'ReadyForEmission',
+        isFollowable: true,
+        premium: 300,
+        additionalCoverages: [
+          { additionalCoverageId: 'ac-1', name: 'Multas', status: 'Sent', sentName: 'Multas' },
+          { additionalCoverageId: 'ac-2', name: 'Trabalhista e Previdenciária', status: 'NotOffered', sentName: null },
+        ],
+      }),
+    ]))
+
+    const { listQuotations } = useQuotations(api)
+    const result = await listQuotations('g-1')
+
+    // Filtrado pelo NOME ESTÁVEL do status, nunca por posição ordinal.
+    expect(result.available[0]!.coberturasNaoContempladas).toEqual(['Trabalhista e Previdenciária'])
+  })
+
+  it('RN-106: sem cobertura escolhida, não há o que sinalizar', async () => {
+    fetchMock.mockResolvedValueOnce(list([
+      item({ quotationId: 'a', result: 'ReadyForEmission', isFollowable: true, premium: 300 }),
+    ]))
+
+    const { listQuotations } = useQuotations(api)
+    const result = await listQuotations('g-1')
+
+    expect(result.available[0]!.coberturasNaoContempladas).toEqual([])
+  })
+
   it('marca a Cotação escolhida via POST select', async () => {
     fetchMock.mockResolvedValueOnce({ quotationGroupId: 'g-1', selectedQuotationId: 'q-9' })
 
@@ -130,12 +163,12 @@ describe('RN-056/057/059 — composable useQuotations (BFF)', () => {
 })
 
 describe('classificationView (RN-058 + CCG pendente)', () => {
-  it('Pronta para emissão sem CCG → "Emissão automática" (success)', () => {
+  it('Pronta para emissão sem CCG → "Pronta para emissão" (success)', () => {
     expect(classificationView({ status: 'auto', requiresCcg: false, analysisTrack: null }))
-      .toEqual({ label: 'Emissão automática', color: 'success' })
+      .toEqual({ label: 'Pronta para emissão', color: 'success' })
   })
 
-  it('Pronta para emissão COM CCG pendente → "Pendência de CCG" (info), não "Emissão automática"', () => {
+  it('Pronta para emissão COM CCG pendente → "Pendência de CCG" (info), não "Pronta para emissão"', () => {
     expect(classificationView({ status: 'auto', requiresCcg: true, analysisTrack: null }))
       .toEqual({ label: 'Pendência de CCG', color: 'info' })
   })

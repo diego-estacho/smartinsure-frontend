@@ -11,6 +11,7 @@ type ListResponse = components['schemas']['ListQuotationsResponse']
 type ItemResponse = components['schemas']['QuotationListItemResponse']
 type RunResponse = components['schemas']['RunQuotationsResponse']
 type SelectResponse = components['schemas']['SelectQuotationResponse']
+type CoverageResponse = components['schemas']['QuotationAdditionalCoverageResponse']
 
 /** Classes seguíveis exibidas com chip próprio; as demais caem em "indisponíveis". */
 export type QuotationStatus = 'auto' | 'analise'
@@ -18,6 +19,8 @@ export type QuotationStatus = 'auto' | 'analise'
 export interface Quotation {
   /** Id da Cotação (Quotation) — chave de seleção. */
   id: string
+  /** Nº da proposta (ProposalNumber), o mesmo da listagem — âncora do usuário; null se a Seguradora ainda não atribuiu. */
+  number: string | null
   insurerId: string
   name: string
   /** Logo da Seguradora (URL), quando cadastrado; null cai no monograma. */
@@ -31,7 +34,7 @@ export interface Quotation {
   status: QuotationStatus
   /** Taxa aplicada. */
   taxa: number
-  /** Compat com a minuta antiga; a minuta real vem do endpoint próprio (RN-062). */
+  /** Compat com a minuta antiga; a minuta real vem do endpoint próprio (RN-079). */
   tags: string[]
   /** Classificação estável do backend (ADR-064): 'ReadyForEmission' | 'Analysis'. */
   result: string
@@ -43,6 +46,12 @@ export interface Quotation {
   requiresCcg: boolean
   ccgSigned: boolean
   ccgMaxLimitWithoutNeed: number | null
+  /**
+   * RN-106: nomes das Coberturas Adicionais escolhidas que ESTA Seguradora não contempla. A
+   * comparação sinaliza a lacuna para que prêmios de escopos diferentes não sejam comparados sem
+   * aviso. Vazio quando a Seguradora contemplou todas (ou quando nenhuma foi escolhida).
+   */
+  coberturasNaoContempladas: string[]
   /** RN-505: opções de parcelamento informadas pela Seguradora — a emissão escolhe dentro delas. */
   installmentOptions: QuotationInstallmentOption[]
   /** RN-505: dias possíveis para o vencimento da primeira parcela. */
@@ -96,7 +105,9 @@ export interface QuotationsResult {
 
 /** Rótulo/cor do status seguível por nome estável (ADR-004). */
 export const quotationStatusView: Record<QuotationStatus, { label: string, color: string }> = {
-  auto: { label: 'Emissão automática', color: 'success' },
+  // "Pronta para emissão" (RN-078): a Cotação está APTA a ser emitida pelo corretor — não é emissão
+  // automática. Rótulo canônico único com a listagem (ver app/lib/status/quotations.ts).
+  auto: { label: 'Pronta para emissão', color: 'success' },
   analise: { label: 'Requer análise de subscrição', color: 'warning' },
 }
 
@@ -124,7 +135,7 @@ export const analysisTrackLabel: Record<string, string> = {
  * Classificação EXIBIDA da Cotação seguível (RN-058). PRIORIDADE (confirmada com a PO): a SUBSCRIÇÃO/
  * Análise vence o CCG — uma cotação em análise mostra "Análise de subscrição" mesmo com CCG pendente
  * (a subscrição é o gate mais forte). Sem análise: Pronta para emissão com CCG pendente → "Pendência de
- * CCG"; sem CCG → "Emissão automática". (O CCG é uma flag ortogonal, não um status do gateway.)
+ * CCG"; sem CCG → "Pronta para emissão". (O CCG é uma flag ortogonal, não um status do gateway.)
  * TODO(PO): confirmar se, no caso análise+CCG, é preciso sinalizar o CCG (ex.: selo) além do status.
  */
 export function classificationView(
@@ -151,6 +162,7 @@ function numOrNull(value: number | string | null | undefined): number | null {
 function toAvailable(item: ItemResponse): Quotation {
   return {
     id: item.quotationId,
+    number: item.number,
     insurerId: item.insurerId,
     name: item.insurerName,
     logoUrl: item.insurerLogoUrl,
@@ -166,6 +178,7 @@ function toAvailable(item: ItemResponse): Quotation {
     requiresCcg: item.requiresCcg,
     ccgSigned: item.ccgSigned,
     ccgMaxLimitWithoutNeed: numOrNull(item.ccgMaxLimitWithoutNeed),
+    coberturasNaoContempladas: notOfferedNames(item.additionalCoverages),
     // RN-505/RN-510: pagamento e documentos vêm da Cotação — a emissão escolhe dentro dessas listas,
     // sem inventar opção. Ausência significa "a Seguradora não informou", não zero opções válidas.
     installmentOptions: (item.installmentOptions ?? []).map(option => ({
@@ -181,6 +194,16 @@ function toAvailable(item: ItemResponse): Quotation {
       description: document.description ?? null,
     })),
   }
+}
+
+/**
+ * RN-106: nomes (da canônica) das coberturas não contempladas. Filtra pelo NOME ESTÁVEL do status —
+ * nunca por posição ordinal.
+ */
+function notOfferedNames(coverages: CoverageResponse[] | undefined | null): string[] {
+  return (coverages ?? [])
+    .filter(coverage => coverage.status === 'NotOffered')
+    .map(coverage => coverage.name)
 }
 
 function toUnavailable(item: ItemResponse): UnavailableQuotation {
@@ -234,11 +257,13 @@ export function mapQuotations(response: ListResponse): QuotationsResult {
 }
 
 export function useQuotations(api: typeof $fetch = useNuxtApp().$api as typeof $fetch) {
-  /** RN-056/057: dispara a cotação de todas as Seguradoras do escopo (fan-out, 202). */
-  async function runQuotations(groupId: string, brokerageId: string): Promise<RunResponse> {
+  /**
+   * RN-056/057: dispara a cotação de todas as Seguradoras do escopo (fan-out, 202).
+   * RN-103: a Corretora é a do Escopo ativo do acesso, resolvida no servidor — não vai no corpo.
+   */
+  async function runQuotations(groupId: string): Promise<RunResponse> {
     return await api<RunResponse>(`/api/quotation-groups/${groupId}/quotations`, {
       method: 'POST',
-      body: { brokerageId },
     })
   }
 

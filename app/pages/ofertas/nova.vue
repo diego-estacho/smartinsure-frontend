@@ -93,8 +93,7 @@ async function restoreFromRoute(groupId: string): Promise<void> {
     insuredAmount: group.insuredAmount,
     startDate: group.coverageStartDate,
     endDate: group.coverageEndDate,
-    coverageMulta: group.includesPenaltyCoverage,
-    coverageLabor: group.includesLaborCoverage,
+    additionalCoverageIds: [...(group.additionalCoverageIds ?? [])],
     complementaryModalityId: null,
   }
   wizard.setQuotationGroupId(group.id)

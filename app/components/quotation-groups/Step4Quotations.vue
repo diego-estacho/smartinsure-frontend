@@ -5,7 +5,7 @@
  * classificada pela ACL do backend (ADR-064) — Pronta para emissão, Análise (com esteira), Indisponível (com
  * motivos) ou Não reconhecida. Selecionar só é permitido nas seguíveis (RN-059); a Análise de
  * subscrição pede confirmação (vai para a esteira da Seguradora). Recálculo por mudança real de dado
- * (RN-060) descarta a seleção e recota. "Baixar minuta" envia os termos e abre o documento (RN-063).
+ * (RN-060) descarta a seleção e recota. "Baixar minuta" envia os termos e abre o documento (RN-080).
  *
  * Sempre mostramos o MOTIVO por Seguradora quando não é seguível (RN-058) — inclusive quando nenhuma
  * seguradora retorna cotação seguível: o corretor precisa ver por que cada uma recusou, não um beco sem saída.
@@ -28,6 +28,20 @@ const { error: selectError, run: runSelect } = useApiError()
 
 // Acompanhamento do fan-out (timer/timeout/estado terminal) no composable dedicado.
 const { timedOut, start: startPolling, refresh: refreshQuotations, resume: resumePolling } = useQuotationPolling()
+
+/**
+ * RN-106: rótulo do aviso de Cobertura Adicional não contemplada. Uma cobertura mostra o nome; mais
+ * de uma mostra a contagem (o detalhe vai no title). Sinaliza escopo menor que o pedido, para que
+ * prêmios de coberturas diferentes não sejam comparados sem aviso.
+ */
+function coberturasNaoContempladasLabel(item: Quotation): string {
+  const names = item.coberturasNaoContempladas
+  return names.length === 1 ? `sem ${names[0]}` : `sem ${names.length} coberturas`
+}
+
+function coberturasNaoContempladasTitle(item: Quotation): string {
+  return `Esta seguradora não contempla: ${item.coberturasNaoContempladas.join(', ')}.`
+}
 
 const unavailOpen = ref(false)
 
@@ -76,10 +90,11 @@ const cotando = computed(() => pending.value.length > 0)
 
 const headers = [
   { title: 'Seguradora', key: 'name' },
+  { title: 'Cotação', key: 'number' },
   { title: 'Prêmio', key: 'premio', align: 'end' },
   { title: 'Comissão', key: 'comissao', align: 'end' },
-  { title: 'Limite', key: 'limite', align: 'end' },
-  { title: 'Classificação', key: 'status' },
+  { title: 'Limite', key: 'limite' },
+  { title: 'Status', key: 'status' },
   { title: '', key: 'actions', sortable: false, align: 'end' },
 ] as const
 
@@ -163,7 +178,8 @@ async function generate(): Promise<void> {
   }
 
   const brokerageId = wizard.brokerageId
-  // Sem Corretora ativa nem no servidor (RN-064) não há como resolver as Habilitações — orienta a escolher.
+  // UX: sem Corretora ativa nem no servidor (RN-064) o gate orienta a escolher antes de cotar. A cotação
+  // em si não envia a Corretora — o backend a resolve pelo claim do Escopo ativo (RN-103); é só pré-check.
   if (!brokerageId) {
     generateError.value = 'Selecione uma corretora ativa para cotar.'
     return
@@ -171,7 +187,8 @@ async function generate(): Promise<void> {
 
   selectError.value = null
   const started = await runGenerate(async () => {
-    await runQuotations(groupId, brokerageId)
+    // RN-103: a Corretora (fan-out) é a do Escopo ativo do acesso, resolvida no servidor.
+    await runQuotations(groupId)
     await refreshQuotations()
     return true
   }, 'Não foi possível iniciar as cotações.')
@@ -182,8 +199,7 @@ async function generate(): Promise<void> {
 async function baixarMinuta(): Promise<void> {
   const groupId = wizard.quotationGroupId
   const quotation = wizard.selectedQuotation
-  const brokerageId = wizard.brokerageId
-  if (!groupId || !quotation || !brokerageId) return
+  if (!groupId || !quotation) return
 
   const terms = Object.entries(wizard.minuta)
     .map(([name, value]) => ({ name, value: String(value ?? '') }))
@@ -192,14 +208,14 @@ async function baixarMinuta(): Promise<void> {
     .filter(([, on]) => on)
     .map(([externalId]) => ({
       particularClauseExternalId: externalId,
-      // Tags próprias da cláusula preenchidas pelo corretor (RN-062): nome → valor (só as não vazias).
+      // Tags próprias da cláusula preenchidas pelo corretor (RN-079): nome → valor (só as não vazias).
       tags: Object.entries(wizard.clauseTags[externalId] ?? {})
         .map(([name, value]) => ({ name, value: String(value ?? '') }))
         .filter(tag => tag.value.trim().length > 0),
     }))
 
   const result = await runDraft(
-    () => submitMinuta(groupId, quotation.id, { brokerageId, terms, particularClauses }),
+    () => submitMinuta(groupId, quotation.id, { terms, particularClauses }),
     'Não foi possível baixar a minuta.',
   )
   if (result === undefined) return
@@ -346,6 +362,9 @@ onMounted(() => {
                 <span class="si-cell-strong">{{ item.name }}</span>
               </div>
             </template>
+            <template #[`item.number`]="{ item }">
+              <span class="si-qg-step4__number">{{ item.number ?? '—' }}</span>
+            </template>
             <template #[`item.premio`]="{ item }">
               <span class="si-qg-step4__premio">{{ item.status === 'auto' ? formatCurrencyBRL(item.premio) : '—' }}</span>
             </template>
@@ -356,12 +375,24 @@ onMounted(() => {
               {{ formatCurrencyBRL(item.limite) }}
             </template>
             <template #[`item.status`]="{ item }">
-              <SiChip
-                :color="classificationView(item).color"
-                size="small"
-              >
-                {{ classificationView(item).label }}
-              </SiChip>
+              <div class="si-qg-step4__status-cell">
+                <SiChip
+                  :color="classificationView(item).color"
+                  size="small"
+                >
+                  {{ classificationView(item).label }}
+                </SiChip>
+                <!-- RN-106: escopo menor que o pedido — o corretor não pode comparar prêmios de
+                     coberturas diferentes sem saber. -->
+                <SiChip
+                  v-if="item.coberturasNaoContempladas.length > 0"
+                  color="warning"
+                  size="small"
+                  :title="coberturasNaoContempladasTitle(item)"
+                >
+                  {{ coberturasNaoContempladasLabel(item) }}
+                </SiChip>
+              </div>
             </template>
             <template #[`item.actions`]="{ item }">
               <SiButton
@@ -394,14 +425,31 @@ onMounted(() => {
                     :name="item.name"
                     :logo-url="item.logoUrl"
                   />
-                  <span class="si-qg-step4__card-name">{{ item.name }}</span>
+                  <div class="si-qg-step4__card-insurer-text">
+                    <span class="si-qg-step4__card-name">{{ item.name }}</span>
+                    <span
+                      v-if="item.number"
+                      class="si-qg-step4__number"
+                    >{{ item.number }}</span>
+                  </div>
                 </div>
-                <SiChip
-                  :color="classificationView(item).color"
-                  size="small"
-                >
-                  {{ classificationView(item).label }}
-                </SiChip>
+                <div class="si-qg-step4__status-cell">
+                  <SiChip
+                    :color="classificationView(item).color"
+                    size="small"
+                  >
+                    {{ classificationView(item).label }}
+                  </SiChip>
+                  <!-- RN-106: mesma sinalização do desktop. -->
+                  <SiChip
+                    v-if="item.coberturasNaoContempladas.length > 0"
+                    color="warning"
+                    size="small"
+                    :title="coberturasNaoContempladasTitle(item)"
+                  >
+                    {{ coberturasNaoContempladasLabel(item) }}
+                  </SiChip>
+                </div>
               </div>
               <div class="si-qg-step4__card-facts">
                 <div class="si-qg-step4__card-premio">
@@ -706,6 +754,21 @@ onMounted(() => {
   min-width: 0;
 }
 
+.si-qg-step4__card-insurer-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Nº da proposta (mesma âncora da listagem): monoespaçado, discreto — identifica a Cotação sem
+ * competir com o Prêmio (o destaque da linha). */
+.si-qg-step4__number {
+  font-family: var(--si-font-mono);
+  font-size: var(--si-fs-caption);
+  color: rgba(var(--v-theme-on-surface), 0.7);
+  white-space: nowrap;
+}
+
 /* ── Progresso + skeletons nomeados (cotando) ── */
 .si-qg-step4__progress {
   display: flex;
@@ -778,6 +841,14 @@ onMounted(() => {
   justify-content: space-between;
   gap: var(--si-space-2);
   margin-bottom: var(--si-space-3);
+}
+
+/* RN-106: chip de classificação + aviso de cobertura não contemplada, lado a lado. */
+.si-qg-step4__status-cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--si-space-2);
 }
 
 .si-qg-step4__card-name {

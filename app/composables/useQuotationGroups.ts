@@ -26,8 +26,7 @@ export interface QuotationGroupPayload {
     insuredAmount: number | null
     startDate: string | null
     endDate: string | null
-    coverageMulta: boolean
-    coverageLabor: boolean
+    additionalCoverageIds: string[]
   }
 }
 
@@ -73,8 +72,8 @@ function toRequestBody(payload: QuotationGroupPayload): QuotationGroupBody {
     coverageEndDate: payload.risk.endDate ?? '',
     scopeMode: toScopeMode(payload.scope.mode),
     insurerIds: payload.scope.insurerIds,
-    includesPenaltyCoverage: payload.risk.coverageMulta,
-    includesLaborCoverage: payload.risk.coverageLabor,
+    // RN-104: a escolha vai pelos ids das Coberturas Adicionais canônicas.
+    additionalCoverageIds: payload.risk.additionalCoverageIds,
   }
 }
 
