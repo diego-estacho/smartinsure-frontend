@@ -14,7 +14,7 @@ defineProps<{
 </script>
 
 <template>
-  <SiDialog v-model="open" :max-width="960" scrollable>
+  <SiDialog v-model="open" :max-width="1040" scrollable>
     <SiCard class="si-ci-modal">
       <div class="si-ci-modal__head">
         <div class="si-ci-modal__titles">
