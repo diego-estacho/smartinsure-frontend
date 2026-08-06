@@ -220,7 +220,7 @@ async function copyNumber() {
       <VContainer class="si-qd__body">
         <div class="si-qd__grid">
           <div class="si-qd__main">
-            <QuotationSituationCard
+            <QuotationsSituationCard
               v-if="detailSituation?.hasSituationCard"
               :view="detailSituation"
               :orientation="isMobile ? 'vertical' : 'horizontal'"
@@ -243,11 +243,11 @@ async function copyNumber() {
               </SiButton>
             </div>
 
-            <QuotationDetailSummary :quotation="quotation" />
+            <QuotationsDetailSummary :quotation="quotation" />
           </div>
 
           <aside class="si-qd__aside">
-            <QuotationTimeline
+            <QuotationsTimeline
               :events="quotation.timeline"
               :collapsible="isMobile"
             />
