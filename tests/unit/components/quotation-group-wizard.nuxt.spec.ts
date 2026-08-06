@@ -12,7 +12,6 @@ import Step5Issuance from '~/components/quotation-groups/Step5Issuance.vue'
 import Step2Insured from '~/components/quotation-groups/Step2Insured.vue'
 import Step1PolicyHolder from '~/components/quotation-groups/Step1PolicyHolder.vue'
 import type { Quotation } from '~/composables/useQuotations'
-import { useIssuance } from '~/composables/useIssuance'
 import { usePersons } from '~/composables/usePersons'
 import { useQuotationGroups } from '~/composables/useQuotationGroups'
 import { buildObjetoTemplate, parseTemplate } from '~/lib/minuta'
@@ -802,15 +801,91 @@ describe('Etapa 4 — Cotações (exec-plan 0013, RN-056..059)', () => {
     expect(w.find('.si-qg-step4').exists()).toBe(true)
   })
 
-  it('etapa 4 sem corretora ativa na sessão orienta a selecionar (RN-064)', async () => {
-    // Grupo salvo, mas sessão sem Corretora ativa (brokerageId nulo): o fan-out automático do onMounted
-    // não pode resolver as Habilitações — a guarda deve orientar, não cotar às cegas.
+})
+
+/**
+ * O Escopo ativo é do servidor (RN-064): a etapa 4 precisa dele para resolver as Habilitações do
+ * fan-out. O contexto do acesso é carregado uma vez por sessão de navegação, então os três cenários
+ * abaixo se distinguem pelo que o SERVIDOR responde — não pelo que está no cache do cliente.
+ */
+describe('RN-064 Corretora ativa na etapa 4 de cotações', () => {
+  const CONTEXT_BASE = {
+    id: 'usr-1',
+    name: 'Corretor',
+    email: 'corretor@teste.com',
+    status: 'Active',
+    systemProfileName: 'BrokerageAdministrator',
+    activePolicyHolderId: null,
+    policyHolders: [],
+  }
+
+  beforeEach(() => {
+    useQuotationGroupWizardStore().reset()
+    forceDesktopViewport()
+  })
+
+  function mountStep4WithSavedGroup() {
     const store = useQuotationGroupWizardStore()
     store.startOffer()
     store.setQuotationGroupId('qg-1')
+    return store
+  }
+
+  it('RN-064: contexto em cache sem Corretora, servidor com — reconsulta e adota a do servidor', async () => {
+    // Vínculo criado DEPOIS do login: o cache do cliente não tem Corretora, mas o servidor já tem.
+    // Antes de bloquear o corretor, a etapa reconsulta o próprio acesso — sem isso ele fica travado
+    // sem saída visível na tela, com a Corretora ativa já resolvida do outro lado.
+    registerEndpoint('/api/me', {
+      method: 'GET',
+      handler: () => ({
+        ...CONTEXT_BASE,
+        activeBrokerageId: 'brk-9',
+        brokerages: [{
+          id: 'brk-9',
+          documentNumber: '10864690000180',
+          name: 'CORRETORA ATIVA',
+          profileName: 'BrokerageAdministrator',
+          isActive: true,
+        }],
+      }),
+    })
+
+    const store = mountStep4WithSavedGroup()
     const w = await mountSuspended(Step4Quotations)
+    // A reconsulta é uma ida ao servidor: espera o efeito dela, não só o tick do mount.
+    await vi.waitFor(() => expect(store.brokerageId).toBe('brk-9'))
     await flushPromises()
-    expect(w.text()).toContain('Selecione uma corretora ativa para cotar')
+
+    expect(w.text()).not.toContain('Selecione uma corretora ativa para cotar')
+  })
+
+  it('RN-064: servidor também sem Corretora ativa — orienta a selecionar, não cota às cegas', async () => {
+    // Acesso legítimo, mas nenhum Escopo de Corretora ativo: sem ele não há Habilitação a resolver.
+    registerEndpoint('/api/me', {
+      method: 'GET',
+      handler: () => ({ ...CONTEXT_BASE, activeBrokerageId: null, brokerages: [] }),
+    })
+
+    const store = mountStep4WithSavedGroup()
+    const w = await mountSuspended(Step4Quotations)
+    await vi.waitFor(() => expect(w.text()).toContain('Selecione uma corretora ativa para cotar'))
+    expect(store.brokerageId).toBeNull()
+  })
+
+  it('RN-064: consulta do acesso falha — avisa a falha em vez de culpar a corretora', async () => {
+    // `loadContext` engole o erro e zera o contexto. Sem contexto nenhum o problema é a consulta, não
+    // a ausência de Corretora: mandar "selecione uma corretora" faria o corretor caçar erro que não é dele.
+    registerEndpoint('/api/me', {
+      method: 'GET',
+      handler: () => {
+        throw createError({ statusCode: 500, statusMessage: 'contexto indisponível' })
+      },
+    })
+
+    mountStep4WithSavedGroup()
+    const w = await mountSuspended(Step4Quotations)
+    await vi.waitFor(() => expect(w.text()).toContain('Não foi possível confirmar sua corretora ativa'))
+    expect(w.text()).not.toContain('Selecione uma corretora ativa para cotar')
   })
 })
 
@@ -857,50 +932,47 @@ describe('Etapa 5 — Emissão (exec-plan 0015, incremento 5)', () => {
     forceDesktopViewport()
   })
 
-  it('useIssuance (mock) retorna o identificador da apólice', async () => {
-    const { issue } = useIssuance()
-    const result = await issue({ delayMs: 0 })
-    expect(result.policyId).toBeTruthy()
-  })
-
-  it('validateCurrentStep exige contrato e forma de pagamento na emissão', () => {
+  // RN-505: o número do contrato saiu da validação (é Tag da minuta, RN-502); o que a etapa exige é a
+  // forma de pagamento, escolhida entre as opções que a Seguradora informou na Cotação.
+  it('validateCurrentStep exige a forma de pagamento na emissão', () => {
     const store = useQuotationGroupWizardStore()
     store.startOffer()
     for (let i = 0; i < 4; i++) store.goNext()
     expect(store.currentStep).toBe(4)
-    expect(store.validateCurrentStep()).toContain('contrato')
-    store.issuance.contrato = '2026/0481-SP'
-    store.issuance.parcelas = '3'
-    store.issuance.vencimento = '30'
+    expect(store.validateCurrentStep()).toContain('forma de pagamento')
+    store.issuance.parcelas = 3
+    store.issuance.vencimento = 30
     expect(store.validateCurrentStep()).toBeNull()
   })
 
   it('reset limpa os dados de emissão', () => {
     const store = useQuotationGroupWizardStore()
-    store.issuance.contrato = 'X'
-    store.issuanceState = 'success'
+    store.issuance.taxa = '2,5'
+    store.issuanceState = 'requested'
     store.termOpen = true
     store.reset()
-    expect(store.issuance.contrato).toBe('')
+    expect(store.issuance.taxa).toBe('')
     expect(store.issuanceState).toBe('form')
     expect(store.termOpen).toBe(false)
   })
 
-  it('a etapa 5 renderiza o formulário (contrato + forma de pagamento)', async () => {
+  it('a etapa 5 renderiza prêmio/comissão e a forma de pagamento', async () => {
     useQuotationGroupWizardStore().startOffer()
     const w = await mountSuspended(Step5Issuance)
     const text = w.text()
-    expect(text).toContain('Número do contrato')
+    expect(text).toContain('Prêmio e comissão')
     expect(text).toContain('Forma de pagamento')
+    expect(text).not.toContain('Número do contrato')
   })
 
-  it('no estado de sucesso, mostra "Apólice emitida"', async () => {
+  // RN-508/RN-514: o desfecho é "Emissão solicitada" — a plataforma não afirma apólice emitida.
+  it('no desfecho, mostra "Emissão solicitada" com o número da proposta', async () => {
     const store = useQuotationGroupWizardStore()
-    store.issuance.contrato = '2026/0481-SP'
-    store.issuanceState = 'success'
-    store.policyId = 'AP-1'
+    store.setIssuanceRequested({ policyExternalId: 'AP-EXT-1', proposalNumber: 'PROP-77' })
     const w = await mountSuspended(Step5Issuance)
-    expect(w.text()).toContain('Apólice emitida')
+    expect(w.text()).toContain('Emissão solicitada')
+    expect(w.text()).toContain('PROP-77')
+    expect(w.text()).not.toContain('Apólice emitida')
   })
 })
 
@@ -1038,6 +1110,9 @@ describe('Salvar QuotationGroup + recálculo inteligente (exec-plan 0015)', () =
         policyHolderId: 'p',
         branchId: null,
         insuredId: 'i',
+        // RN-503: sem escolha no passo 2, null pede ao servidor o principal (na criação) ou a
+        // preservação da réplica já combinada (na atualização).
+        insuredAddressId: null,
         modalityId: 'm',
         insuredAmount: 1000,
         coverageStartDate: '2026-01-01',

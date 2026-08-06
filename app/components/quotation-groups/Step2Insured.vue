@@ -17,6 +17,11 @@ interface InsuredAddress {
   id: string
   label: string
   isMain: boolean
+  /**
+   * RN-503: `true` quando o id é do cadastro da Pessoa (veio do contrato) e pode ser enviado como
+   * escolha; `false` para endereço montado só na tela, que ainda não existe no cadastro.
+   */
+  isPersisted: boolean
 }
 
 const UFS = [
@@ -78,7 +83,14 @@ function formatAddress(address: PersonAddress | typeof newAddress): string {
 function syncSelectedAddress(): void {
   if (!wizard.insured) return
   const chosen = addresses.value.find(address => address.id === selectedAddressId.value)
-  wizard.setInsured({ ...wizard.insured, mainAddress: chosen?.label ?? null })
+  // RN-503: além do rótulo (resumo), o id do endereço escolhido vai para a oferta — é ele que o
+  // backend usa para replicar os valores. Endereço adicionado só na tela ainda não tem id de
+  // cadastro, então não há o que enviar (TODO: cadastrar endereço de Pessoa no contrato).
+  wizard.setInsured({
+    ...wizard.insured,
+    mainAddress: chosen?.label ?? null,
+    addressId: chosen?.isPersisted ? chosen.id : null,
+  })
 }
 
 async function search(): Promise<void> {
@@ -113,19 +125,32 @@ async function search(): Promise<void> {
 }
 
 function select(item: PersonSearchItem): void {
+  // RN-503: a lista vem do cadastro da Pessoa, com os ids reais dos endereços — é deles que sai a
+  // escolha enviada ao salvar. O principal vem primeiro (ordenado pelo servidor) e nasce marcado.
+  addresses.value = (item.addresses ?? []).map(address => ({
+    id: address.id,
+    label: formatAddress(address),
+    isMain: address.isMain,
+    isPersisted: true,
+  }))
+
+  selectedAddressId.value = addresses.value.find(address => address.isMain)?.id
+    ?? addresses.value[0]?.id
+    ?? null
+
+  const selectedAddress = addresses.value.find(address => address.id === selectedAddressId.value)
+
   const chosen: SelectedInsured = {
     id: item.id,
     name: item.name,
     documentNumber: item.documentNumber,
     socialName: item.socialName ?? null,
-    mainAddress: item.mainAddress ? formatAddress(item.mainAddress) : null,
+    mainAddress: selectedAddress?.label
+      ?? (item.mainAddress ? formatAddress(item.mainAddress) : null),
+    addressId: selectedAddress?.id ?? null,
   }
   wizard.setInsured(chosen)
   tradeName.value = item.socialName ?? ''
-  addresses.value = item.mainAddress
-    ? [{ id: `a${addressSeq++}`, label: formatAddress(item.mainAddress), isMain: true }]
-    : []
-  selectedAddressId.value = addresses.value[0]?.id ?? null
   results.value = []
   closeAddressForm()
 }
@@ -194,7 +219,13 @@ function addAddress(): void {
     return
   }
   const id = `a${addressSeq++}`
-  addresses.value.push({ id, label: formatAddress(newAddress), isMain: addresses.value.length === 0 })
+  addresses.value.push({
+    id,
+    label: formatAddress(newAddress),
+    isMain: addresses.value.length === 0,
+    // Só na tela: não existe no cadastro da Pessoa, então não é enviado como escolha (RN-503).
+    isPersisted: false,
+  })
   selectedAddressId.value = id
   syncSelectedAddress()
   closeAddressForm()
