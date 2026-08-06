@@ -7,7 +7,7 @@ import { toBrDateTime } from '~/lib/dates'
 import { extractApiErrorMessage } from '~/lib/apiError'
 
 /**
- * RN-029/RN-030/RN-031/RN-104 — Consulta de Crédito: um componente, duas entradas.
+ * RN-029/RN-030/RN-031/RN-200 — Consulta de Crédito: um componente, duas entradas.
  * `page` (rota /consulta-credito) traz busca + seleção de Corretora; `embed` (modal do passo 1
  * da cotação) recebe Tomador e Corretora por prop e entra direto em loading → result.
  */
@@ -46,6 +46,10 @@ const recent = ref<string[]>([])
 
 // CNPJ atualmente em consulta (reconsulta usa este valor).
 const currentCnpj = ref('')
+
+// RN-201: exportação do quadro consolidado (.xlsx) — só no modo página, após o resultado.
+const exporting = ref(false)
+const toast = ref('')
 
 const rows = computed(() => buildCreditInquiryRows(response.value?.results ?? []))
 const availableRows = computed(() => rows.value.filter(row => row.status === 'Available'))
@@ -107,10 +111,32 @@ onMounted(async () => {
   // de gestão (`listBrokerages`, escopada, que traz só a Corretora ativa). loadContext é idempotente.
   await loadContext()
   selectedBrokerageId.value = activeWorkspace.value?.id ?? workspaces.value[0]?.id ?? ''
+  recent.value = loadRecent()
 })
+
+// Consultas recentes: convenência de recência (não é histórico). Persistidas em localStorage —
+// custo zero de banco, sobrevivem ao reload; o histórico persistido (RN-031) é assunto de outra tela.
+const RECENT_KEY = 'si:credit-inquiry:recent'
+
+function loadRecent(): string[] {
+  try {
+    const raw = localStorage.getItem(RECENT_KEY)
+    const parsed = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? parsed.slice(0, 5) : []
+  }
+  catch {
+    return []
+  }
+}
 
 function pushRecent(term: string) {
   recent.value = [term, ...recent.value.filter(item => item !== term)].slice(0, 5)
+  try {
+    localStorage.setItem(RECENT_KEY, JSON.stringify(recent.value))
+  }
+  catch {
+    // localStorage indisponível (modo privado/quota) — recência fica só em memória.
+  }
 }
 
 async function submitInquiry() {
@@ -211,6 +237,30 @@ function candidateCity(candidate: PolicyHolderListItem): string {
 function initials(name: string): string {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(word => word[0]).join('').toUpperCase()
 }
+
+// RN-201: baixa o .xlsx da consulta persistida pelo BFF (reusa o exporter do backend, RN-018).
+async function exportInquiry() {
+  const inquiryId = response.value?.creditInquiryId
+  if (!inquiryId) {
+    return
+  }
+  exporting.value = true
+  try {
+    const blob = await $fetch<Blob>(`/api/credit-inquiries/${inquiryId}/export`, { responseType: 'blob' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `consulta-credito-${resultCnpj.value.replace(/\D/g, '')}.xlsx`
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
+  catch (error) {
+    toast.value = extractApiErrorMessage(error, 'Não foi possível exportar a consulta.')
+  }
+  finally {
+    exporting.value = false
+  }
+}
 </script>
 
 <template>
@@ -218,11 +268,17 @@ function initials(name: string): string {
     <!-- Cabeçalho (somente page). -->
     <header v-if="!isEmbed" class="si-ci-panel__header">
       <div class="si-ci-panel__heading">
-        <span class="si-ci-panel__eyebrow">Plataforma · Consulta de crédito</span>
         <h1 class="si-ci-panel__title">Consulta de crédito</h1>
       </div>
       <div v-if="phase === 'result'" class="si-ci-panel__actions">
-        <SiButton variant="outlined" color="secondary" :prepend-icon="'download'" disabled title="Formato a definir">
+        <SiButton
+          variant="outlined"
+          color="secondary"
+          :prepend-icon="'download'"
+          :loading="exporting"
+          :disabled="!response?.creditInquiryId"
+          @click="exportInquiry"
+        >
           Exportar
         </SiButton>
         <SiButton variant="outlined" color="secondary" @click="startNewInquiry">
@@ -412,41 +468,52 @@ function initials(name: string): string {
           </SiButton>
         </div>
 
+        <!-- Faixa de KPIs (RN-029): células planas sobre o card branco (não cards internos), como o
+             protótipo — label caixa-alta + valor tabular; divisórias de 1px pelo gap do grid. -->
         <div class="si-ci-kpis">
           <div class="si-ci-kpi">
-            <SiMetric label="Seguradoras consultadas" :value="`${kpis.queried} de ${kpis.queried}`" />
+            <span class="si-ci-kpi__label">Seguradoras consultadas</span>
+            <span class="si-ci-kpi__value">{{ `${kpis.queried} de ${kpis.queried}` }}</span>
             <SiProgressLinear :model-value="100" color="primary" height="4" rounded class="si-ci-kpi__bar" />
           </div>
-          <SiMetric
-            class="si-ci-kpi"
-            label="Com limite aprovado"
-            :value="kpis.available"
-            :hint="`${kpis.withoutLimit} sem limite ou indisponíveis`"
-          />
-          <SiMetric
-            class="si-ci-kpi si-ci-kpi--accent"
-            label="Maior limite disponível"
-            :value="kpis.maxLimit"
-            :hint="kpis.leaderName"
-          />
-          <SiMetric
-            class="si-ci-kpi"
-            label="Consulta"
-            :value="kpis.queriedAt"
-            :hint="kpis.elapsed ? `concluída em ${kpis.elapsed}` : ''"
-          />
+          <div class="si-ci-kpi">
+            <span class="si-ci-kpi__label">Com limite aprovado</span>
+            <span class="si-ci-kpi__value">{{ kpis.available }}</span>
+            <span class="si-ci-kpi__hint">{{ kpis.withoutLimit }} sem limite ou indisponíveis</span>
+          </div>
+          <div class="si-ci-kpi si-ci-kpi--accent">
+            <span class="si-ci-kpi__label">Maior limite disponível</span>
+            <span class="si-ci-kpi__value">{{ kpis.maxLimit }}</span>
+            <span class="si-ci-kpi__hint">{{ kpis.leaderName }}</span>
+          </div>
+          <div class="si-ci-kpi si-ci-kpi--date">
+            <span class="si-ci-kpi__label">Consulta</span>
+            <span class="si-ci-kpi__value">{{ kpis.queriedAt }}</span>
+            <span v-if="kpis.elapsed" class="si-ci-kpi__hint">concluída em {{ kpis.elapsed }}</span>
+          </div>
         </div>
       </SiCard>
 
-      <SiAlert
-        v-if="noneAvailable"
-        type="warning"
-        title="Nenhuma seguradora retornou limite disponível"
-        text="Verifique se o tomador tem cadastro ativo nas seguradoras ou reconsulte em alguns minutos. Seguradoras indisponíveis não significam recusa de crédito."
-      />
+      <div v-if="noneAvailable" class="si-ci-state">
+        <span class="si-ci-state__icon si-ci-state__icon--warning">
+          <SiIcon :icon="'alertTriangle'" :size="24" />
+        </span>
+        <h2 class="si-ci-state__title">Nenhuma seguradora retornou limite disponível</h2>
+        <p class="si-ci-state__text">
+          Verifique se o tomador tem cadastro ativo nas seguradoras ou reconsulte em alguns minutos.
+          Seguradoras indisponíveis não significam recusa de crédito.
+        </p>
+      </div>
 
       <CreditInquiryTable :rows="rows" :mode="mode" />
     </template>
+
+    <SiSnackbar
+      :model-value="Boolean(toast)"
+      @update:model-value="(v) => { if (!v) toast = '' }"
+    >
+      {{ toast }}
+    </SiSnackbar>
   </section>
 </template>
 
@@ -473,14 +540,6 @@ function initials(name: string): string {
 .si-ci-panel__heading {
   flex: 1;
   min-width: 0;
-}
-
-.si-ci-panel__eyebrow {
-  display: block;
-  font-size: 11.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--si-cinza);
 }
 
 .si-ci-panel__title {
@@ -543,6 +602,8 @@ function initials(name: string): string {
 /* Card de busca. */
 .si-ci-search {
   padding: var(--si-space-5) var(--si-space-5) var(--si-space-4);
+  /* Card branco como o protótipo (o variant outlined do Vuetify vem transparente). */
+  background: rgb(var(--v-theme-surface));
 }
 
 .si-ci-search__fields {
@@ -618,6 +679,14 @@ function initials(name: string): string {
   padding: var(--si-space-12) var(--si-space-4);
 }
 
+/* Na página, os estados (vazio/buscando/carregando/sem-resultado/erro) ficam num card branco
+ * enquadrado, como o protótipo. No embed (modal) a moldura é o próprio diálogo, então não enquadra. */
+.si-ci-panel--page .si-ci-state {
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid var(--si-cinza-claro);
+  border-radius: var(--si-radius-lg);
+}
+
 .si-ci-state__icon {
   display: inline-flex;
   align-items: center;
@@ -637,6 +706,11 @@ function initials(name: string): string {
   color: rgb(var(--v-theme-error));
 }
 
+.si-ci-state__icon--warning {
+  background: var(--si-warning-tint);
+  color: var(--si-warning-fg);
+}
+
 .si-ci-state__title {
   margin: 0;
   font-size: 17px;
@@ -653,6 +727,7 @@ function initials(name: string): string {
 /* Candidatos. */
 .si-ci-candidates {
   overflow: hidden;
+  background: rgb(var(--v-theme-surface));
 }
 
 .si-ci-candidates__head {
@@ -719,6 +794,7 @@ function initials(name: string): string {
 /* Cartão do tomador + KPIs. */
 .si-ci-holder {
   overflow: hidden;
+  background: rgb(var(--v-theme-surface));
 }
 
 .si-ci-holder__head {
@@ -757,10 +833,40 @@ function initials(name: string): string {
 .si-ci-kpi {
   background: rgb(var(--v-theme-background));
   padding: var(--si-space-4) var(--si-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--si-space-1);
 }
 
-.si-ci-kpi--accent :deep(.si-metric__value) {
+.si-ci-kpi__label {
+  font-size: 11.5px;
+  font-weight: var(--si-font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--si-cinza);
+}
+
+.si-ci-kpi__value {
+  font-size: 22px;
+  line-height: 1.15;
+  font-weight: var(--si-font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--v-theme-on-surface));
+}
+
+.si-ci-kpi__hint {
+  font-size: var(--si-fs-caption);
+  color: var(--si-cinza);
+}
+
+.si-ci-kpi--accent .si-ci-kpi__value {
   color: var(--si-verde-800);
+}
+
+/* KPI "Consulta" (data/hora): valor menor que os numéricos, como o protótipo (15px). */
+.si-ci-kpi--date .si-ci-kpi__value {
+  font-size: 15px;
+  line-height: 1.3;
 }
 
 .si-ci-kpi__bar {

@@ -37,36 +37,24 @@ interface TableHeader {
   width: number
 }
 
+// Mesmas colunas nos dois modos (page e embed): o modal traz a informação completa, sem "versão pobre".
+// O embed é um pouco mais estreito, então as larguras são levemente compactas (table-layout: fixed escala).
 const headers = computed<TableHeader[]>(() => {
-  const base: TableHeader[] = [
-    { title: 'Seguradora', key: 'insurer', sortable: false, width: props.mode === 'embed' ? 190 : 196 },
-    { title: 'Status', key: 'status', sortable: false, width: props.mode === 'embed' ? 150 : 164 },
-    { title: 'Tradicional', key: 'traditional', sortable: false, align: 'end', width: props.mode === 'embed' ? 124 : 128 },
-    { title: 'Judicial', key: 'judicial', sortable: false, align: 'end', width: props.mode === 'embed' ? 136 : 142 },
-    { title: 'Financeira', key: 'financial', sortable: false, align: 'end', width: props.mode === 'embed' ? 120 : 124 },
+  const compact = props.mode === 'embed'
+  return [
+    { title: 'Seguradora', key: 'insurer', sortable: false, width: compact ? 224 : 252 },
+    { title: 'Status', key: 'status', sortable: false, width: compact ? 128 : 138 },
+    { title: 'Tradicional', key: 'traditional', sortable: false, align: 'end', width: compact ? 122 : 128 },
+    { title: 'Judicial', key: 'judicial', sortable: false, align: 'end', width: compact ? 132 : 142 },
+    { title: 'Financeira', key: 'financial', sortable: false, align: 'end', width: compact ? 118 : 124 },
+    { title: 'Utilizado', key: 'used', sortable: false, align: 'end', width: compact ? 128 : 140 },
+    { title: 'Validade', key: 'validity', sortable: false, align: 'start', width: compact ? 100 : 108 },
   ]
-  if (props.mode === 'page') {
-    base.push({ title: 'Utilizado', key: 'used', sortable: false, align: 'end', width: 140 })
-    base.push({ title: 'Validade', key: 'validity', sortable: false, align: 'start', width: 108 })
-  }
-  return base
 })
 
 const footerNote = computed(() =>
-  props.mode === 'embed'
-    ? `Exibindo ${filteredRows.value.length} de ${props.rows.length} seguradoras vinculadas · utilizado e validade na consulta de crédito completa`
-    : `Exibindo ${filteredRows.value.length} de ${props.rows.length} seguradoras vinculadas`,
+  `Exibindo ${filteredRows.value.length} de ${props.rows.length} seguradoras vinculadas`,
 )
-
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(word => word[0])
-    .join('')
-    .toUpperCase()
-}
 </script>
 
 <template>
@@ -126,9 +114,7 @@ function initials(name: string): string {
       >
         <template #[`item.insurer`]="{ item }">
           <div class="si-ci-insurer">
-            <SiAvatar :size="34" color="charcoal" rounded="10">
-              <span class="si-ci-insurer__initials">{{ initials(item.insurerName) }}</span>
-            </SiAvatar>
+            <SiInsurerLogo :name="item.insurerName" :logo-url="item.insurerLogoUrl" :size="44" />
             <div class="si-ci-insurer__text">
               <span class="si-ci-insurer__name" :title="item.insurerName">{{ item.insurerName }}</span>
               <span class="si-ci-insurer__time">
@@ -167,7 +153,7 @@ function initials(name: string): string {
           <CreditInquiryLimitCellContent :cell="item.financial" />
         </template>
 
-        <template v-if="mode === 'page'" #[`item.used`]="{ item }">
+        <template #[`item.used`]="{ item }">
           <div v-if="item.used && item.used.value > 0" class="si-ci-used">
             <span class="si-ci-used__value">{{ formatCurrencyBRL(item.used.value) }}</span>
             <span class="si-ci-used__pct">{{ item.used.percent }}%</span>
@@ -181,7 +167,7 @@ function initials(name: string): string {
           <span v-else class="si-ci-empty">—</span>
         </template>
 
-        <template v-if="mode === 'page'" #[`item.validity`]>
+        <template #[`item.validity`]>
           <!-- OPEN-08: validade sem fonte no motor — apresentada como ausente, nunca inventada. -->
           <span class="si-ci-empty">—</span>
         </template>
@@ -192,9 +178,7 @@ function initials(name: string): string {
     <ul class="si-ci-table__mobile">
       <li v-for="item in filteredRows" :key="`m-${item.insurerId}`" class="si-ci-card">
         <div class="si-ci-card__head">
-          <SiAvatar :size="32" color="charcoal" rounded="10">
-            <span class="si-ci-insurer__initials">{{ initials(item.insurerName) }}</span>
-          </SiAvatar>
+          <SiInsurerLogo :name="item.insurerName" :logo-url="item.insurerLogoUrl" :size="40" />
           <span class="si-ci-card__name">{{ item.insurerName }}</span>
           <SiChip
             :color="getCreditInquiryInsurerStatusView(item.status).color"
@@ -210,13 +194,13 @@ function initials(name: string): string {
             <CreditInquiryMobileMetric label="Tradicional" :cell="item.traditional" />
             <CreditInquiryMobileMetric label="Judicial" :cell="item.judicial" judicial />
             <CreditInquiryMobileMetric label="Financeira" :cell="item.financial" />
-            <div v-if="mode === 'page'" class="si-ci-card__metric">
+            <div class="si-ci-card__metric">
               <span class="si-ci-card__metric-label">Validade</span>
               <span class="si-ci-card__metric-value si-ci-empty">—</span>
             </div>
           </div>
 
-          <div v-if="mode === 'page' && item.used && item.used.value > 0" class="si-ci-card__used">
+          <div v-if="item.used && item.used.value > 0" class="si-ci-card__used">
             <span class="si-ci-card__metric-label">Utilizado</span>
             <div class="si-ci-used">
               <span class="si-ci-used__value">{{ formatCurrencyBRL(item.used.value) }} · {{ item.used.percent }}%</span>
@@ -248,6 +232,8 @@ function initials(name: string): string {
 <style scoped>
 .si-ci-table {
   overflow: hidden;
+  /* Card branco como o protótipo (outlined do Vuetify vem transparente). */
+  background: rgb(var(--v-theme-surface));
 }
 
 .si-ci-table__head {
@@ -289,12 +275,6 @@ function initials(name: string): string {
   min-width: 0;
 }
 
-.si-ci-insurer__initials {
-  font-size: 12px;
-  font-weight: var(--si-font-weight-semibold);
-  color: rgb(var(--v-theme-primary));
-}
-
 .si-ci-insurer__text {
   display: flex;
   flex-direction: column;
@@ -317,6 +297,9 @@ function initials(name: string): string {
 .si-ci-status {
   display: flex;
   flex-direction: column;
+  /* flex-start pra o chip NÃO esticar na largura da coluna (default align-items: stretch fazia o
+     badge tomar a coluna inteira — o problema reportado). */
+  align-items: flex-start;
   gap: var(--si-space-1);
   min-width: 0;
 }

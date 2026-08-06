@@ -821,6 +821,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/credit-inquiries/{id}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Exporta o quadro consolidado de uma consulta de crédito (.xlsx) */
+        get: operations["ExportCreditInquiry"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/imported-additional-coverages/{id}/link": {
         parameters: {
             query?: never;
@@ -3423,6 +3440,7 @@ export interface components {
             /** Format: uuid */
             insurerId: string;
             insurerName: string;
+            insurerLogoUrl: null | string;
             status: string;
             failureReason: null | string;
             /** Format: int64 */
@@ -4426,6 +4444,33 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["GetCreditInquiryResponse"];
                 };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ExportCreditInquiry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Not Found */
             404: {

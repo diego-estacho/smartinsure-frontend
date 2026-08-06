@@ -1,5 +1,5 @@
 /**
- * RN-029/RN-104 — helpers de domínio da Consulta de Crédito.
+ * RN-029/RN-200 — helpers de domínio da Consulta de Crédito.
  *
  * O Motor de Cálculo devolve limites em grupos dinâmicos (GroupType estável). A tela mapeia
  * os grupos conhecidos para as três colunas fixas do design (Tradicional / Judicial / Financeira),
@@ -44,6 +44,7 @@ export interface CreditUsedCell {
 export interface CreditInquiryRow {
   insurerId: string
   insurerName: string
+  insurerLogoUrl: string | null
   status: string
   failureReason: string | null
   responseTimeMs: number | null
@@ -103,6 +104,7 @@ export function buildCreditInquiryRow(result: CreditInquiryResultResponse): Cred
   return {
     insurerId: result.insurerId,
     insurerName: result.insurerName,
+    insurerLogoUrl: result.insurerLogoUrl ?? null,
     status: result.status,
     failureReason: result.failureReason,
     responseTimeMs: result.responseTimeMs == null ? null : Number(result.responseTimeMs),
