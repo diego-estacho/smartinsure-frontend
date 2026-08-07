@@ -77,6 +77,7 @@ import CreditCard from 'lucide-vue-next/dist/esm/icons/credit-card'
 import SlidersHorizontal from 'lucide-vue-next/dist/esm/icons/sliders-horizontal'
 import Network from 'lucide-vue-next/dist/esm/icons/network'
 import Tag from 'lucide-vue-next/dist/esm/icons/tag'
+import Copy from 'lucide-vue-next/dist/esm/icons/copy'
 
 /**
  * Registry: chave estável (inglês) → componente Lucide. Fonte única consumida pelo `SiIcon`
@@ -85,6 +86,7 @@ import Tag from 'lucide-vue-next/dist/esm/icons/tag'
 export const appIcons = {
   // ── Ícones usados nas telas ───────────────────────────────────────────
   shieldCheck: ShieldCheck,
+  copy: Copy,
   menu: Menu,
   building: Building2,
   domain: Building,

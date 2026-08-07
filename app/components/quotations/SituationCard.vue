@@ -1,0 +1,58 @@
+<script setup lang="ts">
+/**
+ * Card de situação do detalhe da Cotação (RN-081): Stepper + Alert do cenário. Só é renderizado onde há
+ * jornada de emissão a mostrar (pronta/ccg) — a página decide pelo `view.hasSituationCard`. Read-only:
+ * o Stepper não é clicável. No mobile o Stepper é vertical.
+ */
+import type { QuotationSituationView } from '~/lib/quotations/detailView'
+
+withDefaults(defineProps<{
+  view: QuotationSituationView
+  orientation?: 'horizontal' | 'vertical'
+}>(), { orientation: 'horizontal' })
+</script>
+
+<template>
+  <SiCard
+    variant="flat"
+    class="si-situation"
+  >
+    <SiStepper
+      v-if="view.stepper"
+      :steps="view.stepper.steps"
+      :current="view.stepper.current"
+      :orientation="orientation"
+      class="si-situation__stepper"
+    />
+    <SiAlert
+      v-if="view.alert"
+      :type="view.alert.type"
+      :title="view.alert.title"
+      :text="view.alert.text"
+      variant="tonal"
+    />
+  </SiCard>
+</template>
+
+<style scoped>
+.si-situation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--si-space-5);
+  padding: var(--si-space-5) 22px;
+  box-shadow: var(--si-shadow-1);
+}
+
+/* Alert do detalhe mais compacto, como o protótipo: o título default do Vuetify (20px) é grande demais
+ * aqui — 16px semibold sobre corpo 14px mantém a hierarquia sem gritar. Escopado a este card. */
+.si-situation :deep(.v-alert-title) {
+  font-size: 16px;
+  font-weight: var(--si-font-weight-semibold);
+  line-height: 1.35;
+}
+
+.si-situation :deep(.v-alert__content) {
+  font-size: 14px;
+  line-height: 1.5;
+}
+</style>

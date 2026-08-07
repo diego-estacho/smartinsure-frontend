@@ -55,3 +55,26 @@ export function toBrDateTime(isoString: string): string {
   const date = `${pad(day)}/${pad(month + 1)}/${year}`
   return `${date} ${hour}:${minute}`
 }
+
+/** Exibição de `DateOnly` "AAAA-MM-DD" → 15/07/2026; "—" quando ausente/inválida. */
+export function toBrDateOnly(iso: string | null | undefined): string {
+  if (!iso) return '—'
+  const date = fromIsoDate(iso.slice(0, 10))
+  return date ? toBrDate(date) : '—'
+}
+
+/** Exibição de `DateTime` ISO com hora no padrão do DS: 10/07/2026 às 14:31 (cronologia). */
+export function toBrDateTimeAt(iso: string | null | undefined): string {
+  if (!iso) return '—'
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(iso)
+  return m ? `${m[3]}/${m[2]}/${m[1]} às ${m[4]}:${m[5]}` : '—'
+}
+
+/** Dias de vigência = arredondamento de (fim − início), mínimo 1. Derivação de exibição (não é regra). */
+export function coverageDays(
+  start: string | null | undefined, end: string | null | undefined): number | null {
+  const startDate = start ? fromIsoDate(start.slice(0, 10)) : null
+  const endDate = end ? fromIsoDate(end.slice(0, 10)) : null
+  if (!startDate || !endDate) return null
+  return Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / 86_400_000))
+}
