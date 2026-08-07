@@ -1,55 +1,175 @@
 <script setup lang="ts">
 /**
- * Etapa 5 — Emissão (exec-plan 0015, incremento 5) — **MOCK**. Formulário (número do contrato,
- * minuta/cláusulas sincronizadas com a etapa 4, prêmio/comissão, forma de pagamento), modal de
- * "Termo e declaração" com aceite obrigatório, e estados de processamento e sucesso.
+ * Etapa 5 — Emissão (RN-500..RN-514), integrada ao servidor.
  *
- * A emissão real depende de contrato inexistente — `useIssuance` é mock isolado. TODO(backend):
- * `POST emissao { ofertaId, contrato, clausulas, minuta, pagamento, aceite }`.
+ * A tela reflete, não decide: prêmio e comissão vêm da Cotação; a **taxa** é editável e, ao confirmar,
+ * o servidor a submete à Seguradora e devolve prêmio/comissão/parcelamento recalculados (RN-504). O
+ * parcelamento e o vencimento são escolhidos **entre as opções da Cotação** (RN-505); os documentos
+ * exigidos aparecem como leitura (RN-510); o Termo vem do servidor, porque é o mesmo texto que o aceite
+ * registra (RN-506). O desfecho é **emissão solicitada** — a plataforma não afirma apólice emitida, que
+ * depende de confirmação junto à Seguradora (demanda própria).
  */
+import type { QuotationInstallmentOption } from '~/composables/useQuotations'
 import { extractApiErrorMessage } from '~/lib/apiError'
+import { formatTaxPercentage, parseTaxPercentage } from '~/lib/format'
 
 const wizard = useQuotationGroupWizardStore()
-const { issue } = useIssuance()
+const { requestIssuance, updateTax, getInsurerTerm } = useIssuance()
 
 const error = ref<string | null>(null)
+const taxError = ref<string | null>(null)
+const savingTax = ref(false)
+const termContent = ref<string | null>(null)
+const termError = ref<string | null>(null)
 
-const parcelaOptions = Array.from({ length: 6 }, (_, i) => ({ value: String(i + 1), title: `${i + 1}x` }))
-const vencimentoOptions = [
-  { value: '7', title: '7 dias' },
-  { value: '15', title: '15 dias' },
-  { value: '30', title: '30 dias' },
-]
+const quotation = computed(() => wizard.selectedQuotation)
 
-const TERM_TEXT = 'O tomador, por meio próprio ou por seu corretor de seguros, declara ter lido, compreendido e estar de acordo com as condições aqui estabelecidas, incluindo as condições contratuais deste seguro, autorizando a emissão da apólice oriunda desta proposta por meio deste pedido de emissão digital de Seguro Garantia.'
+// RN-505: as escolhas saem das listas informadas pela Seguradora — nada é oferecido além delas.
+const parcelaOptions = computed(() =>
+  (quotation.value?.installmentOptions ?? []).map((option: QuotationInstallmentOption) => ({
+    value: option.number,
+    title: option.description?.trim()
+      ? `${option.number}x — ${option.description}${option.hasInterest ? ' (com juros)' : ''}`
+      : `${option.number}x de ${brl(option.value)}${option.hasInterest ? ' (com juros)' : ''}`,
+  })),
+)
+
+const vencimentoOptions = computed(() =>
+  (quotation.value?.possibleGracePeriodsInDays ?? []).map((days: number) => ({
+    value: days,
+    title: days === 0 ? 'Na emissão' : `${days} dias`,
+  })),
+)
+
+const requiredDocuments = computed(() => quotation.value?.requiredDocuments ?? [])
 
 function brl(value: number): string {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
-const premio = computed(() => wizard.selectedQuotation?.premio ?? null)
+const premio = computed(() => quotation.value?.premio ?? null)
+const comissaoPercentual = computed(() => quotation.value?.comissao ?? null)
 
-// Valor da comissão (derivado): prêmio × comissão de corretagem (%). Só forma, não decisão (ADR-004).
+// Comissão em valor: vem da Cotação (a Seguradora calcula, ADR-004) — a tela apenas apresenta.
 const valorComissao = computed(() => {
-  const rate = Number(wizard.issuance.comissaoCorretagem.replace(',', '.'))
-  if (premio.value == null || Number.isNaN(rate)) return null
-  return (premio.value * rate) / 100
+  if (premio.value == null || comissaoPercentual.value == null) return null
+  return (premio.value * comissaoPercentual.value) / 100
 })
 
-async function confirmIssue(): Promise<void> {
-  wizard.termOpen = false
-  wizard.issuanceState = 'emitting'
-  error.value = null
+/** RN-501: exigência de Contragarantia sem assinatura é beco sem saída — dito antes do emitir. */
+const ccgBlock = computed(() =>
+  quotation.value?.requiresCcg && !quotation.value.ccgSigned
+    ? 'A seguradora exige Contragarantia (CCG) assinada para emitir esta apólice.'
+    : null,
+)
+
+const lastQuotationTax = ref('')
+
+// RN-504: a taxa oferecida para ajuste é a VIGENTE na Cotação escolhida — deixar o campo vazio
+// esconderia o valor que está valendo e faria o corretor redigitar de memória o que já veio da
+// Seguradora. Segue a Cotação (inclusive após um recálculo), preservando o que ele estiver digitando.
+watch(() => quotation.value?.taxa, (taxa) => {
+  if (taxa == null) return
+  const vigente = formatTaxPercentage(taxa)
+  // Só sobrescreve o que a própria Cotação escreveu antes — o que o corretor digitou é preservado.
+  if (wizard.issuance.taxa === '' || wizard.issuance.taxa === lastQuotationTax.value) {
+    wizard.issuance.taxa = vigente
+  }
+  lastQuotationTax.value = vigente
+}, { immediate: true })
+
+/** RN-504: submete a taxa e passa a exibir o que a Seguradora devolveu. */
+async function confirmTax(): Promise<void> {
+  const groupId = wizard.quotationGroupId
+  const parsed = parseTaxPercentage(wizard.issuance.taxa)
+
+  taxError.value = null
+
+  if (!groupId) {
+    taxError.value = 'A oferta ainda não foi salva.'
+    return
+  }
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    taxError.value = 'Informe uma taxa maior que zero.'
+    return
+  }
+
+  savingTax.value = true
   try {
-    const result = await issue()
-    wizard.policyId = result.policyId
-    wizard.issuanceState = 'success'
+    const result = await updateTax({ quotationGroupId: groupId, tax: parsed })
+    // O servidor já aplicou na Cotação; espelhamos o retorno para a tela não divergir do que valeu.
+    wizard.applyRecalculatedQuotation(result)
+  }
+  catch (err) {
+    taxError.value = extractApiErrorMessage(err, 'Não foi possível ajustar a taxa agora.')
+  }
+  finally {
+    savingTax.value = false
+  }
+}
+
+/**
+ * RN-506: o texto do Termo é do servidor — a tela não guarda cópia, porque é o MESMO conteúdo que o
+ * aceite registra. Carregado quando o modal abre (quem abre é o rodapé do wizard, pela store), uma vez
+ * por passada: reabrir não refaz a chamada.
+ */
+async function loadInsurerTerm(): Promise<void> {
+  termError.value = null
+
+  if (termContent.value) return
+
+  if (!wizard.quotationGroupId) {
+    termError.value = 'A oferta ainda não foi salva — volte e conclua os dados de risco.'
+    return
+  }
+
+  try {
+    const term = await getInsurerTerm(wizard.quotationGroupId)
+    termContent.value = term.content
+  }
+  catch (err) {
+    termError.value = extractApiErrorMessage(err, 'Não foi possível carregar o termo da seguradora.')
+  }
+}
+
+watch(() => wizard.termOpen, (open) => {
+  if (open) void loadInsurerTerm()
+}, { immediate: true })
+
+async function confirmIssue(): Promise<void> {
+  const groupId = wizard.quotationGroupId
+  wizard.termOpen = false
+  error.value = null
+
+  if (!groupId) {
+    error.value = 'A oferta ainda não foi salva — volte e conclua os dados de risco.'
+    return
+  }
+
+  if (wizard.issuance.parcelas == null || wizard.issuance.vencimento == null) {
+    error.value = 'Escolha a forma de pagamento para emitir.'
+    return
+  }
+
+  wizard.issuanceState = 'emitting'
+  try {
+    const result = await requestIssuance({
+      quotationGroupId: groupId,
+      installmentNumber: wizard.issuance.parcelas,
+      gracePeriodInDays: wizard.issuance.vencimento,
+      termAccepted: wizard.termAccepted,
+    })
+    wizard.setIssuanceRequested(result)
   }
   catch (err) {
     wizard.issuanceState = 'form'
-    error.value = extractApiErrorMessage(err, 'Não foi possível emitir a apólice agora. Tente novamente em alguns minutos.')
+    // RN-511: o motivo é o do servidor (portão ou veredito da Seguradora) — não reescrevemos.
+    error.value = extractApiErrorMessage(err, 'Não foi possível solicitar a emissão agora.')
   }
 }
+
+defineExpose({ confirmIssue, confirmTax, loadInsurerTerm })
 </script>
 
 <template>
@@ -64,16 +184,16 @@ async function confirmIssue(): Promise<void> {
       :width="4"
     />
     <h2 class="si-qg-emit__status-title">
-      Emitindo apólice
+      Solicitando a emissão
     </h2>
     <p class="si-qg-emit__status-text">
-      Aguarde um momento — estamos salvando as informações e preparando a apólice.
+      Aguarde um momento — estamos enviando o pedido de emissão à seguradora.
     </p>
   </div>
 
-  <!-- Sucesso -->
+  <!-- Emissão solicitada (RN-508/RN-514): a plataforma afirma o que sabe, não "apólice emitida" -->
   <div
-    v-else-if="wizard.issuanceState === 'success'"
+    v-else-if="wizard.issuanceState === 'requested'"
     class="si-qg-emit__status"
   >
     <span class="si-qg-emit__check">
@@ -83,15 +203,13 @@ async function confirmIssue(): Promise<void> {
       />
     </span>
     <h2 class="si-qg-emit__status-title">
-      Apólice emitida
+      Emissão solicitada
     </h2>
     <p class="si-qg-emit__status-text">
-      A apólice do contrato {{ wizard.issuance.contrato }} foi emitida com sucesso. Você pode baixá-la ou iniciar uma nova oferta.
+      O pedido de emissão da proposta {{ wizard.issuedProposalNumber ?? wizard.policyId }} foi enviado à
+      seguradora. A apólice fica disponível quando a seguradora concluir a emissão.
     </p>
     <div class="si-qg-emit__status-actions">
-      <SiButton :prepend-icon="'download'">
-        Baixar apólice
-      </SiButton>
       <SiButton
         variant="outlined"
         color="secondary"
@@ -115,21 +233,34 @@ async function confirmIssue(): Promise<void> {
       class="mb-0"
     />
 
-    <section class="si-qg-emit__block">
-      <span class="si-qg-emit__block-title">Contrato</span>
-      <SiTextField
-        v-model="wizard.issuance.contrato"
-        label="Número do contrato"
-        required
-        placeholder="Ex.: 2026/0481-SP"
-        density="comfortable"
-        class="si-qg-emit__contrato"
-      />
+    <!-- RN-501: bloqueio explicado antes de o corretor preencher o resto -->
+    <SiAlert
+      v-if="ccgBlock"
+      type="warning"
+      title="Emissão indisponível"
+      :text="ccgBlock"
+      class="mb-0"
+    />
+
+    <!-- RN-510: documentos que a seguradora exige — leitura; o envio é demanda própria -->
+    <section
+      v-if="requiredDocuments.length"
+      class="si-qg-emit__block"
+    >
+      <span class="si-qg-emit__block-title">Documentos exigidos pela seguradora</span>
+      <ul class="si-qg-emit__docs">
+        <li
+          v-for="document in requiredDocuments"
+          :key="document.name"
+        >
+          {{ document.name }}<template v-if="document.description"> — {{ document.description }}</template>
+        </li>
+      </ul>
     </section>
 
-    <section class="si-qg-emit__block">
-      <QuotationGroupsMinutaClauses class="si-qg-emit__minuta" />
-    </section>
+    <!-- RN-502: a minuta traz os próprios blocos e some quando a Modalidade não define Tag nem Cláusula
+         ("nada a preencher"). Sem wrapper aqui: um card vazio na tela seria ruído sem conteúdo. -->
+    <QuotationGroupsMinutaClauses class="si-qg-emit__minuta" />
 
     <section class="si-qg-emit__block">
       <span class="si-qg-emit__block-title">Prêmio e comissão</span>
@@ -141,23 +272,36 @@ async function confirmIssue(): Promise<void> {
           density="comfortable"
         />
         <SiTextField
-          v-model="wizard.issuance.taxa"
-          label="Taxa aplicada (%)"
-          placeholder="0,00"
-          density="comfortable"
-        />
-        <SiTextField
           :model-value="valorComissao != null ? brl(valorComissao) : '—'"
           label="Valor da comissão"
           readonly
           density="comfortable"
         />
         <SiTextField
-          v-model="wizard.issuance.comissaoCorretagem"
-          label="Comissão de corretagem (%)"
-          placeholder="0"
+          :model-value="comissaoPercentual != null ? `${comissaoPercentual}` : '—'"
+          label="Comissão (%)"
+          readonly
           density="comfortable"
         />
+      </div>
+
+      <!-- RN-504: a taxa é o único valor editável; quem recalcula prêmio e comissão é a seguradora -->
+      <div class="si-qg-emit__grid si-qg-emit__grid--2">
+        <SiTextField
+          v-model="wizard.issuance.taxa"
+          label="Taxa aplicada (%)"
+          placeholder="0,00"
+          density="comfortable"
+          :error-messages="taxError ? [taxError] : []"
+        />
+        <SiButton
+          variant="outlined"
+          color="secondary"
+          :loading="savingTax"
+          @click="confirmTax()"
+        >
+          Recalcular com esta taxa
+        </SiButton>
       </div>
     </section>
 
@@ -194,8 +338,14 @@ async function confirmIssue(): Promise<void> {
         <h3 class="text-subtitle-1 si-qg-emit__term-title">
           Termo e declaração
         </h3>
+        <SiAlert
+          v-if="termError"
+          type="error"
+          :text="termError"
+          class="mb-2"
+        />
         <p class="si-qg-emit__term-text">
-          {{ TERM_TEXT }}
+          {{ termContent ?? 'Carregando o termo da seguradora…' }}
         </p>
         <SiCheckbox
           v-model="wizard.termAccepted"

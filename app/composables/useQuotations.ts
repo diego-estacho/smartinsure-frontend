@@ -52,6 +52,26 @@ export interface Quotation {
    * aviso. Vazio quando a Seguradora contemplou todas (ou quando nenhuma foi escolhida).
    */
   coberturasNaoContempladas: string[]
+  /** RN-505: opções de parcelamento informadas pela Seguradora — a emissão escolhe dentro delas. */
+  installmentOptions: QuotationInstallmentOption[]
+  /** RN-505: dias possíveis para o vencimento da primeira parcela. */
+  possibleGracePeriodsInDays: number[]
+  /** RN-510: documentos que a Seguradora exige para emitir (informativos). */
+  requiredDocuments: QuotationRequiredDocument[]
+}
+
+/** RN-505: opção de parcelamento oferecida pela Seguradora. */
+export interface QuotationInstallmentOption {
+  number: number
+  description: string | null
+  value: number
+  hasInterest: boolean
+}
+
+/** RN-510: documento exigido pela Seguradora para emitir. */
+export interface QuotationRequiredDocument {
+  name: string
+  description: string | null
 }
 
 export interface UnavailableQuotation {
@@ -159,6 +179,20 @@ function toAvailable(item: ItemResponse): Quotation {
     ccgSigned: item.ccgSigned,
     ccgMaxLimitWithoutNeed: numOrNull(item.ccgMaxLimitWithoutNeed),
     coberturasNaoContempladas: notOfferedNames(item.additionalCoverages),
+    // RN-505/RN-510: pagamento e documentos vêm da Cotação — a emissão escolhe dentro dessas listas,
+    // sem inventar opção. Ausência significa "a Seguradora não informou", não zero opções válidas.
+    installmentOptions: (item.installmentOptions ?? []).map(option => ({
+      // O contrato gerado admite número em string (serialização decimal); `num` normaliza na borda.
+      number: num(option.number),
+      description: option.description ?? null,
+      value: num(option.value),
+      hasInterest: option.hasInterest,
+    })),
+    possibleGracePeriodsInDays: (item.possibleGracePeriodsInDays ?? []).map(days => num(days)),
+    requiredDocuments: (item.requiredDocuments ?? []).map(document => ({
+      name: document.name,
+      description: document.description ?? null,
+    })),
   }
 }
 

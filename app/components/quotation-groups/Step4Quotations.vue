@@ -15,6 +15,7 @@ import { classificationView } from '~/composables/useQuotations'
 import { formatCurrencyBRL } from '~/lib/currency'
 
 const wizard = useQuotationGroupWizardStore()
+const { context: userContext, loadContext, activeWorkspace } = useWorkspaces()
 const { runQuotations, selectQuotation } = useQuotations()
 const { submitMinuta } = useQuotationMinuta()
 const { isMobile } = useIsMobile()
@@ -34,8 +35,8 @@ const { timedOut, start: startPolling, refresh: refreshQuotations, resume: resum
  * prêmios de coberturas diferentes não sejam comparados sem aviso.
  */
 function coberturasNaoContempladasLabel(item: Quotation): string {
-  const nomes = item.coberturasNaoContempladas
-  return nomes.length === 1 ? `sem ${nomes[0]}` : `sem ${nomes.length} coberturas`
+  const names = item.coberturasNaoContempladas
+  return names.length === 1 ? `sem ${names[0]}` : `sem ${names.length} coberturas`
 }
 
 function coberturasNaoContempladasTitle(item: Quotation): string {
@@ -144,14 +145,41 @@ async function doSelect(item: Quotation): Promise<void> {
 }
 
 async function generate(): Promise<void> {
+  // Um fan-out por vez: o onMounted dispara e o botão de tentar de novo também, e duas chamadas
+  // concorrentes cotariam o mesmo Grupo duas vezes.
+  if (generating.value) return
+
   const groupId = wizard.quotationGroupId
-  const brokerageId = wizard.brokerageId
   if (!groupId) {
     generateError.value = 'Não foi possível identificar o grupo de cotação para cotar.'
     return
   }
-  // UX: sem Corretora ativa na sessão (RN-064) o gate orienta a escolher antes de cotar. A cotação em si
-  // não envia a Corretora — o backend a resolve pelo claim do Escopo ativo (RN-103); isto é só pré-check.
+
+  // Contexto do acesso é carregado uma vez por sessão de navegação: um Vínculo criado DEPOIS do login
+  // não aparece no cache, e o corretor ficaria travado aqui sem saída visível. Reconsulta o próprio
+  // acesso antes de desistir (RN-064) — o servidor é quem diz qual é a Corretora ativa. Vai pelo
+  // `run` para a etapa mostrar carregando enquanto a consulta acontece, como nas demais chamadas.
+  if (!wizard.brokerageId) {
+    const contextoIndisponivel = 'Não foi possível confirmar sua corretora ativa. Tente novamente.'
+
+    await runGenerate(async () => {
+      await loadContext(true)
+      if (activeWorkspace.value) wizard.setBrokerageId(activeWorkspace.value.id)
+      return true
+    }, contextoIndisponivel)
+
+    // `loadContext` não propaga a falha (zera o contexto e segue), então o `run` acima não tem o que
+    // capturar: sem contexto nenhum, o problema é a consulta e não a ausência de Corretora — dizer
+    // "selecione uma corretora" aqui mandaria o corretor caçar um erro que não é dele.
+    if (!wizard.brokerageId && !userContext.value) {
+      generateError.value = contextoIndisponivel
+      return
+    }
+  }
+
+  const brokerageId = wizard.brokerageId
+  // UX: sem Corretora ativa nem no servidor (RN-064) o gate orienta a escolher antes de cotar. A cotação
+  // em si não envia a Corretora — o backend a resolve pelo claim do Escopo ativo (RN-103); é só pré-check.
   if (!brokerageId) {
     generateError.value = 'Selecione uma corretora ativa para cotar.'
     return

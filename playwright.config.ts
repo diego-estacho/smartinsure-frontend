@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test'
 
 // E2E de jornada (ADR-005). Sobe o dev server e exercita a UI real.
 /** Suíte que fala com a API e o provedor de identidade reais, em vez de mockar o BFF. */
-const JOURNEY_SPECS = /perfis-e-usuarios\.spec\.ts/
+const JOURNEY_SPECS = /(perfis-e-usuarios|emissao)\.spec\.ts/
 
 export default defineConfig({
   testDir: './tests/e2e',
