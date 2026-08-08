@@ -17,6 +17,12 @@ export type InvitePolicyHolderUserBody = components['schemas']['InvitePolicyHold
 export type InvitePolicyHolderUserResponse = components['schemas']['InvitePolicyHolderUserResponse']
 export type ResendInvitationResponse = components['schemas']['ResendInvitationResponse']
 export type ChangeUserActivationResponse = components['schemas']['ChangeUserActivationResponse']
+export type EditUserBody = components['schemas']['EditUserBody']
+export type EditUserResponse = components['schemas']['EditUserResponse']
+export type ChangeUserScopeProfileBody = components['schemas']['ChangeUserScopeProfileBody']
+export type ChangeUserScopeProfileResponse = components['schemas']['ChangeUserScopeProfileResponse']
+export type SetUserProfileBody = components['schemas']['SetUserProfileBody']
+export type SetUserProfileResponse = components['schemas']['SetUserProfileResponse']
 
 /**
  * Acesso a dados da jornada Usuários (ADR-004): fetch fino tipado pelo contrato
@@ -134,6 +140,37 @@ export function useUsers(api: typeof $fetch = useNuxtApp().$api as typeof $fetch
     })
   }
 
+  /**
+   * RN-202: edita o Usuário. O nome é sempre atualizado; informar `email` só tem efeito enquanto
+   * o Usuário está Pendente — o servidor troca a identidade e reenvia o Convite. Enviar `email`
+   * para um Usuário Ativo/Inativo é recusado pelo servidor (§9).
+   */
+  async function editUser(id: string, body: EditUserBody): Promise<EditUserResponse> {
+    return await api<EditUserResponse>(`/api/users/${id}`, {
+      method: 'PUT',
+      body,
+    })
+  }
+
+  /** RN-075: troca o Perfil do Usuário no vínculo (Corretora/Tomador). */
+  async function changeScopeProfile(
+    id: string,
+    body: ChangeUserScopeProfileBody,
+  ): Promise<ChangeUserScopeProfileResponse> {
+    return await api<ChangeUserScopeProfileResponse>(`/api/users/${id}/scope-profile`, {
+      method: 'PUT',
+      body,
+    })
+  }
+
+  /** RN-012: concede/revoga o Perfil no Escopo Sistema (`profile` nulo revoga). */
+  async function setUserProfile(id: string, profile: string | null): Promise<SetUserProfileResponse> {
+    return await api<SetUserProfileResponse>(`/api/users/${id}/profile`, {
+      method: 'PUT',
+      body: { profile } satisfies SetUserProfileBody,
+    })
+  }
+
   return {
     createUser,
     listUsers,
@@ -145,5 +182,8 @@ export function useUsers(api: typeof $fetch = useNuxtApp().$api as typeof $fetch
     resendInvitation,
     inactivateUser,
     reactivateUser,
+    editUser,
+    changeScopeProfile,
+    setUserProfile,
   }
 }

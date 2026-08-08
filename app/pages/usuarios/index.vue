@@ -68,6 +68,10 @@ const inviteError = ref<string | null>(null)
 const confirmInactivate = ref<UserListItem | null>(null)
 const actingId = ref<string | null>(null)
 
+// Editar usuário (§9, RN-202): o modal busca o detalhe pelo id ao abrir.
+const editUserId = ref<string | null>(null)
+const editOpen = ref(false)
+
 const currentTab = computed(() => userStatusTabs.find(t => t.key === tab.value) ?? userStatusTabs[0]!)
 
 function tabCount(countKey: keyof UserStatusCounts): number {
@@ -310,6 +314,25 @@ async function onReactivate(item: UserListItem) {
   finally {
     actingId.value = null
   }
+}
+
+// §9/RN-202: abre o modal de edição para o usuário da linha.
+function openEdit(item: UserListItem) {
+  editUserId.value = item.id
+  editOpen.value = true
+}
+
+// O modal decide o efeito (nome/e-mail/perfil); aqui só refletimos o resultado e refazemos a lista.
+async function onEdited(payload: { name: string, emailResent: boolean, email: string }) {
+  toast.value = payload.emailResent
+    ? `Dados atualizados. Convite reenviado para ${payload.email}.`
+    : 'Dados atualizados.'
+  await refresh()
+}
+
+async function onEditResent(payload: { email: string }) {
+  toast.value = `Novo link de primeiro acesso enviado para ${payload.email}. O link anterior deixa de valer.`
+  await refresh()
 }
 
 // Exportar (§3): CSV client-side dos usuários carregados na página atual (sem endpoint de export).
@@ -716,6 +739,11 @@ async function confirmInviteAdmin(payload: { name: string, email: string, broker
                   class="si-rowmenu"
                 >
                   <SiListItem
+                    title="Editar usuário"
+                    prepend-icon="pencil"
+                    @click="openEdit(item)"
+                  />
+                  <SiListItem
                     v-if="item.status === 'Pending'"
                     title="Reenviar convite"
                     prepend-icon="mail"
@@ -789,6 +817,14 @@ async function confirmInviteAdmin(payload: { name: string, email: string, broker
                 @click="openDetail(item)"
               >
                 Ver usuário
+              </SiButton>
+              <SiButton
+                variant="text"
+                size="small"
+                :prepend-icon="'pencil'"
+                @click="openEdit(item)"
+              >
+                Editar
               </SiButton>
               <SiButton
                 v-if="item.status === 'Pending'"
@@ -871,6 +907,13 @@ async function confirmInviteAdmin(payload: { name: string, email: string, broker
       v-model="scopedInviteOpen"
       :submitting="scopedInviting"
       @confirm="confirmScopedInvite"
+    />
+
+    <UsersEditDialog
+      v-model="editOpen"
+      :user-id="editUserId"
+      @saved="onEdited"
+      @resent="onEditResent"
     />
 
     <SiAlert

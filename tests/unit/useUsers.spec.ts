@@ -115,6 +115,103 @@ describe('RN-066 convite de Corretor Administrador — composable useUsers', () 
   })
 })
 
+describe('RN-202 edição de Usuário — composable useUsers', () => {
+  it('edita via PUT no BFF enviando nome e e-mail', async () => {
+    fetchMock.mockResolvedValueOnce({
+      id: '01980000-0000-7000-8000-000000000001',
+      name: 'Ana Paula',
+      email: 'ana.paula@exemplo.com',
+      status: 'Pending',
+    })
+
+    const { editUser } = useUsers(api)
+    const result = await editUser('01980000-0000-7000-8000-000000000001', {
+      name: 'Ana Paula',
+      email: 'ana.paula@exemplo.com',
+    })
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/users/01980000-0000-7000-8000-000000000001', {
+      method: 'PUT',
+      body: { name: 'Ana Paula', email: 'ana.paula@exemplo.com' },
+    })
+    expect(result.email).toBe('ana.paula@exemplo.com')
+  })
+
+  it('renomeia sem tocar no e-mail quando email é nulo', async () => {
+    fetchMock.mockResolvedValueOnce({
+      id: '01980000-0000-7000-8000-000000000001',
+      name: 'Ana Paula',
+      email: 'ana@exemplo.com',
+      status: 'Active',
+    })
+
+    const { editUser } = useUsers(api)
+    await editUser('01980000-0000-7000-8000-000000000001', { name: 'Ana Paula', email: null })
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/users/01980000-0000-7000-8000-000000000001', {
+      method: 'PUT',
+      body: { name: 'Ana Paula', email: null },
+    })
+  })
+
+  it('propaga a recusa do servidor (e-mail de não-Pendente) sem decidir no cliente', async () => {
+    fetchMock.mockRejectedValueOnce(new Error('409'))
+
+    const { editUser } = useUsers(api)
+
+    await expect(editUser('01980000-0000-7000-8000-000000000001', {
+      name: 'Ana',
+      email: 'novo@exemplo.com',
+    })).rejects.toThrow()
+  })
+})
+
+describe('RN-075 troca de Perfil no vínculo — composable useUsers', () => {
+  it('troca o perfil do vínculo via PUT scope-profile', async () => {
+    fetchMock.mockResolvedValueOnce({
+      userId: '01980000-0000-7000-8000-000000000001',
+      scopeId: '01980000-0000-7000-8000-000000000021',
+      profileId: '01980000-0000-7000-8000-000000000031',
+      profileName: 'Comercial',
+    })
+
+    const { changeScopeProfile } = useUsers(api)
+    const result = await changeScopeProfile('01980000-0000-7000-8000-000000000001', {
+      scopeId: '01980000-0000-7000-8000-000000000021',
+      profileId: '01980000-0000-7000-8000-000000000031',
+    })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/users/01980000-0000-7000-8000-000000000001/scope-profile',
+      {
+        method: 'PUT',
+        body: {
+          scopeId: '01980000-0000-7000-8000-000000000021',
+          profileId: '01980000-0000-7000-8000-000000000031',
+        },
+      },
+    )
+    expect(result.profileName).toBe('Comercial')
+  })
+})
+
+describe('RN-012 concessão/revogação do Perfil de Sistema — composable useUsers', () => {
+  it('envia o perfil (ou nulo para revogar) via PUT profile', async () => {
+    fetchMock.mockResolvedValueOnce({
+      id: '01980000-0000-7000-8000-000000000001',
+      profile: null,
+    })
+
+    const { setUserProfile } = useUsers(api)
+    await setUserProfile('01980000-0000-7000-8000-000000000001', null)
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/users/01980000-0000-7000-8000-000000000001/profile', {
+      method: 'PUT',
+      body: { profile: null },
+    })
+  })
+})
+
 describe('RN-064 vínculos do Usuário com Corretoras e Tomadores', () => {
   it('traz os vínculos com o perfil de cada escopo no detalhe', async () => {
     fetchMock.mockResolvedValueOnce({

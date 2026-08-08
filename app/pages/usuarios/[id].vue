@@ -26,6 +26,7 @@ const error = ref<string | null>(null)
 const toast = ref('')
 const acting = ref(false)
 const confirmInactivate = ref(false)
+const editOpen = ref(false)
 
 const statusView = computed(() =>
   getUserDisplayStatus(user.value?.status, user.value?.inviteExpired ?? false))
@@ -181,6 +182,19 @@ async function onInactivateConfirmed() {
   }
 }
 
+// §9/RN-202: editar usuário. O modal busca o detalhe pelo id; ao salvar, refazemos o detalhe.
+async function onEdited(payload: { name: string, emailResent: boolean, email: string }) {
+  toast.value = payload.emailResent
+    ? `Dados atualizados. Convite reenviado para ${payload.email}.`
+    : 'Dados atualizados.'
+  await refresh()
+}
+
+async function onEditResent(payload: { email: string }) {
+  toast.value = `Novo link de primeiro acesso enviado para ${payload.email}. O link anterior deixa de valer.`
+  await refresh()
+}
+
 // Ação principal do cabeçalho por situação (§11): reenviar (pendente/expirado) e reativar (inativo)
 // já têm backend; a redefinição de senha do Ativo entra na Fatia D.
 const isInactive = computed(() => user.value?.status === 'Inactive')
@@ -232,6 +246,14 @@ const isPending = computed(() => user.value?.status === 'Pending')
           </div>
 
           <div class="si-user-detail__hero-actions">
+            <SiButton
+              variant="outlined"
+              color="secondary"
+              :prepend-icon="'pencil'"
+              @click="editOpen = true"
+            >
+              Editar usuário
+            </SiButton>
             <SiButton
               v-if="isPending"
               :prepend-icon="'mail'"
@@ -422,6 +444,13 @@ const isPending = computed(() => user.value?.status === 'Pending')
         </template>
       </SiCard>
     </SiDialog>
+
+    <UsersEditDialog
+      v-model="editOpen"
+      :user-id="user?.id ?? null"
+      @saved="onEdited"
+      @resent="onEditResent"
+    />
 
     <SiSnackbar
       :model-value="Boolean(toast)"

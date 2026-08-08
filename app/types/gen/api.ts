@@ -2843,7 +2843,32 @@ export interface paths {
                 };
             };
         };
-        put?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["EditUserBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["EditUserResponse"];
+                    };
+                };
+            };
+        };
         post?: never;
         delete?: never;
         options?: never;
@@ -2957,6 +2982,47 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["SetUserProfileResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{id}/scope-profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ChangeUserScopeProfileBody"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChangeUserScopeProfileResponse"];
                     };
                 };
             };
@@ -3391,6 +3457,21 @@ export interface components {
             id: string;
             status: string;
         };
+        ChangeUserScopeProfileBody: {
+            /** Format: uuid */
+            scopeId: string;
+            /** Format: uuid */
+            profileId: string;
+        };
+        ChangeUserScopeProfileResponse: {
+            /** Format: uuid */
+            userId: string;
+            /** Format: uuid */
+            scopeId: string;
+            /** Format: uuid */
+            profileId: string;
+            profileName: string;
+        };
         CreateAdditionalCoverageResponse: {
             /** Format: uuid */
             id: string;
@@ -3624,6 +3705,17 @@ export interface components {
             insurersAvailable: number | string;
             /** Format: double */
             consolidatedLimit: number | string;
+        };
+        EditUserBody: {
+            name: string;
+            email: null | string;
+        };
+        EditUserResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            email: string;
+            status: string;
         };
         ExecuteCreditInquiryRequest: {
             /** Format: uuid */
