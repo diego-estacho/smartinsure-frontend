@@ -9,12 +9,12 @@
  * assignable`), a de tomadores da listagem de Tomadores. Nomeação vigente, unicidade de e-mail e
  * autorização são decisão do servidor (SECURITY do produto); aqui só se valida forma.
  *
- * NOTA (fatia): o CPF (Fatia B) e a criação inline de perfil (§8 passo 2 / Fatia F) entram depois.
- * Até lá o atalho "Criar perfil de acesso" leva à tela de Perfis.
+ * NOTA (fatia): a criação inline de perfil (§8 passo 2 / Fatia F) entra depois — até lá o atalho
+ * "Criar perfil de acesso" leva à tela de Perfis.
  */
 import type { AssignableProfile } from '~/composables/useProfiles'
 import type { PolicyHolderListItem } from '~/composables/usePolicyHolders'
-import { formatCnpj } from '~/lib/documents'
+import { formatCnpj, isValidCpf } from '~/lib/documents'
 import { extractApiErrorMessage } from '~/lib/apiError'
 import { email as emailRule, required } from '~/lib/rules'
 import { getProfileLabel, profileScopes } from '~/lib/status/profiles'
@@ -29,6 +29,8 @@ const emit = defineEmits<{
   confirm: [payload: {
     name: string
     email: string
+    /** CPF em dígitos (RN-082). */
+    documentNumber: string
     profileId: string
     policyHolderId: string | null
     /** Escopo do perfil escolhido — a página usa para saber qual fluxo chamar (RN-069/RN-070). */
@@ -44,6 +46,7 @@ const { context } = useWorkspaces()
 
 const name = ref('')
 const email = ref('')
+const cpf = ref<string | null>(null)
 const profileId = ref<string | null>(null)
 const policyHolderId = ref<string | null>(null)
 const profiles = ref<AssignableProfile[]>([])
@@ -96,6 +99,7 @@ watch(open, async (isOpen) => {
 
   name.value = ''
   email.value = ''
+  cpf.value = null
   profileId.value = null
   policyHolderId.value = null
   await load()
@@ -136,6 +140,11 @@ function goToCreateProfile() {
   navigateTo('/perfis')
 }
 
+// RN-082: valida forma do CPF (dígitos verificadores); o servidor decide unicidade/imutabilidade.
+function cpfRule(value: string | null): true | string {
+  return isValidCpf(value ?? '') || 'CPF inválido.'
+}
+
 function submit() {
   if (!canSubmit.value || !profileId.value) {
     return
@@ -144,6 +153,7 @@ function submit() {
   emit('confirm', {
     name: name.value.trim(),
     email: email.value.trim(),
+    documentNumber: (cpf.value ?? '').replace(/\D/g, ''),
     profileId: profileId.value,
     policyHolderId: policyHolderId.value,
     profileScope: selectedProfile.value?.scope ?? '',
@@ -193,19 +203,26 @@ function submit() {
         v-else
         v-model="formValid"
       >
-        <SiTextField
-          v-model="name"
-          label="Nome"
-          :rules="[required()]"
-          class="mb-3"
-        />
+        <div class="si-invite__grid">
+          <SiTextField
+            v-model="name"
+            label="Nome"
+            :rules="[required()]"
+          />
+          <SiDocField
+            v-model="cpf"
+            tipo="cpf"
+            label="CPF"
+            :rules="[required(), cpfRule]"
+          />
+        </div>
 
         <SiTextField
           v-model="email"
           label="E-mail"
           type="email"
           :rules="[required(), emailRule()]"
-          class="mb-3"
+          class="mb-3 mt-3"
         />
 
         <SiSelect
@@ -275,6 +292,13 @@ function submit() {
 <style scoped>
 .si-invite {
   padding: var(--si-space-5);
+}
+
+/* §8: Nome e CPF lado a lado (empilham no mobile). */
+.si-invite__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--si-space-4);
 }
 
 .si-invite__title {

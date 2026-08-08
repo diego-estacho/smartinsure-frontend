@@ -3780,6 +3780,7 @@ export interface components {
             id: string;
             name: string;
             email: string;
+            documentNumber: null | string;
             status: string;
             /** Format: uuid */
             profileId: null | string;
@@ -3861,6 +3862,7 @@ export interface components {
         InviteBrokerageUserBody: {
             name: string;
             email: string;
+            documentNumber: string;
             /** Format: uuid */
             profileId: string;
         };
@@ -3879,6 +3881,7 @@ export interface components {
         InvitePolicyHolderAdministratorBody: {
             name: string;
             email: string;
+            documentNumber: string;
             /** Format: uuid */
             policyHolderId: string;
         };
@@ -3894,6 +3897,7 @@ export interface components {
         InvitePolicyHolderUserBody: {
             name: string;
             email: string;
+            documentNumber: string;
             /** Format: uuid */
             profileId: string;
         };

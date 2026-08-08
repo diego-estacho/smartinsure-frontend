@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { GetUserResponse } from '~/composables/useUsers'
 import { toBrDateTime } from '~/lib/dates'
+import { formatCpf } from '~/lib/documents'
 import { extractApiErrorMessage } from '~/lib/apiError'
 import { getProfileLabel, getProfileScopeView, profileScopes } from '~/lib/status/profiles'
 import { getUserDisplayStatus } from '~/lib/status/users'
@@ -340,6 +341,13 @@ const isPending = computed(() => user.value?.status === 'Pending')
               <span class="si-user-detail__eyebrow">Dados do acesso</span>
             </div>
             <div class="si-user-detail__facts">
+              <div
+                v-if="user.documentNumber"
+                class="si-user-detail__fact"
+              >
+                <span class="si-user-detail__fact-label">CPF</span>
+                <span class="si-user-detail__fact-value">{{ formatCpf(user.documentNumber) }}</span>
+              </div>
               <div class="si-user-detail__fact">
                 <span class="si-user-detail__fact-label">Vínculo</span>
                 <span class="si-user-detail__fact-value">{{ access.link }}</span>

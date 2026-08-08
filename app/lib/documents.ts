@@ -56,3 +56,10 @@ export function formatCnpj(input: string): string {
   if (clean.length !== 14) return input
   return `${clean.slice(0, 2)}.${clean.slice(2, 5)}.${clean.slice(5, 8)}/${clean.slice(8, 12)}-${clean.slice(12)}`
 }
+
+/** Formata CPF (11 dígitos) para exibição: 000.000.000-00. */
+export function formatCpf(input: string): string {
+  const clean = String(input).replace(/\D/g, '')
+  if (clean.length !== 11) return input
+  return `${clean.slice(0, 3)}.${clean.slice(3, 6)}.${clean.slice(6, 9)}-${clean.slice(9)}`
+}

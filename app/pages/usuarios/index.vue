@@ -340,6 +340,7 @@ function exportCsv() {
 async function confirmScopedInvite(payload: {
   name: string
   email: string
+  documentNumber: string
   profileId: string
   policyHolderId: string | null
   profileScope: string
@@ -353,6 +354,7 @@ async function confirmScopedInvite(payload: {
       invited = await invitePolicyHolderAdministrator({
         name: payload.name,
         email: payload.email,
+        documentNumber: payload.documentNumber,
         policyHolderId: payload.policyHolderId,
       })
     }
@@ -360,6 +362,7 @@ async function confirmScopedInvite(payload: {
       invited = await invitePolicyHolderUser({
         name: payload.name,
         email: payload.email,
+        documentNumber: payload.documentNumber,
         profileId: payload.profileId,
       })
     }
@@ -367,6 +370,7 @@ async function confirmScopedInvite(payload: {
       invited = await inviteBrokerageUser({
         name: payload.name,
         email: payload.email,
+        documentNumber: payload.documentNumber,
         profileId: payload.profileId,
       })
     }
