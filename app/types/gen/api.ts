@@ -2311,7 +2311,9 @@ export interface paths {
         post?: never;
         delete: {
             parameters: {
-                query?: never;
+                query?: {
+                    migrateToProfileId?: string;
+                };
                 header?: never;
                 path: {
                     id: string;
@@ -3879,6 +3881,12 @@ export interface components {
             /** Format: uuid */
             policyHolderId: null | string;
             permissions: components["schemas"]["ProfilePermissionResponse"][];
+            description: null | string;
+            /** Format: date-time */
+            createdAt: string;
+            linkedUsers: components["schemas"]["ProfileLinkedUserResponse"][];
+            /** Format: int32 */
+            linkedUserCount: number | string;
         };
         GetQuotationGroupResponse: {
             /** Format: uuid */
@@ -4226,6 +4234,8 @@ export interface components {
             code: string;
             description: null | string;
             isSystem: boolean;
+            area: null | string;
+            dependsOn: null | string;
         };
         PersonAddressOptionResponse: {
             /** Format: uuid */
@@ -4310,6 +4320,12 @@ export interface components {
             stateCode: null | string;
             isAppointedToBrokerage: null | boolean;
         };
+        ProfileLinkedUserResponse: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            email: string;
+        };
         ProfileListItemResponse: {
             /** Format: uuid */
             id: string;
@@ -4322,6 +4338,13 @@ export interface components {
             policyHolderId: null | string;
             /** Format: int32 */
             permissionCount: number | string;
+            description: null | string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: int32 */
+            userCount: number | string;
+            /** Format: int32 */
+            areaCount: number | string;
         };
         ProfilePermissionResponse: {
             /** Format: uuid */
@@ -4569,6 +4592,7 @@ export interface components {
         ScopedProfileBody: {
             name: string;
             permissionCodes: null | string[];
+            description?: null | string;
         };
         SearchPersonsResponse: {
             items: components["schemas"]["PersonSearchItemResponse"][];

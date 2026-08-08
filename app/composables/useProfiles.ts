@@ -70,9 +70,15 @@ export function useProfiles(api: typeof $fetch = useNuxtApp().$api as typeof $fe
     return await api<UpdateScopedProfileResponse>(`/api/profiles/${id}`, { method: 'PUT', body })
   }
 
-  /** RN-074: remove perfil customizado — o servidor recusa se houver usuário com ele. */
-  async function deleteProfile(id: string): Promise<void> {
-    await api<unknown>(`/api/profiles/${id}`, { method: 'DELETE' })
+  /**
+   * RN-074: remove perfil customizado. Se estiver em uso, passe `migrateToProfileId` (perfil-destino
+   * do mesmo escopo) — o servidor migra os usuários antes de excluir. Sem usuários, exclusão imediata.
+   */
+  async function deleteProfile(id: string, migrateToProfileId?: string): Promise<void> {
+    await api<unknown>(`/api/profiles/${id}`, {
+      method: 'DELETE',
+      ...(migrateToProfileId ? { query: { migrateToProfileId } } : {}),
+    })
   }
 
   /**

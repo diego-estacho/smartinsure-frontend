@@ -117,6 +117,8 @@ em forma e registre aqui.
 | trilha de etapas (`Stepper.jsx`) | `SiStepper` (`:steps`, `v-model:current`, `orientation`, `clickable`) — componente próprio (o Vuetify não tem primitivo equivalente ao dot-stepper do DS) |
 | indicador / KPI (rótulo + valor tabular) | `SiMetric` (`label`, `value`, `hint`; `empty` = traço "—" honesto quando ainda não há fonte de dado) |
 | "voltar" da tela de detalhe (seta + breadcrumb) | `SiPageBack` (`to`, `parent-label`, `current`) — a seta volta no histórico, o breadcrumb leva à rota-pai; padrão reutilizável (ADR-022) |
+| controle segmentado (níveis / toggle de N estados) | `SiSegmented` (`:options`, `v-model` `string\|null` — `null` = nenhum aceso, `size`) — componente próprio (o Vuetify 3 não tem segmented nativo) |
+| editor de permissões por área (níveis + cascata de dependência, handoff §2/§3) | `<PermissionsEditor>` (`:catalog` de `~/lib/permissions/catalog`, `v-model` de códigos, `filter-text`) — compõe `SiSegmented`+`SiCheckbox`; regras puras em `~/lib/permissions/rules` (§12); compartilhado com o atalho do convite (§13) |
 
 ## Voz (do README do DS)
 
