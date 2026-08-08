@@ -2,6 +2,7 @@
 import type { UserListItem, UserStatusCounts } from '~/composables/useUsers'
 import type { UsersFilters } from '~/components/users/FiltersDrawer.vue'
 import { extractApiErrorMessage } from '~/lib/apiError'
+import { formatLastAccess } from '~/lib/dates'
 import { getProfileLabel, getProfileScopeView, profileScopes } from '~/lib/status/profiles'
 import {
   getUserDisplayStatus,
@@ -142,10 +143,11 @@ function originLabel(item: UserListItem): string {
 }
 
 const headers = [
-  { title: 'Usuário', key: 'name', sortable: false, width: 250 },
-  { title: 'Perfil de acesso', key: 'profileName', sortable: false, width: 190 },
-  { title: 'Vínculo', key: 'link', sortable: false, width: 190 },
-  { title: 'Situação', key: 'status', sortable: false, width: 130 },
+  { title: 'Usuário', key: 'name', sortable: false, width: 230 },
+  { title: 'Perfil de acesso', key: 'profileName', sortable: false, width: 180 },
+  { title: 'Vínculo', key: 'link', sortable: false, width: 160 },
+  { title: 'Último acesso', key: 'lastAccess', sortable: false, width: 140 },
+  { title: 'Situação', key: 'status', sortable: false, width: 120 },
   { title: 'Ações', key: 'actions', sortable: false, align: 'end' as const, width: 96 },
 ] as const
 
@@ -354,13 +356,14 @@ async function onEditResent(payload: { email: string }) {
 // Exportar (§3): CSV client-side dos usuários carregados na página atual (sem endpoint de export).
 function exportCsv() {
   const rows = items.value
-  const header = ['Nome', 'E-mail', 'Perfil', 'Vínculo', 'Situação']
+  const header = ['Nome', 'E-mail', 'Perfil', 'Vínculo', 'Último acesso', 'Situação']
   const escape = (value: string) => `"${value.replace(/"/g, '""')}"`
   const body = rows.map(item => [
     item.name,
     item.email,
     item.profileName ? getProfileLabel(item.profileName) : '',
     linkLabel(item),
+    formatLastAccess(item.lastAccessAtUtc),
     getUserDisplayStatus(item.status, item.inviteExpired).label,
   ].map(cell => escape(String(cell))).join(','))
   const csv = [header.map(escape).join(','), ...body].join('\r\n')
@@ -715,6 +718,13 @@ async function confirmInviteAdmin(payload: { name: string, email: string, broker
             >{{ linkLabel(item) }}</span>
           </template>
 
+          <template #[`item.lastAccess`]="{ item }">
+            <span
+              class="si-users__muted"
+              :class="{ 'si-users__never': !item.lastAccessAtUtc }"
+            >{{ formatLastAccess(item.lastAccessAtUtc) }}</span>
+          </template>
+
           <template #[`item.status`]="{ item }">
             <SiChip
               :color="getUserDisplayStatus(item.status, item.inviteExpired).color"
@@ -826,6 +836,10 @@ async function confirmInviteAdmin(payload: { name: string, email: string, broker
               <div>
                 <span class="si-users__card-key">Vínculo</span>
                 <span>{{ linkLabel(item) }}</span>
+              </div>
+              <div>
+                <span class="si-users__card-key">Último acesso</span>
+                <span>{{ formatLastAccess(item.lastAccessAtUtc) }}</span>
               </div>
             </div>
             <div
@@ -1126,6 +1140,12 @@ async function confirmInviteAdmin(payload: { name: string, email: string, broker
 
 .si-users__muted {
   color: var(--si-cinza);
+}
+
+/* "Nunca" (sem acesso) — levemente distinto do resto (RN-204). */
+.si-users__never {
+  font-style: italic;
+  opacity: 0.85;
 }
 
 .si-users__breakall {

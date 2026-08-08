@@ -3923,6 +3923,8 @@ export interface components {
             /** Format: date-time */
             inviteExpiresAt: null | string;
             inviteExpired: boolean;
+            /** Format: date-time */
+            lastAccessAtUtc: null | string;
             brokerageMemberships: components["schemas"]["UserMembershipResponse"][];
             policyHolderMemberships: components["schemas"]["UserMembershipResponse"][];
         };
@@ -4762,6 +4764,8 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
             inviteExpired: boolean;
+            /** Format: date-time */
+            lastAccessAtUtc: null | string;
         };
         UserMembershipResponse: {
             /** Format: uuid */

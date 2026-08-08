@@ -409,6 +409,12 @@ const isActive = computed(() => user.value?.status === 'Active')
                 <span class="si-user-detail__fact-label">Cadastrado em</span>
                 <span class="si-user-detail__fact-value">{{ toBrDateTime(user.createdAt) }}</span>
               </div>
+              <div class="si-user-detail__fact">
+                <span class="si-user-detail__fact-label">Último acesso</span>
+                <span class="si-user-detail__fact-value">
+                  {{ user.lastAccessAtUtc ? toBrDateTime(user.lastAccessAtUtc) : 'Nunca' }}
+                </span>
+              </div>
             </div>
             <div class="si-user-detail__aside-action">
               <SiButton

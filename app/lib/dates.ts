@@ -70,6 +70,25 @@ export function toBrDateTimeAt(iso: string | null | undefined): string {
   return m ? `${m[3]}/${m[2]}/${m[1]} às ${m[4]}:${m[5]}` : '—'
 }
 
+/**
+ * Último acesso (RN-204) em formato relativo para a listagem/detalhe: "Nunca" (sem acesso),
+ * "Hoje", "Ontem", "Há N dias" (até 30) ou a data (dd/mm/aaaa). Compara o dia-calendário em UTC
+ * (mesma convenção sem-shift do módulo) com o dia atual.
+ */
+export function formatLastAccess(iso: string | null | undefined): string {
+  if (!iso) return 'Nunca'
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso)
+  if (!m) return 'Nunca'
+  const accessUtc = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+  const now = new Date()
+  const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  const days = Math.round((todayUtc - accessUtc) / 86_400_000)
+  if (days <= 0) return 'Hoje'
+  if (days === 1) return 'Ontem'
+  if (days < 30) return `Há ${days} dias`
+  return `${m[3]}/${m[2]}/${m[1]}`
+}
+
 /** Dias de vigência = arredondamento de (fim − início), mínimo 1. Derivação de exibição (não é regra). */
 export function coverageDays(
   start: string | null | undefined, end: string | null | undefined): number | null {
