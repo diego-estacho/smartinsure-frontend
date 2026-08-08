@@ -2425,6 +2425,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/quotations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["QuotationDetailResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/quotation-groups": {
         parameters: {
             query?: never;
@@ -2716,6 +2760,11 @@ export interface paths {
                     pageSize?: number | string;
                     search?: string;
                     status?: string;
+                    profileId?: string;
+                    scope?: string;
+                    linkId?: string;
+                    registeredFrom?: string;
+                    registeredTo?: string;
                 };
                 header?: never;
                 path?: never;
@@ -2729,7 +2778,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["PagedResponseOfUserListItemResponse"];
+                        "application/json": components["schemas"]["ListUsersResponse"];
                     };
                 };
             };
@@ -3143,50 +3192,6 @@ export interface paths {
                 };
             };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/quotations/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["QuotationDetailResponse"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3779,8 +3784,15 @@ export interface components {
             /** Format: uuid */
             profileId: null | string;
             profileName: null | string;
+            profileScope: null | string;
+            profileIsFixed: boolean;
             /** Format: date-time */
             createdAt: string;
+            /** Format: date-time */
+            invitedAt: null | string;
+            /** Format: date-time */
+            inviteExpiresAt: null | string;
+            inviteExpired: boolean;
             brokerageMemberships: components["schemas"]["UserMembershipResponse"][];
             policyHolderMemberships: components["schemas"]["UserMembershipResponse"][];
         };
@@ -3939,6 +3951,16 @@ export interface components {
             selectedQuotationId: null | string;
             quotations: components["schemas"]["QuotationListItemResponse"][];
         };
+        ListUsersResponse: {
+            items: components["schemas"]["UserListItemResponse"][];
+            /** Format: int32 */
+            page: number | string;
+            /** Format: int32 */
+            pageSize: number | string;
+            /** Format: int64 */
+            totalCount: number | string;
+            counts: components["schemas"]["UserStatusCountsResponse"];
+        };
         MapInsurerResponse: {
             /** Format: uuid */
             insurerId: string;
@@ -4033,17 +4055,6 @@ export interface components {
         };
         PagedResponseOfProfileListItemResponse: {
             items: components["schemas"]["ProfileListItemResponse"][];
-            /** Format: int32 */
-            page: number | string;
-            /** Format: int32 */
-            pageSize: number | string;
-            /** Format: int64 */
-            totalCount: number | string;
-            /** Format: int64 */
-            totalPages?: number | string;
-        };
-        PagedResponseOfUserListItemResponse: {
-            items: components["schemas"]["UserListItemResponse"][];
             /** Format: int32 */
             page: number | string;
             /** Format: int32 */
@@ -4239,6 +4250,46 @@ export interface components {
             particularClauseExternalId: string;
             tags: components["schemas"]["QuotationTermInput"][];
         };
+        QuotationDetailCoverageResponse: {
+            name: string;
+            status: string;
+            sentName: null | string;
+        };
+        QuotationDetailResponse: {
+            /** Format: uuid */
+            quotationId: string;
+            number: null | string;
+            policyHolderName: string;
+            policyHolderDocumentNumber: string;
+            insuredName: string;
+            insuredDocumentNumber: string;
+            /** Format: uuid */
+            insurerId: string;
+            insurerName: string;
+            insurerLogoUrl: null | string;
+            /** Format: uuid */
+            modalityId: string;
+            modalityName: string;
+            /** Format: double */
+            insuredAmount: number | string;
+            /** Format: double */
+            premium: null | number | string;
+            /** Format: double */
+            commissionPercentage: null | number | string;
+            /** Format: double */
+            commissionValue: null | number | string;
+            /** Format: date */
+            coverageStartDate: string;
+            /** Format: date */
+            coverageEndDate: string;
+            /** Format: date-time */
+            createdAt: string;
+            result: string;
+            requiresCcg: boolean;
+            ccgSigned: boolean;
+            additionalCoverages: components["schemas"]["QuotationDetailCoverageResponse"][];
+            timeline: components["schemas"]["QuotationTimelineEventResponse"][];
+        };
         QuotationGroupPersonAddressResponse: {
             zipCode: null | string;
             street: null | string;
@@ -4320,6 +4371,11 @@ export interface components {
         QuotationTermInput: {
             name: string;
             value: string;
+        };
+        QuotationTimelineEventResponse: {
+            type: string;
+            /** Format: date-time */
+            occurredAt: string;
         };
         ReassignImportedModalityBody: {
             /** Format: uuid */
@@ -4562,8 +4618,12 @@ export interface components {
             email: string;
             status: string;
             profileName: null | string;
+            profileScope: null | string;
+            profileIsFixed: boolean;
+            link: null | string;
             /** Format: date-time */
             createdAt: string;
+            inviteExpired: boolean;
         };
         UserMembershipResponse: {
             /** Format: uuid */
@@ -4575,6 +4635,8 @@ export interface components {
             /** Format: uuid */
             profileId: string;
             profileName: string;
+            profileScope: string;
+            profileIsFixed: boolean;
         };
         UserScopeResponse: {
             /** Format: uuid */
@@ -4584,50 +4646,17 @@ export interface components {
             profileName: string;
             isActive: boolean;
         };
-        QuotationDetailCoverageResponse: {
-            name: string;
-            status: string;
-            sentName: null | string;
-        };
-        QuotationTimelineEventResponse: {
-            type: string;
-            /** Format: date-time */
-            occurredAt: string;
-        };
-        QuotationDetailResponse: {
-            /** Format: uuid */
-            quotationId: string;
-            number: null | string;
-            policyHolderName: string;
-            policyHolderDocumentNumber: string;
-            insuredName: string;
-            insuredDocumentNumber: string;
-            /** Format: uuid */
-            insurerId: string;
-            insurerName: string;
-            insurerLogoUrl: null | string;
-            /** Format: uuid */
-            modalityId: string;
-            modalityName: string;
-            /** Format: double */
-            insuredAmount: number | string;
-            /** Format: double */
-            premium: null | number | string;
-            /** Format: double */
-            commissionPercentage: null | number | string;
-            /** Format: double */
-            commissionValue: null | number | string;
-            /** Format: date */
-            coverageStartDate: string;
-            /** Format: date */
-            coverageEndDate: string;
-            /** Format: date-time */
-            createdAt: string;
-            result: string;
-            requiresCcg: boolean;
-            ccgSigned: boolean;
-            additionalCoverages: components["schemas"]["QuotationDetailCoverageResponse"][];
-            timeline: components["schemas"]["QuotationTimelineEventResponse"][];
+        UserStatusCountsResponse: {
+            /** Format: int64 */
+            all: number | string;
+            /** Format: int64 */
+            active: number | string;
+            /** Format: int64 */
+            pending: number | string;
+            /** Format: int64 */
+            expired: number | string;
+            /** Format: int64 */
+            inactive: number | string;
         };
     };
     responses: never;

@@ -83,6 +83,12 @@
   block-size: 2.5px;
 }
 
+/* O VTabs do Vuetify pinta uma barra de rolagem vertical parasita na tablist (documentado no
+ * handoff de Usuários). Escondê-la no kit, para valer em todas as telas com abas (ADR-022). */
+.si-tabs [role="tablist"] {
+  overflow-y: hidden;
+}
+
 /* Badge de contagem opcional da aba (DS Tabs.jsx): pill 20px, tabular; inativo cinza sobre o
  * fundo da página, ativo em tint verde (verde-100 / verde-800). Só aparece quando há `count`. */
 .si-tab__count {
@@ -388,6 +394,17 @@
   font-weight: var(--si-font-weight-semibold);
   font-size: var(--si-fs-caption);
   border-radius: var(--si-radius-pill);
+}
+
+/* Ponto 6px opcional do status pill (DS): herda a cor do texto do chip (currentColor),
+ * então acompanha a variante semântica (verde/âmbar/vermelho) sem cor hardcoded. */
+.si-chip--dot .si-chip__dot {
+  inline-size: 6px;
+  block-size: 6px;
+  border-radius: var(--si-radius-pill);
+  background: currentColor;
+  margin-inline-end: var(--si-space-2);
+  flex: 0 0 auto;
 }
 
 /* ─── Alert (.si-alert / .si-alert--<tipo> na raiz do VAlert) ─────────────────

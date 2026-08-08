@@ -2,8 +2,9 @@ import type { components } from '~/types/gen/api'
 
 export type CreateUserRequest = components['schemas']['CreateUserRequest']
 export type CreateUserResponse = components['schemas']['CreateUserResponse']
-export type UserListResponse = components['schemas']['PagedResponseOfUserListItemResponse']
+export type UserListResponse = components['schemas']['ListUsersResponse']
 export type UserListItem = components['schemas']['UserListItemResponse']
+export type UserStatusCounts = components['schemas']['UserStatusCountsResponse']
 export type GetUserResponse = components['schemas']['GetUserResponse']
 export type UserMembership = components['schemas']['UserMembershipResponse']
 export type InviteBrokerageAdministratorRequest = components['schemas']['InviteBrokerageAdministratorRequest']
@@ -14,6 +15,8 @@ export type InviteBrokerageUserBody = components['schemas']['InviteBrokerageUser
 export type InviteBrokerageUserResponse = components['schemas']['InviteBrokerageUserResponse']
 export type InvitePolicyHolderUserBody = components['schemas']['InvitePolicyHolderUserBody']
 export type InvitePolicyHolderUserResponse = components['schemas']['InvitePolicyHolderUserResponse']
+export type ResendInvitationResponse = components['schemas']['ResendInvitationResponse']
+export type ChangeUserActivationResponse = components['schemas']['ChangeUserActivationResponse']
 
 /**
  * Acesso a dados da jornada Usuários (ADR-004): fetch fino tipado pelo contrato
@@ -33,6 +36,11 @@ export function useUsers(api: typeof $fetch = useNuxtApp().$api as typeof $fetch
     pageSize?: number
     search?: string
     status?: string
+    profileId?: string
+    scope?: string
+    linkId?: string
+    registeredFrom?: string
+    registeredTo?: string
   } = {}): Promise<UserListResponse> {
     return await api<UserListResponse>('/api/users', {
       method: 'GET',
@@ -41,6 +49,11 @@ export function useUsers(api: typeof $fetch = useNuxtApp().$api as typeof $fetch
         pageSize: params.pageSize ?? 20,
         ...(params.search ? { search: params.search } : {}),
         ...(params.status ? { status: params.status } : {}),
+        ...(params.profileId ? { profileId: params.profileId } : {}),
+        ...(params.scope ? { scope: params.scope } : {}),
+        ...(params.linkId ? { linkId: params.linkId } : {}),
+        ...(params.registeredFrom ? { registeredFrom: params.registeredFrom } : {}),
+        ...(params.registeredTo ? { registeredTo: params.registeredTo } : {}),
       },
     })
   }
@@ -97,6 +110,30 @@ export function useUsers(api: typeof $fetch = useNuxtApp().$api as typeof $fetch
     })
   }
 
+  /**
+   * RN-065: reenvia o Convite de primeiro acesso (Pendente/Convite expirado). Vai para o mesmo
+   * e-mail — é o caminho do caso "não recebi o convite"; o servidor renova o link e a validade.
+   */
+  async function resendInvitation(id: string): Promise<ResendInvitationResponse> {
+    return await api<ResendInvitationResponse>(`/api/users/${id}/invitations/resend`, {
+      method: 'POST',
+    })
+  }
+
+  /** RN-076: inativa o Usuário (a decisão e a transição de situação são do servidor). */
+  async function inactivateUser(id: string): Promise<ChangeUserActivationResponse> {
+    return await api<ChangeUserActivationResponse>(`/api/users/${id}/inactivate`, {
+      method: 'POST',
+    })
+  }
+
+  /** RN-076: reativa o Usuário. */
+  async function reactivateUser(id: string): Promise<ChangeUserActivationResponse> {
+    return await api<ChangeUserActivationResponse>(`/api/users/${id}/reactivate`, {
+      method: 'POST',
+    })
+  }
+
   return {
     createUser,
     listUsers,
@@ -105,5 +142,8 @@ export function useUsers(api: typeof $fetch = useNuxtApp().$api as typeof $fetch
     invitePolicyHolderAdministrator,
     inviteBrokerageUser,
     invitePolicyHolderUser,
+    resendInvitation,
+    inactivateUser,
+    reactivateUser,
   }
 }

@@ -118,6 +118,24 @@ const items = [
           <SiChip color="success">Sucesso</SiChip>
           <SiChip color="warning">Aviso</SiChip>
           <SiChip color="error" variant="outlined">Erro</SiChip>
+          <SiChip
+            color="success"
+            dot
+          >
+            Ativo
+          </SiChip>
+          <SiChip
+            color="warning"
+            dot
+          >
+            Pendente
+          </SiChip>
+          <SiChip
+            color="error"
+            dot
+          >
+            Expirado
+          </SiChip>
         </VCardText>
       </SiCard>
 

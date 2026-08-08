@@ -20,6 +20,9 @@ import EllipsisVertical from 'lucide-vue-next/dist/esm/icons/ellipsis-vertical'
 import Ellipsis from 'lucide-vue-next/dist/esm/icons/ellipsis'
 import User from 'lucide-vue-next/dist/esm/icons/user'
 import UserPlus from 'lucide-vue-next/dist/esm/icons/user-plus'
+import UserX from 'lucide-vue-next/dist/esm/icons/user-x'
+import UserCheck from 'lucide-vue-next/dist/esm/icons/user-check'
+import Mail from 'lucide-vue-next/dist/esm/icons/mail'
 import Lock from 'lucide-vue-next/dist/esm/icons/lock'
 import ArrowLeft from 'lucide-vue-next/dist/esm/icons/arrow-left'
 import ArrowRight from 'lucide-vue-next/dist/esm/icons/arrow-right'
@@ -94,6 +97,9 @@ export const appIcons = {
   dotsHorizontal: Ellipsis,
   user: User,
   userPlus: UserPlus,
+  userX: UserX,
+  userCheck: UserCheck,
+  mail: Mail,
   users: Users,
   userRound: UserRound,
   keyRound: KeyRound,

@@ -8,6 +8,9 @@
  * Administrador — o Tomador; emite `confirm`. A lista de perfis vem do servidor (`/api/profiles/
  * assignable`), a de tomadores da listagem de Tomadores. Nomeação vigente, unicidade de e-mail e
  * autorização são decisão do servidor (SECURITY do produto); aqui só se valida forma.
+ *
+ * NOTA (fatia): o CPF (Fatia B) e a criação inline de perfil (§8 passo 2 / Fatia F) entram depois.
+ * Até lá o atalho "Criar perfil de acesso" leva à tela de Perfis.
  */
 import type { AssignableProfile } from '~/composables/useProfiles'
 import type { PolicyHolderListItem } from '~/composables/usePolicyHolders'
@@ -52,6 +55,9 @@ const formValid = ref(false)
 const selectedProfile = computed(
   () => profiles.value.find(profile => profile.id === profileId.value) ?? null,
 )
+
+// §1: sem nenhum perfil disponível, o modal não mostra um select vazio — vira estado explicativo.
+const hasNoProfiles = computed(() => !loading.value && !loadError.value && profiles.value.length === 0)
 
 /**
  * Perfil de escopo Tomador só pede o Tomador quando quem cria é o Corretor Administrador
@@ -124,6 +130,12 @@ async function load() {
   }
 }
 
+// §8 passo 2 (Fatia F): a criação inline entra depois; por ora o atalho leva à tela de Perfis.
+function goToCreateProfile() {
+  open.value = false
+  navigateTo('/perfis')
+}
+
 function submit() {
   if (!canSubmit.value || !profileId.value) {
     return
@@ -144,14 +156,13 @@ function submit() {
     v-model="open"
     max-width="560"
   >
-    <SiCard class="si-create-scoped-user">
-      <h2 class="text-h6 mb-1">
+    <SiCard class="si-invite">
+      <h2 class="si-invite__title">
         Novo usuário
       </h2>
-
-      <p class="si-create-scoped-user__hint mb-5">
-        O convidado recebe um e-mail com link de primeiro acesso e define a própria senha. Perfis de
-        tomador exigem escolher o tomador — ele precisa ter nomeação vigente com a corretora ativa.
+      <p class="si-invite__hint">
+        O convidado recebe um e-mail com link de primeiro acesso e define a própria senha. Ele fica
+        na situação Pendente até entrar pela primeira vez.
       </p>
 
       <SiAlert
@@ -161,14 +172,27 @@ function submit() {
         :text="loadError"
       />
 
-      <SiAlert
-        v-else-if="!loading && !profiles.length"
-        type="warning"
-        class="mb-4"
-        text="Nenhum perfil disponível para atribuir no escopo atual."
-      />
+      <!-- §1/§8 "Estado sem perfis": sem select vazio — bloco explicativo com criação de perfil. -->
+      <div
+        v-else-if="hasNoProfiles"
+        class="si-invite__empty"
+      >
+        <div class="si-invite__empty-icon">
+          <SiIcon icon="keyRound" />
+        </div>
+        <h3 class="si-invite__empty-title">
+          Crie um perfil de acesso primeiro
+        </h3>
+        <p class="si-invite__empty-text">
+          O perfil define o que a pessoa pode fazer na plataforma. Sem ele o convite criaria um
+          acesso que não autoriza operação alguma.
+        </p>
+      </div>
 
-      <SiForm v-model="formValid">
+      <SiForm
+        v-else
+        v-model="formValid"
+      >
         <SiTextField
           v-model="name"
           label="Nome"
@@ -186,12 +210,24 @@ function submit() {
 
         <SiSelect
           v-model="profileId"
-          label="Perfil"
+          label="Perfil de acesso"
           :items="profileOptions"
           :loading="loading"
           :rules="[required()]"
-          class="mb-3"
+          hint="Define o que a pessoa pode fazer. Você pode trocar depois."
+          persistent-hint
         />
+
+        <p class="si-invite__shortcut">
+          Nenhum perfil serve para esta pessoa?
+          <button
+            type="button"
+            class="si-invite__link"
+            @click="goToCreateProfile"
+          >
+            Criar perfil de acesso
+          </button>
+        </p>
 
         <SiSelect
           v-if="requiresPolicyHolder"
@@ -200,47 +236,131 @@ function submit() {
           :items="policyHolderOptions"
           :loading="loading"
           :rules="[required()]"
+          class="mt-2"
         />
       </SiForm>
 
-      <div class="si-create-scoped-user__actions">
-        <SiButton
-          variant="text"
-          size="small"
-          @click="open = false"
-        >
-          Cancelar
-        </SiButton>
-
-        <SiButton
-          :prepend-icon="'userPlus'"
-          :loading="props.submitting"
-          :disabled="!canSubmit"
-          size="small"
-          @click="submit"
-        >
-          Enviar convite
-        </SiButton>
+      <div class="si-invite__footer">
+        <span class="si-invite__note">O usuário é criado só quando você envia o convite.</span>
+        <div class="si-invite__actions">
+          <SiButton
+            variant="text"
+            color="secondary"
+            @click="open = false"
+          >
+            Cancelar
+          </SiButton>
+          <SiButton
+            v-if="hasNoProfiles"
+            :prepend-icon="'keyRound'"
+            @click="goToCreateProfile"
+          >
+            Criar perfil de acesso
+          </SiButton>
+          <SiButton
+            v-else
+            :prepend-icon="'userPlus'"
+            :loading="props.submitting"
+            :disabled="!canSubmit"
+            @click="submit"
+          >
+            Enviar convite
+          </SiButton>
+        </div>
       </div>
     </SiCard>
   </SiDialog>
 </template>
 
 <style scoped>
-.si-create-scoped-user {
+.si-invite {
   padding: var(--si-space-5);
 }
 
-.si-create-scoped-user__hint {
+.si-invite__title {
+  margin: 0 0 var(--si-space-1);
+  font-size: var(--si-fs-h4);
+  font-weight: var(--si-font-weight-semibold);
+}
+
+.si-invite__hint {
+  margin: 0 0 var(--si-space-5);
   color: var(--si-cinza);
   font-size: var(--si-fs-body-2);
 }
 
-.si-create-scoped-user__actions {
+.si-invite__shortcut {
+  margin: var(--si-space-2) 0 0;
+  font-size: var(--si-fs-caption);
+  color: var(--si-cinza);
+}
+
+.si-invite__link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: rgb(var(--v-theme-primary));
+  font-size: var(--si-fs-caption);
+  font-weight: var(--si-font-weight-semibold);
+  cursor: pointer;
+}
+
+.si-invite__link:hover {
+  text-decoration: underline;
+}
+
+.si-invite__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--si-space-2);
+  padding: var(--si-space-6) var(--si-space-5);
+  border: 1px dashed var(--si-border-strong, var(--si-cinza));
+  border-radius: var(--si-radius-lg);
+  background: rgb(var(--v-theme-background));
+}
+
+.si-invite__empty-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--si-radius-pill);
+  background: var(--si-cinza-claro);
+  color: var(--si-cinza);
+}
+
+.si-invite__empty-title {
+  margin: 0;
+  font-size: var(--si-fs-body-1);
+  font-weight: var(--si-font-weight-semibold);
+}
+
+.si-invite__empty-text {
+  margin: 0;
+  max-width: 360px;
+  color: var(--si-cinza);
+  font-size: var(--si-fs-body-2);
+}
+
+.si-invite__footer {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: var(--si-space-2);
+  justify-content: space-between;
+  gap: var(--si-space-3);
   margin-top: var(--si-space-5);
+  flex-wrap: wrap;
+}
+
+.si-invite__note {
+  color: var(--si-cinza);
+  font-size: var(--si-fs-caption);
+}
+
+.si-invite__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--si-space-2);
 }
 </style>
