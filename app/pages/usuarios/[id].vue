@@ -122,7 +122,7 @@ async function refresh() {
 
             <NuxtLink
               v-else-if="user.profileId"
-              :to="`/perfis/${user.profileId}`"
+              :to="`/perfis-acesso/${user.profileId}`"
               class="si-user-detail__profile-link"
             >
               {{ getProfileLabel(user.profileName) }}
