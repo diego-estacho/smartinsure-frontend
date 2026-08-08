@@ -5,6 +5,7 @@
  * de documentação/onboarding. Componente novo entra aqui.
  */
 import { required, email, cpfCnpj } from '~/lib/rules'
+import { buildCatalog } from '~/lib/permissions/catalog'
 
 useHead({ title: 'SmartInsure · Vitrine UI' })
 
@@ -62,6 +63,28 @@ const items = [
   { name: 'Beta Corretora', premium: 'R$ 980,50', status: 'Proposta' },
   { name: 'Gama Hub', premium: 'R$ 2.115,90', status: 'Emitida' },
 ]
+
+// SiSegmented + editor de permissões (Perfis de acesso) — catálogo-fixture (sem backend).
+const segDemo = ref<string | null>('view')
+const segOptions = [
+  { value: 'none', label: 'Sem acesso' },
+  { value: 'view', label: 'Consultar' },
+  { value: 'operate', label: 'Operar' },
+]
+const permCatalog = buildCatalog([
+  { id: '1', code: 'quotation-groups.view', description: 'Consultar cotações', isSystem: true, area: 'quotations', dependsOn: null },
+  { id: '2', code: 'quotation-groups.create', description: 'Criar cotação', isSystem: true, area: 'quotations', dependsOn: 'quotation-groups.view' },
+  { id: '3', code: 'quotation-groups.edit', description: 'Editar cotação', isSystem: true, area: 'quotations', dependsOn: 'quotation-groups.view' },
+  { id: '4', code: 'policies.issue', description: 'Emitir apólice', isSystem: true, area: 'quotations', dependsOn: 'quotation-groups.view' },
+  { id: '5', code: 'credit-inquiries.view', description: 'Consultar consultas de crédito', isSystem: true, area: 'credit-inquiries', dependsOn: null },
+  { id: '6', code: 'credit-inquiries.create', description: 'Solicitar consulta de crédito', isSystem: true, area: 'credit-inquiries', dependsOn: 'credit-inquiries.view' },
+  { id: '7', code: 'users.view', description: 'Consultar usuários', isSystem: true, area: 'users-access', dependsOn: null },
+  { id: '8', code: 'users.create', description: 'Convidar usuário', isSystem: true, area: 'users-access', dependsOn: 'users.view' },
+  { id: '9', code: 'profiles.view', description: 'Consultar perfis de acesso', isSystem: true, area: 'users-access', dependsOn: null },
+  { id: '10', code: 'profiles.manage', description: 'Criar e editar perfis de acesso', isSystem: true, area: 'users-access', dependsOn: 'profiles.view' },
+])
+const permSelected = ref<string[]>(['quotation-groups.view', 'quotation-groups.create'])
+const permFilter = ref('')
 </script>
 
 <template>
@@ -87,6 +110,47 @@ const items = [
           <SiButton :disabled="true">Desabilitado</SiButton>
           <SiButton size="small">Pequeno</SiButton>
           <SiButton size="large">Grande</SiButton>
+        </VCardText>
+      </SiCard>
+
+      <!-- SiSegmented + Editor de permissões (Perfis de acesso) -->
+      <SiCard class="mb-6">
+        <VCardTitle>SiSegmented + Editor de permissões (Perfis de acesso)</VCardTitle>
+        <VCardText>
+          <div
+            class="d-flex align-center mb-4"
+            style="gap: var(--si-space-3)"
+          >
+            <SiSegmented
+              v-model="segDemo"
+              :options="segOptions"
+              aria-label="Demo segmentado"
+            />
+            <code>{{ segDemo ?? 'null (personalizado)' }}</code>
+          </div>
+
+          <SiTextField
+            v-model="permFilter"
+            placeholder="Filtrar permissões"
+            prepend-inner-icon="search"
+            density="compact"
+            hide-details
+            clearable
+            class="mb-3"
+            style="max-width: 320px"
+          />
+
+          <div style="border: 1px solid var(--si-cinza-claro); border-radius: var(--si-radius-lg); overflow: hidden">
+            <PermissionsEditor
+              v-model="permSelected"
+              :catalog="permCatalog"
+              :filter-text="permFilter"
+            />
+          </div>
+
+          <p class="text-caption mt-3">
+            Marcadas: <code>{{ permSelected.join(', ') || '—' }}</code>
+          </p>
         </VCardText>
       </SiCard>
 

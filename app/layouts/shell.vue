@@ -86,7 +86,7 @@ const secondaryNav: NavItem[] = [
   { key: 'mapaModalidades', title: 'Mapa de Modalidades', icon: 'sitemap', to: '/mapa-de-modalidades' },
   { key: 'coberturasAdicionais', title: 'Coberturas Adicionais', icon: 'shieldCheck', to: '/coberturas-adicionais' },
   { key: 'usuarios', title: 'Usuários', icon: 'userRound', to: '/usuarios' },
-  { key: 'perfis', title: 'Perfis de acesso', icon: 'keyRound', to: '/perfis' },
+  { key: 'perfis', title: 'Perfis de acesso', icon: 'keyRound', to: '/perfis-acesso' },
   { key: 'relatorios', title: 'Relatórios', icon: 'barChart' },
   { key: 'config', title: 'Configurações', icon: 'settings' },
 ]
