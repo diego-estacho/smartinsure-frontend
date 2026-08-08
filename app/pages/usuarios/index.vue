@@ -50,7 +50,7 @@ const tab = ref<UserStatusTabKey>('todos')
 // Filtros avançados (§4): rascunho aplicado pelo drawer; opções vêm de perfis/corretoras da base.
 const drawerOpen = ref(false)
 function emptyFilters(): UsersFilters {
-  return { profileId: null, scope: null, linkId: null, registeredFrom: null, registeredTo: null }
+  return { profileId: null, scope: null, linkId: null, registeredFrom: null, registeredTo: null, lastAccess: null }
 }
 const filters = ref<UsersFilters>(emptyFilters())
 const profileOptions = ref<{ title: string, value: string }[]>([])
@@ -95,6 +95,12 @@ const activeFilterChips = computed<{ key: string, label: string }[]>(() => {
   }
   if (f.registeredFrom || f.registeredTo) {
     chips.push({ key: 'registered', label: `Cadastro: ${f.registeredFrom ?? '…'} – ${f.registeredTo ?? '…'}` })
+  }
+  if (f.lastAccess) {
+    const labels: Record<string, string> = {
+      7: 'Últimos 7 dias', 30: 'Últimos 30 dias', 90: 'Últimos 90 dias', never: 'Nunca acessou',
+    }
+    chips.push({ key: 'lastAccess', label: `Último acesso: ${labels[f.lastAccess] ?? f.lastAccess}` })
   }
   return chips
 })
@@ -169,6 +175,7 @@ async function refresh() {
       linkId: filters.value.linkId ?? undefined,
       registeredFrom: filters.value.registeredFrom ?? undefined,
       registeredTo: filters.value.registeredTo ?? undefined,
+      lastAccess: filters.value.lastAccess ?? undefined,
     })
     items.value = response.items ?? []
     totalCount.value = Number(response.totalCount ?? 0)
@@ -227,6 +234,9 @@ function removeFilterChip(key: string) {
   else if (key === 'registered') {
     next.registeredFrom = null
     next.registeredTo = null
+  }
+  else if (key === 'lastAccess') {
+    next.lastAccess = null
   }
   filters.value = next
   reload()

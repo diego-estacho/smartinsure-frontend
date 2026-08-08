@@ -48,6 +48,7 @@ export function useUsers(api: typeof $fetch = useNuxtApp().$api as typeof $fetch
     linkId?: string
     registeredFrom?: string
     registeredTo?: string
+    lastAccess?: string
   } = {}): Promise<UserListResponse> {
     return await api<UserListResponse>('/api/users', {
       method: 'GET',
@@ -61,6 +62,7 @@ export function useUsers(api: typeof $fetch = useNuxtApp().$api as typeof $fetch
         ...(params.linkId ? { linkId: params.linkId } : {}),
         ...(params.registeredFrom ? { registeredFrom: params.registeredFrom } : {}),
         ...(params.registeredTo ? { registeredTo: params.registeredTo } : {}),
+        ...(params.lastAccess ? { lastAccess: params.lastAccess } : {}),
       },
     })
   }

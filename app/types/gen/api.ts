@@ -2765,6 +2765,7 @@ export interface paths {
                     linkId?: string;
                     registeredFrom?: string;
                     registeredTo?: string;
+                    lastAccess?: string;
                 };
                 header?: never;
                 path?: never;

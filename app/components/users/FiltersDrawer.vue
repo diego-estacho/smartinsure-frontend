@@ -3,8 +3,6 @@
  * Drawer "Filtros avançados" da Listagem de Usuários (§4) — filtros secundários sem poluir a tela.
  * Mantém um rascunho local; "Aplicar filtros" aplica e fecha. Vira bottom sheet no mobile.
  * Nenhum campo repete o que a busca já cobre (nome/e-mail/perfil).
- *
- * NOTA (fatia): "Último acesso" é dado da Fatia E — entra aqui junto com a coluna.
  */
 import { profileScopes } from '~/lib/status/profiles'
 
@@ -14,6 +12,8 @@ export type UsersFilters = {
   linkId: string | null
   registeredFrom: string | null
   registeredTo: string | null
+  /** Último acesso (RN-204): "7"/"30"/"90" (últimos N dias) ou "never" (nunca acessou). */
+  lastAccess: string | null
 }
 
 const props = defineProps<{
@@ -38,6 +38,15 @@ const scopeOptions = [
   { title: 'Sistema', value: profileScopes.system },
   { title: 'Corretora', value: profileScopes.brokerage },
   { title: 'Tomador', value: profileScopes.policyHolder },
+]
+
+// RN-204: recorte por último acesso. "Nunca acessou" ajuda a achar quem foi convidado mas não entrou.
+const lastAccessOptions = [
+  { title: 'Qualquer', value: null },
+  { title: 'Últimos 7 dias', value: '7' },
+  { title: 'Últimos 30 dias', value: '30' },
+  { title: 'Últimos 90 dias', value: '90' },
+  { title: 'Nunca acessou', value: 'never' },
 ]
 
 const draft = ref<UsersFilters>({ ...props.filters })
@@ -131,6 +140,15 @@ function clear() {
         <SiSelect
           v-model="draft.linkId"
           :items="[{ title: 'Todos os vínculos', value: null }, ...props.links]"
+          density="compact"
+        />
+      </div>
+
+      <div class="si-users-filters__group">
+        <span class="si-users-filters__group-label">Último acesso</span>
+        <SiSelect
+          v-model="draft.lastAccess"
+          :items="lastAccessOptions"
           density="compact"
         />
       </div>
