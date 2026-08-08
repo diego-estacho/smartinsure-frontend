@@ -18,7 +18,7 @@ import { getUserDisplayStatus } from '~/lib/status/users'
 definePageMeta({ layout: 'shell' })
 
 const route = useRoute()
-const { getUser, resendInvitation, inactivateUser, reactivateUser } = useUsers()
+const { getUser, resendInvitation, inactivateUser, reactivateUser, requestPasswordReset } = useUsers()
 
 const user = ref<GetUserResponse | null>(null)
 const loading = ref(false)
@@ -195,10 +195,29 @@ async function onEditResent(payload: { email: string }) {
   await refresh()
 }
 
-// Ação principal do cabeçalho por situação (§11): reenviar (pendente/expirado) e reativar (inativo)
-// já têm backend; a redefinição de senha do Ativo entra na Fatia D.
+// RN-203: redefinição de senha do Usuário Ativo (o servidor gera o link e envia por e-mail).
+async function onResetPassword() {
+  if (!user.value) {
+    return
+  }
+  acting.value = true
+  try {
+    await requestPasswordReset(user.value.id)
+    toast.value = `Link de redefinição de senha enviado para ${user.value.email}.`
+  }
+  catch (requestError) {
+    error.value = extractApiErrorMessage(requestError, 'Não foi possível enviar a redefinição de senha.')
+  }
+  finally {
+    acting.value = false
+  }
+}
+
+// Ação principal do cabeçalho por situação (§11): reenviar (pendente/expirado), reativar (inativo)
+// e enviar redefinição de senha (ativo, RN-203).
 const isInactive = computed(() => user.value?.status === 'Inactive')
 const isPending = computed(() => user.value?.status === 'Pending')
+const isActive = computed(() => user.value?.status === 'Active')
 </script>
 
 <template>
@@ -261,6 +280,14 @@ const isPending = computed(() => user.value?.status === 'Pending')
               @click="onResend"
             >
               Reenviar convite
+            </SiButton>
+            <SiButton
+              v-else-if="isActive"
+              :prepend-icon="'keyRound'"
+              :loading="acting"
+              @click="onResetPassword"
+            >
+              Enviar redefinição de senha
             </SiButton>
             <SiButton
               v-else-if="isInactive"

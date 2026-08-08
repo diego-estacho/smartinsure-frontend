@@ -26,6 +26,7 @@ const {
   resendInvitation,
   inactivateUser,
   reactivateUser,
+  requestPasswordReset,
   inviteBrokerageAdministrator,
   invitePolicyHolderAdministrator,
   inviteBrokerageUser,
@@ -320,6 +321,21 @@ async function onReactivate(item: UserListItem) {
 function openEdit(item: UserListItem) {
   editUserId.value = item.id
   editOpen.value = true
+}
+
+// RN-203: dispara a redefinição de senha (Ativo). O servidor envia o link; refletimos no toast.
+async function onResetPassword(item: UserListItem) {
+  actingId.value = item.id
+  try {
+    await requestPasswordReset(item.id)
+    toast.value = `Link de redefinição de senha enviado para ${item.email}.`
+  }
+  catch (requestError) {
+    error.value = extractApiErrorMessage(requestError, 'Não foi possível enviar a redefinição de senha.')
+  }
+  finally {
+    actingId.value = null
+  }
 }
 
 // O modal decide o efeito (nome/e-mail/perfil); aqui só refletimos o resultado e refazemos a lista.
@@ -742,6 +758,12 @@ async function confirmInviteAdmin(payload: { name: string, email: string, broker
                     title="Editar usuário"
                     prepend-icon="pencil"
                     @click="openEdit(item)"
+                  />
+                  <SiListItem
+                    v-if="item.status === 'Active'"
+                    title="Enviar redefinição de senha"
+                    prepend-icon="keyRound"
+                    @click="onResetPassword(item)"
                   />
                   <SiListItem
                     v-if="item.status === 'Pending'"

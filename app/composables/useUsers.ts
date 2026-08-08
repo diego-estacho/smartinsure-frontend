@@ -23,6 +23,7 @@ export type ChangeUserScopeProfileBody = components['schemas']['ChangeUserScopeP
 export type ChangeUserScopeProfileResponse = components['schemas']['ChangeUserScopeProfileResponse']
 export type SetUserProfileBody = components['schemas']['SetUserProfileBody']
 export type SetUserProfileResponse = components['schemas']['SetUserProfileResponse']
+export type RequestPasswordResetResponse = components['schemas']['RequestPasswordResetResponse']
 
 /**
  * Acesso a dados da jornada Usuários (ADR-004): fetch fino tipado pelo contrato
@@ -171,6 +172,13 @@ export function useUsers(api: typeof $fetch = useNuxtApp().$api as typeof $fetch
     })
   }
 
+  /** RN-203: dispara a redefinição de senha de um Usuário Ativo (o servidor envia o link por e-mail). */
+  async function requestPasswordReset(id: string): Promise<RequestPasswordResetResponse> {
+    return await api<RequestPasswordResetResponse>(`/api/users/${id}/password-reset`, {
+      method: 'POST',
+    })
+  }
+
   return {
     createUser,
     listUsers,
@@ -185,5 +193,6 @@ export function useUsers(api: typeof $fetch = useNuxtApp().$api as typeof $fetch
     editUser,
     changeScopeProfile,
     setUserProfile,
+    requestPasswordReset,
   }
 }

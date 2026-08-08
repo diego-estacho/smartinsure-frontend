@@ -212,6 +212,34 @@ describe('RN-012 concessão/revogação do Perfil de Sistema — composable useU
   })
 })
 
+describe('RN-203 redefinição de senha — composable useUsers', () => {
+  it('dispara a redefinição via POST no BFF', async () => {
+    fetchMock.mockResolvedValueOnce({
+      userId: '01980000-0000-7000-8000-000000000001',
+      email: 'ana@exemplo.com',
+    })
+
+    const { requestPasswordReset } = useUsers(api)
+    const result = await requestPasswordReset('01980000-0000-7000-8000-000000000001')
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/users/01980000-0000-7000-8000-000000000001/password-reset',
+      { method: 'POST' },
+    )
+    expect(result.email).toBe('ana@exemplo.com')
+  })
+
+  it('propaga a recusa do servidor (usuário não-ativo) sem decidir no cliente', async () => {
+    fetchMock.mockRejectedValueOnce(new Error('409'))
+
+    const { requestPasswordReset } = useUsers(api)
+
+    await expect(
+      requestPasswordReset('01980000-0000-7000-8000-000000000001'),
+    ).rejects.toThrow()
+  })
+})
+
 describe('RN-064 vínculos do Usuário com Corretoras e Tomadores', () => {
   it('traz os vínculos com o perfil de cada escopo no detalhe', async () => {
     fetchMock.mockResolvedValueOnce({
