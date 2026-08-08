@@ -9,8 +9,10 @@
  * assignable`), a de tomadores da listagem de Tomadores. Nomeação vigente, unicidade de e-mail e
  * autorização são decisão do servidor (SECURITY do produto); aqui só se valida forma.
  *
- * NOTA (fatia): a criação inline de perfil (§8 passo 2 / Fatia F) entra depois — até lá o atalho
- * "Criar perfil de acesso" leva à tela de Perfis.
+ * §8 passo 2 (Fatia F): a criação de perfil é INLINE, numa 2ª tela do mesmo modal (nunca
+ * modal-sobre-modal). Reusa o editor de permissões da jornada Perfis (`<PermissionsEditor>` +
+ * catálogo de áreas). Ao criar, volta ao passo 1 com o perfil já selecionado e os dados do convite
+ * preservados. O escopo do perfil é derivado no servidor a partir do contexto de quem cria.
  */
 import type { AssignableProfile } from '~/composables/useProfiles'
 import type { PolicyHolderListItem } from '~/composables/usePolicyHolders'
@@ -36,13 +38,19 @@ const emit = defineEmits<{
     /** Escopo do perfil escolhido — a página usa para saber qual fluxo chamar (RN-069/RN-070). */
     profileScope: string
   }]
+  /** §8 passo 2: um perfil foi criado inline e já selecionado (para o toast na página). */
+  'profile-created': [name: string]
 }>()
 
-const { listAssignableProfiles } = useProfiles()
+const { listAssignableProfiles, createProfile } = useProfiles()
 const { listPolicyHolders } = usePolicyHolders()
+const { catalog, loading: catalogLoading, load: loadCatalog } = usePermissionsCatalog()
 // RN-068 x RN-070: quem tem corretora ativa está criando pela corretora (e escolhe o Tomador);
 // sem corretora ativa, o ator é o Tomador Administrador e o Tomador é o ativo dele.
 const { context } = useWorkspaces()
+
+// Passo do modal: 1 = convite; 2 = criar perfil inline (§8 passo 2).
+const step = ref<1 | 2>(1)
 
 const name = ref('')
 const email = ref('')
@@ -54,6 +62,14 @@ const policyHolders = ref<PolicyHolderListItem[]>([])
 const loading = ref(false)
 const loadError = ref<string | null>(null)
 const formValid = ref(false)
+
+// Passo 2: criação inline de perfil.
+const newProfileName = ref('')
+const newProfileDescription = ref('')
+const newProfileCodes = ref<string[]>([])
+const newProfileFormValid = ref(false)
+const creatingProfile = ref(false)
+const createProfileError = ref<string | null>(null)
 
 const selectedProfile = computed(
   () => profiles.value.find(profile => profile.id === profileId.value) ?? null,
@@ -92,11 +108,16 @@ const canSubmit = computed(() =>
   && (!requiresPolicyHolder.value || Boolean(policyHolderId.value)),
 )
 
+// Perfil precisa de nome e de ao menos uma permissão (perfil que não autoriza nada não serve ao convite).
+const canCreateProfile = computed(() =>
+  newProfileFormValid.value && newProfileName.value.trim().length > 0 && newProfileCodes.value.length > 0)
+
 watch(open, async (isOpen) => {
   if (!isOpen) {
     return
   }
 
+  step.value = 1
   name.value = ''
   email.value = ''
   cpf.value = null
@@ -134,10 +155,57 @@ async function load() {
   }
 }
 
-// §8 passo 2 (Fatia F): a criação inline entra depois; por ora o atalho leva à tela de Perfis.
-function goToCreateProfile() {
-  open.value = false
-  navigateTo('/perfis')
+// §8 passo 2: abre a 2ª tela (criar perfil) sem sair do modal (nunca modal-sobre-modal).
+async function goToCreateProfile() {
+  newProfileName.value = ''
+  newProfileDescription.value = ''
+  newProfileCodes.value = []
+  createProfileError.value = null
+  step.value = 2
+  await loadCatalog()
+}
+
+// Volta ao convite preservando os dados já preenchidos.
+function backToInvite() {
+  step.value = 1
+}
+
+// §8 passo 2: cria o perfil, recarrega os assinaláveis, já seleciona o novo e volta ao convite.
+async function createInlineProfile() {
+  if (!canCreateProfile.value) {
+    return
+  }
+
+  creatingProfile.value = true
+  createProfileError.value = null
+
+  try {
+    const description = newProfileDescription.value.trim()
+    const created = await createProfile({
+      name: newProfileName.value.trim(),
+      description: description.length > 0 ? description : null,
+      permissionCodes: [...newProfileCodes.value],
+    })
+
+    // Recarrega a lista e garante que o recém-criado esteja presente para exibir o rótulo e ficar
+    // selecionável de imediato (o /assignable pode não trazer customizados na hora — cache/filtro).
+    const assignable = await listAssignableProfiles()
+    profiles.value = assignable.some(profile => profile.id === created.id)
+      ? assignable
+      : [
+          { id: created.id, name: created.name, scope: created.scope, isFixed: false, brokerageId: null, policyHolderId: null },
+          ...assignable,
+        ]
+    profileId.value = created.id
+    step.value = 1
+    emit('profile-created', created.name)
+  }
+  catch (error) {
+    createProfileError.value = extractApiErrorMessage(error, 'Não foi possível criar o perfil.')
+  }
+  finally {
+    creatingProfile.value = false
+  }
 }
 
 // RN-082: valida forma do CPF (dígitos verificadores); o servidor decide unicidade/imutabilidade.
@@ -164,9 +232,13 @@ function submit() {
 <template>
   <SiDialog
     v-model="open"
-    max-width="560"
+    :max-width="step === 1 ? 560 : 760"
   >
-    <SiCard class="si-invite">
+    <!-- Passo 1: convite -->
+    <SiCard
+      v-if="step === 1"
+      class="si-invite"
+    >
       <h2 class="si-invite__title">
         Novo usuário
       </h2>
@@ -286,6 +358,77 @@ function submit() {
         </div>
       </div>
     </SiCard>
+
+    <!-- Passo 2: criar perfil inline (§8 passo 2 / Fatia F) -->
+    <SiCard
+      v-else
+      class="si-invite"
+    >
+      <h2 class="si-invite__title">
+        Criar perfil de acesso
+      </h2>
+      <p class="si-invite__hint">
+        Defina o que este perfil autoriza. Ao criar, ele fica disponível na hora e já entra
+        selecionado no convite — seus dados acima são preservados.
+      </p>
+
+      <SiAlert
+        v-if="createProfileError"
+        type="error"
+        class="mb-4"
+        :text="createProfileError"
+      />
+
+      <SiForm v-model="newProfileFormValid">
+        <SiTextField
+          v-model="newProfileName"
+          label="Nome do perfil"
+          :rules="[required()]"
+        />
+        <SiTextField
+          v-model="newProfileDescription"
+          label="Descrição (opcional)"
+          class="mt-3"
+        />
+      </SiForm>
+
+      <div class="si-invite__editor">
+        <div
+          v-if="catalogLoading || !catalog"
+          class="si-invite__editor-loading"
+        >
+          Carregando permissões…
+        </div>
+        <PermissionsEditor
+          v-else
+          v-model="newProfileCodes"
+          :catalog="catalog"
+        />
+      </div>
+
+      <div class="si-invite__footer">
+        <span class="si-invite__note">
+          {{ newProfileCodes.length }} {{ newProfileCodes.length === 1 ? 'permissão selecionada' : 'permissões selecionadas' }}
+        </span>
+        <div class="si-invite__actions">
+          <SiButton
+            variant="text"
+            color="secondary"
+            @click="backToInvite"
+          >
+            Voltar
+          </SiButton>
+          <SiButton
+            :prepend-icon="'keyRound'"
+            :loading="creatingProfile"
+            :disabled="!canCreateProfile"
+            @click="createInlineProfile"
+          >
+            Criar perfil
+          </SiButton>
+        </div>
+      </div>
+    </SiCard>
   </SiDialog>
 </template>
 
@@ -309,6 +452,22 @@ function submit() {
 
 .si-invite__hint {
   margin: 0 0 var(--si-space-5);
+  color: var(--si-cinza);
+  font-size: var(--si-fs-body-2);
+}
+
+/* §8 passo 2: o editor de permissões rola dentro do modal, sem estourar a altura. */
+.si-invite__editor {
+  margin-top: var(--si-space-4);
+  max-height: 46dvh;
+  overflow-y: auto;
+  border: 1px solid var(--si-divider);
+  border-radius: var(--si-radius-lg);
+}
+
+.si-invite__editor-loading {
+  padding: var(--si-space-5);
+  text-align: center;
   color: var(--si-cinza);
   font-size: var(--si-fs-body-2);
 }

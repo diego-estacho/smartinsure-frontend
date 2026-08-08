@@ -192,7 +192,7 @@ async function onResend() {
 
 function goToProfiles() {
   open.value = false
-  navigateTo('/perfis')
+  navigateTo('/perfis-acesso')
 }
 </script>
 

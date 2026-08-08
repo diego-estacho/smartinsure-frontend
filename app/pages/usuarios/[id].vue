@@ -337,7 +337,7 @@ const isActive = computed(() => user.value?.status === 'Active')
                 </div>
                 <NuxtLink
                   v-if="profile.profileId"
-                  :to="`/perfis/${profile.profileId}`"
+                  :to="`/perfis-acesso/${profile.profileId}`"
                   class="si-user-detail__link"
                 >
                   Abrir perfil

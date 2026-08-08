@@ -363,6 +363,11 @@ async function onEditResent(payload: { email: string }) {
   await refresh()
 }
 
+// §8 passo 2: perfil criado inline no modal de convite (já selecionado lá).
+function onInlineProfileCreated(profileName: string) {
+  toast.value = `Perfil "${getProfileLabel(profileName)}" criado e já selecionado no convite.`
+}
+
 // Exportar (§3): CSV client-side dos usuários carregados na página atual (sem endpoint de export).
 function exportCsv() {
   const rows = items.value
@@ -953,6 +958,7 @@ async function confirmInviteAdmin(payload: { name: string, email: string, broker
       v-model="scopedInviteOpen"
       :submitting="scopedInviting"
       @confirm="confirmScopedInvite"
+      @profile-created="onInlineProfileCreated"
     />
 
     <UsersEditDialog
